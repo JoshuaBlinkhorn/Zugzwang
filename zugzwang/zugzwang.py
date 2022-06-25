@@ -201,8 +201,7 @@ def print_board(board,player) :
         if (row < 7) :
             board_string += '\n'
 
-    return board_string
-    #print(board_string)
+    print(board_string)
 
 class ZugPieces():
     KING = chess.KING
