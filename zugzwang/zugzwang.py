@@ -42,6 +42,8 @@ import datetime
 import shutil
 from colorama import Fore, Back, Style
 
+        
+
 #############
 # constants #
 #############
@@ -202,37 +204,49 @@ def print_board(board,player) :
     return board_string
     #print(board_string)
 
+class ZugPieces():
+    KING = chess.KING
+    QUEEN = chess.QUEEN
+    ROOK = chess.ROOK
+    BISHOP = chess.BISHOP
+    KNIGHT = chess.KNIGHT    
+    PAWN = chess.PAWN
+    
 class ZugUnicodePieces():
-    PAWN = '\u2654'
-    ROOK = '\u2655'
-    BISHOP = '\u2656'
-    KNIGHT = '\u2657'
-    QUEEN = '\u2658'        
-    KING = '\u2659'    
+    KING = '\u2654'
+    QUEEN = '\u2655'
+    ROOK = '\u2656'
+    BISHOP = '\u2657'
+    KNIGHT = '\u2658'        
+    PAWN = '\u2659'    
 
 
 class ZugColours():
     WHITE = True
     BLACK = False
     
+
 class ZugPlayers(ZugColours):
     pass
+
 
 class ZugPieceColours(ZugColours):
     pass
     
+
 class ZugSquareColours(ZugColours):
     pass
     
+
 class ZugBoard(chess.Board):
 
     PIECE_TYPE_TO_UNICODE = {
-        chess.PAWN: '\u2654',
-        chess.ROOK: '\u2655',
-        chess.BISHOP: '\u2656',
-        chess.KNIGHT: '\u2657',
-        chess.QUEEN: '\u2658',
-        chess.KING: '\u2659',
+        ZugPieces.KING: ZugUnicodePieces.KING,
+        ZugPieces.QUEEN: ZugUnicodePieces.QUEEN,
+        ZugPieces.ROOK: ZugUnicodePieces.ROOK,
+        ZugPieces.BISHOP: ZugUnicodePieces.BISHOP,
+        ZugPieces.KNIGHT: ZugUnicodePieces.KNIGHT,
+        ZugPieces.PAWN: ZugUnicodePieces.PAWN,
     }
 
     @classmethod
@@ -263,11 +277,38 @@ class ZugBoard(chess.Board):
         back = cls._square_colour_to_back(square_colour)
         piece = cls._piece_type_to_unicode(piece_type)
         return back + fore + piece
+
+    @classmethod
+    def _render_newline(cls):
+        return Style.RESET_ALL + '\n'
     
+    @classmethod
+    def _square_colour(cls, square):
+        if (chess.square_rank(square) + chess.square_file(square)) % 2:
+            return ZugSquareColours.WHITE
+        else:
+            return ZugSquareColours.BLACK
 
+    @classmethod
+    def _square_index_by_row_and_col(cls, perspective):
+        if perspective == ZugPlayers.WHITE:
+            return lambda row, col: ((7 - row) * 8) + col
+        else:
+            return lambda row, col: (row * 8) + (7 - col)
+                
     def make_string(self, perspective):
-        return print_board(self, perspective);
-
+        square_index_by_row_and_col = self._square_index_by_row_and_col(perspective)
+        string = ''
+        for row in range(8):
+            for col in range(8):
+                square_index = square_index_by_row_and_col(row, col)
+                square_colour = self._square_colour(square_index)
+                piece = self.piece_map().get(square_index, None)
+                piece_type = piece.piece_type if piece else None
+                piece_colour = piece.color if piece else ZugPieceColours.WHITE
+                string += self._render_square(piece_type, piece_colour, square_colour)
+            string += self._render_newline()
+        return string
     
 # prints repertoire moves for the given node
 def print_moves(node) :

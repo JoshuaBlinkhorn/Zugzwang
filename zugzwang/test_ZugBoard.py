@@ -6,28 +6,53 @@ from zugzwang import (
     ZugBoard,
     ZugPlayers,
     ZugPieceColours,
-    ZugSquareColours,    
+    ZugSquareColours,
+    ZugPieces,
     ZugUnicodePieces,
-    white_pieces
-    )
+)
 
 @pytest.fixture
 def mock_ZugBoard():
     return ZugBoard()
 
+WHITE_PERSPECTIVE_TOP_ROW = (
+    (ZugPieces.ROOK, ZugPieceColours.BLACK, ZugSquareColours.WHITE),
+    (ZugPieces.KNIGHT, ZugPieceColours.BLACK, ZugSquareColours.BLACK),
+    (ZugPieces.BISHOP, ZugPieceColours.BLACK, ZugSquareColours.WHITE),
+    (ZugPieces.QUEEN, ZugPieceColours.BLACK, ZugSquareColours.BLACK),
+    (ZugPieces.KING, ZugPieceColours.BLACK, ZugSquareColours.WHITE),
+    (ZugPieces.BISHOP, ZugPieceColours.BLACK, ZugSquareColours.BLACK),
+    (ZugPieces.KNIGHT, ZugPieceColours.BLACK, ZugSquareColours.WHITE),
+    (ZugPieces.ROOK, ZugPieceColours.BLACK, ZugSquareColours.BLACK),
+)
 
-def test_ZugBoard_make_string_white_perspective(mock_ZugBoard):
-    perspective = ZugPlayers.WHITE
-    string = mock_ZugBoard.make_string(perspective)
-    expected_char = Back.CYAN + Fore.BLACK + white_pieces[2]
-    assert string.startswith(expected_char)
+BLACK_PERSPECTIVE_TOP_ROW = (
+    (ZugPieces.ROOK, ZugPieceColours.WHITE, ZugSquareColours.WHITE),
+    (ZugPieces.KNIGHT, ZugPieceColours.WHITE, ZugSquareColours.BLACK),
+    (ZugPieces.BISHOP, ZugPieceColours.WHITE, ZugSquareColours.WHITE),
+    (ZugPieces.KING, ZugPieceColours.WHITE, ZugSquareColours.BLACK),
+    (ZugPieces.QUEEN, ZugPieceColours.WHITE, ZugSquareColours.WHITE),
+    (ZugPieces.BISHOP, ZugPieceColours.WHITE, ZugSquareColours.BLACK),
+    (ZugPieces.KNIGHT, ZugPieceColours.WHITE, ZugSquareColours.WHITE),
+    (ZugPieces.ROOK, ZugPieceColours.WHITE, ZugSquareColours.BLACK),
+)
 
-
-def test_ZugBoard_make_string_black_perspective(mock_ZugBoard):
-    perspective = ZugPlayers.BLACK
-    string = mock_ZugBoard.make_string(perspective)
-    expected_char = Back.CYAN + Fore.WHITE + white_pieces[2]
-    assert string.startswith(expected_char)
+@pytest.mark.parametrize(
+    'top_row, perspective',
+    [
+        (WHITE_PERSPECTIVE_TOP_ROW, ZugPlayers.WHITE),
+        (BLACK_PERSPECTIVE_TOP_ROW, ZugPlayers.BLACK),
+    ]
+)
+def test_ZugBoard_make_string(top_row, perspective):
+    board = ZugBoard()
+    prefix = ''
+    for (piece_type, piece_colour, square_colour) in top_row:
+        prefix += ZugBoard._render_square(
+            piece_type, piece_colour, square_colour
+        )
+    prefix += ZugBoard._render_newline()
+    assert ZugBoard().make_string(perspective).startswith(prefix)
 
 
 @pytest.mark.parametrize(
@@ -78,15 +103,10 @@ def test_ZugBoard_make_string_black_perspective(mock_ZugBoard):
     ]
 )
 def test_ZugBoard_render_square(
-        mock_ZugBoard,
         piece_type,
         piece_colour,
         square_colour,
         expected_char
 ):
-    rendered_char = mock_ZugBoard._render_square(
-        piece_type,
-        piece_colour,
-        square_colour
-    )
+    rendered_char = ZugBoard._render_square(piece_type, piece_colour, square_colour)
     assert rendered_char == expected_char
