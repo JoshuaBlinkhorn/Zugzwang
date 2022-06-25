@@ -237,8 +237,11 @@ class ZugSquareColours(ZugColours):
     pass
     
 
-class ZugBoard(chess.Board):
+class ZugBoard():
 
+    def __init__(self, board: chess.Board):
+        self.board = board        
+    
     PIECE_TYPE_TO_UNICODE = {
         ZugPieces.KING: ZugUnicodePieces.KING,
         ZugPieces.QUEEN: ZugUnicodePieces.QUEEN,
@@ -302,7 +305,7 @@ class ZugBoard(chess.Board):
             for col in range(8):
                 square_index = square_index_by_row_and_col(row, col)
                 square_colour = self._square_colour(square_index)
-                piece = self.piece_map().get(square_index, None)
+                piece = self.board.piece_map().get(square_index, None)
                 piece_type = piece.piece_type if piece else None
                 piece_colour = piece.color if piece else ZugPieceColours.WHITE
                 string += self._render_square(piece_type, piece_colour, square_colour)
@@ -871,7 +874,8 @@ def play_card(card,pgn) :
     if (status == REVIEW) :
         print("\nRECALL : this is a position you've learned, due for recall\n")
 
-    print_board(front.board(),player)
+    #print_board(front.board(),player)
+    print(ZugBoard(front.board()).make_string(player))
     if (status == NEW) :
         print("\nGuess the move..")
     else :
@@ -885,7 +889,8 @@ def play_card(card,pgn) :
     back = front.variations[0]
     clear()    
     print("Solution:")
-    print_board(back.board(),player)
+    #print_board(back.board(),player)
+    print(ZugBoard(back.board()).make_string(player))    
 
     if (status == NEW) :
         print("\nHit [enter] to continue.")
