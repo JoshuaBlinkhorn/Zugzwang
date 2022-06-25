@@ -1,6 +1,7 @@
 __pycache__
 Collections
 Archive
+scratch.py
 *.png
 *.log
 *.aux
