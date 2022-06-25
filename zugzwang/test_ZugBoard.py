@@ -41,14 +41,13 @@ BLACK_PERSPECTIVE_TOP_ROW = (
     ]
 )
 def test_ZugBoard_make_string(top_row, perspective):
-    board = ZugBoard()
     prefix = ''
     for (piece_type, piece_colour, square_colour) in top_row:
         prefix += ZugBoard._render_square(
             piece_type, piece_colour, square_colour
         )
     prefix += ZugBoard._render_newline()
-    assert ZugBoard().make_string(perspective).startswith(prefix)
+    assert ZugBoard(chess.Board()).make_string(perspective).startswith(prefix)
 
 
 @pytest.mark.parametrize(
