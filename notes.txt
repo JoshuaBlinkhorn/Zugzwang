@@ -1,0 +1,25 @@
+Notes on revamping chessic 24-06-2022
+
+We should put the archived version into a new git repository and
+give it a new name.
+Then we should start to use it as it to train the Grunfeld.
+
+At the same time, clone it somewhere else and create branches for
+the following upgrades:
+
+1) Replaced constants with an enum
+2) Subclass Board and put the printing functions into that class.
+   Also write unit tests for that class.
+3) Create the whole OOP architecture class by class, from the
+   inside out. So we should have classes like:
+   - Problem, Solution, which subclass Node
+   - Card
+   - Item, Collection, Category
+   - MainMenu, CollectionMenu, CategoryMenu which subclass Menuxo
+
+~~~~~~~~~~~~~~~~
+2022-06-24 18:52
+
+I'm going to do 2, creating my own board class, and write unit tests
+at the same time.
+So we need a venv.
