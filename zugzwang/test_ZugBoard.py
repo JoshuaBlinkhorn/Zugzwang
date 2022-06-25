@@ -11,10 +11,6 @@ from zugzwang import (
     ZugUnicodePieces,
 )
 
-@pytest.fixture
-def mock_ZugBoard():
-    return ZugBoard()
-
 WHITE_PERSPECTIVE_TOP_ROW = (
     (ZugPieces.ROOK, ZugPieceColours.BLACK, ZugSquareColours.WHITE),
     (ZugPieces.KNIGHT, ZugPieceColours.BLACK, ZugSquareColours.BLACK),
