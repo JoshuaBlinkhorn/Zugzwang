@@ -199,8 +199,76 @@ def print_board(board,player) :
         if (row < 7) :
             board_string += '\n'
 
-    print(board_string)
+    return board_string
+    #print(board_string)
 
+class ZugUnicodePieces():
+    PAWN = '\u2654'
+    ROOK = '\u2655'
+    BISHOP = '\u2656'
+    KNIGHT = '\u2657'
+    QUEEN = '\u2658'        
+    KING = '\u2659'    
+
+
+class ZugColours():
+    WHITE = True
+    BLACK = False
+    
+class ZugPlayers(ZugColours):
+    pass
+
+class ZugPieceColours(ZugColours):
+    pass
+    
+class ZugSquareColours(ZugColours):
+    pass
+    
+class ZugBoard(chess.Board):
+
+    PIECE_TYPE_TO_UNICODE = {
+        chess.PAWN: '\u2654',
+        chess.ROOK: '\u2655',
+        chess.BISHOP: '\u2656',
+        chess.KNIGHT: '\u2657',
+        chess.QUEEN: '\u2658',
+        chess.KING: '\u2659',
+    }
+
+    @classmethod
+    def _piece_type_to_unicode(cls, piece_type):
+        return cls.PIECE_TYPE_TO_UNICODE.get(piece_type, ' ')
+        
+    PIECE_COLOUR_TO_FORE = {
+        ZugPieceColours.WHITE: Fore.WHITE,
+        ZugPieceColours.BLACK: Fore.BLACK,        
+    }
+
+    @classmethod
+    def _piece_colour_to_fore(cls, piece_colour):
+        return cls.PIECE_COLOUR_TO_FORE.get(piece_colour)
+        
+    SQUARE_COLOUR_TO_BACK = {
+        ZugSquareColours.WHITE: Back.GREEN,
+        ZugSquareColours.BLACK: Back.CYAN,
+    }
+
+    @classmethod
+    def _square_colour_to_back(cls, square_colour):
+        return cls.SQUARE_COLOUR_TO_BACK.get(square_colour)
+        
+    @classmethod
+    def _render_square(cls, piece_type, piece_colour, square_colour):
+        fore = cls._piece_colour_to_fore(piece_colour)
+        back = cls._square_colour_to_back(square_colour)
+        piece = cls._piece_type_to_unicode(piece_type)
+        return back + fore + piece
+    
+
+    def make_string(self, perspective):
+        return print_board(self, perspective);
+
+    
 # prints repertoire moves for the given node
 def print_moves(node) :
     if (node.player_to_move) :
@@ -879,5 +947,6 @@ def handle_card_result(result,card,queue,pgn) :
 ###############
 
 #backup_collections()
-main_menu()
+if __name__ == '__main__':
+    main_menu()
 
