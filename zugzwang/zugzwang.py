@@ -83,6 +83,11 @@ VALUE = 1
 # path to data directory
 data_path = "Collections"
 
+
+def yesterday() -> datetime.date:
+    return datetime.date.today() - datetime.timedelta(days=1)
+
+
 ##########################
 # date-string conversion #
 ##########################
@@ -187,17 +192,33 @@ class ZugSquareColours(ZugColours):
     pass
     
 
+class ZugSolutionStatuses():
+    NEW = 'NEW'
+    LEARNING_STAGE_1 = 'LEARNING_STAGE_1'
+    LEARNING_STAGE_2 = 'LEARNING_STAGE_2'
+    REVIEW = 'REVIEW'
+    INACTIVE = 'INACTIVE'
+
+
 class ZugRootData():
 
     def __init__(
-        self,
-        last_access: datetime.date = datetime.date.today(),
-        new_remaining: int = ZugDefaults.NEW_REMAINING,
-        new_limit: int = ZugDefaults.NEW_REMAINING,
-    ) -> None:
+            self,
+            last_access: datetime.date = datetime.date.today(),
+            new_remaining: int = ZugDefaults.NEW_REMAINING,
+            new_limit: int = ZugDefaults.NEW_LIMIT,
+            new: int = 0,
+            review: int = 0,
+            inactive: int = 0,
+            reachable: int = 0,
+    ):
         self.last_access = last_access
         self.new_remaining = new_remaining
         self.new_limit = new_limit
+        self.new = new
+        self.review = review
+        self.inactive = inactive
+        self.reachable = reachable
 
     @classmethod
     def from_comment(cls, comment: str):
@@ -206,14 +227,30 @@ class ZugRootData():
         last_access = datetime.datetime.strptime(last_access, '%d-%m-%Y').date()
         new_remaining = int(data[1].split('=')[1])
         new_limit = int(data[2].split('=')[1])
-        return ZugRootData(last_access, new_remaining, new_limit)
+        new = int(data[3].split('=')[1])
+        review = int(data[4].split('=')[1])
+        inactive = int(data[5].split('=')[1])
+        reachable = int(data[6].split('=')[1])
+        return ZugRootData(
+            last_access,
+            new_remaining,
+            new_limit,
+            new,
+            review,
+            inactive,
+            reachable
+        )
 
     def make_comment(self) -> str:
         return ';'.join(
             (
                 f'last_access={self.last_access.strftime("%d-%m-%Y")}',
                 f'new_remaining={self.new_remaining}',
-                f'new_limit={self.new_limit}'
+                f'new_limit={self.new_limit}',
+                f'new={self.new}',
+                f'review={self.review}',
+                f'inactive={self.inactive}',
+                f'reachable={self.reachable}'
             )
         )
 
@@ -221,16 +258,57 @@ class ZugRootData():
 class ZugRoot():
 
     def __init__(self, game: chess.pgn.Game):
-        root_data = ZugRootData.from_comment(game.comment)        
+        self.data = ZugRootData.from_comment(game.comment)
         self.game = game
-        self.last_access = root_data.last_access
-        self.new_remaining = root_data.new_remaining
-        self.new_limit = root_data.new_limit
 
     def update_game_comment(self):
-        root_data = ZugRootData(self.last_access, self.new_remaining, self.new_limit)
-        self.game.comment = root_data.make_comment()
+        self.game.comment = self.data.make_comment()
 
+    def update_status_counts(self):
+        pass
+
+    def reset_data(self):
+        pass
+
+
+class ZugSolutionData():
+
+    def __init__(
+            self,
+            status: str = ZugSolutionStatuses.INACTIVE,
+            previous_date: datetime.date = yesterday(),
+            due_date: datetime.date = yesterday(),
+            successes: int = 0,
+            failures: int = 0,
+    ):
+        self.status = status
+        self.previous_date = previous_date
+        self.due_date = due_date
+        self.successes = successes
+        self.failures = failures
+
+    @classmethod
+    def from_comment(cls, comment: str):
+        data = comment.split(';')
+        status = data[0].split('=')[1]
+        previous_date = data[1].split('=')[1]
+        previous_date = datetime.datetime.strptime(previous_date, '%d-%m-%Y').date()
+        due_date = data[2].split('=')[1]
+        due_date = datetime.datetime.strptime(due_date, '%d-%m-%Y').date()
+        successes = int(data[3].split('=')[1])
+        failures = int(data[4].split('=')[1])
+        return ZugSolutionData(status, previous_date, due_date, successes, failures)
+
+    def make_comment(self) -> str:
+        return ';'.join(
+            (
+                f'status={self.status}',
+                f'previous_date={self.previous_date.strftime("%d-%m-%Y")}',
+                f'due_date={self.due_date.strftime("%d-%m-%Y")}',
+                f'successes={self.successes}',
+                f'failures={self.failures}'
+            )
+        )
 
 
 class ZugBoard():
