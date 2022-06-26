@@ -147,6 +147,11 @@ def print_turn(board) :
     else :
         print("BLACK to play.")
 
+class ZugDefaults():
+    NEW_REMAINING = 10
+    NEW_LIMIT = 10
+
+
 class ZugPieces():
     KING = chess.KING
     QUEEN = chess.QUEEN
@@ -155,6 +160,7 @@ class ZugPieces():
     KNIGHT = chess.KNIGHT    
     PAWN = chess.PAWN
     
+
 class ZugUnicodePieces():
     KING = '\u2654'
     QUEEN = '\u2655'
@@ -180,6 +186,52 @@ class ZugPieceColours(ZugColours):
 class ZugSquareColours(ZugColours):
     pass
     
+
+class ZugRootData():
+
+    def __init__(
+        self,
+        last_access: datetime.date = datetime.date.today(),
+        new_remaining: int = ZugDefaults.NEW_REMAINING,
+        new_limit: int = ZugDefaults.NEW_REMAINING,
+    ) -> None:
+        self.last_access = last_access
+        self.new_remaining = new_remaining
+        self.new_limit = new_limit
+
+    @classmethod
+    def from_comment(cls, comment: str):
+        data = comment.split(';')
+        last_access = data[0].split('=')[1]
+        last_access = datetime.datetime.strptime(last_access, '%d-%m-%Y').date()
+        new_remaining = int(data[1].split('=')[1])
+        new_limit = int(data[2].split('=')[1])
+        return ZugRootData(last_access, new_remaining, new_limit)
+
+    def make_comment(self) -> str:
+        return ';'.join(
+            (
+                f'last_access={self.last_access.strftime("%d-%m-%Y")}',
+                f'new_remaining={self.new_remaining}',
+                f'new_limit={self.new_limit}'
+            )
+        )
+
+
+class ZugRoot():
+
+    def __init__(self, game: chess.pgn.Game):
+        root_data = ZugRootData.from_comment(game.comment)        
+        self.game = game
+        self.last_access = root_data.last_access
+        self.new_remaining = root_data.new_remaining
+        self.new_limit = root_data.new_limit
+
+    def update_game_comment(self):
+        root_data = ZugRootData(self.last_access, self.new_remaining, self.new_limit)
+        self.game.comment = root_data.make_comment()
+
+
 
 class ZugBoard():
 
