@@ -311,6 +311,22 @@ class ZugSolutionData():
         )
 
 
+class ZugSolution():
+
+    def __init__(self, node: chess.pgn.ChildNode):
+        self.data = ZugSolutionData.from_comment(node.comment)
+        self.node = node
+
+    def update_node_comment(self):
+        self.node.comment = self.data.make_comment()
+
+    def update_status_counts(self):
+        pass
+
+    def reset_data(self):
+        pass
+
+
 class ZugBoard():
 
     def __init__(self, board: chess.Board):
