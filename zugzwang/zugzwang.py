@@ -42,7 +42,7 @@ import datetime
 import shutil
 from colorama import Fore, Back, Style
 
-        
+from typing import Union        
 
 #############
 # constants #
@@ -200,6 +200,9 @@ class ZugSolutionStatuses():
     INACTIVE = 'INACTIVE'
 
 
+class ZugSolutionStatusError(ValueError):
+    pass
+
 class ZugRootData():
 
     def __init__(
@@ -311,6 +314,8 @@ class ZugSolutionData():
         )
 
 
+
+
 class ZugSolution():
 
     def __init__(self, node: chess.pgn.ChildNode):
@@ -325,6 +330,73 @@ class ZugSolution():
 
     def reset_data(self):
         pass
+
+
+class ZugQueueItem():
+
+    SUCCESS = 'SUCCESS'
+    FAILURE = 'FAILURE'
+    
+    def play(self) -> Union[int, None]:
+        return self._interpret_result(self._present())
+
+    def _present(self) -> str:
+        return self.SUCCESS
+
+    def _interpret_result(self, result: str) -> Union[int,None]:
+        pass
+
+
+class ZugTrainingPosition(ZugQueueItem):
+
+    _queue_insertion_offset = 3
+
+    def __init__(self, solution_node: chess.pgn.ChildNode):
+        self._solution_node = solution_node
+        self._problem_node = solution_node.parent
+        self._solution_data = ZugSolutionData.from_comment(solution_node.comment)
+        if self._solution_data.status  == ZugSolutionStatuses.INACTIVE:
+            msg = 'ZugTrainingPosition solution has invalid status INACTIVE'
+            raise ZugSolutionStatusError(msg)
+
+    def _present():        
+        if self._solution_data.status == ZugSolutionStatuses.NEW:
+            return None
+            
+    def _interpret_result(self, result):
+        if self._solution_data.status == ZugSolutionStatuses.NEW:
+            return self._interpret_new(result)
+
+    def _interpret_new(self, result):
+        self._solution_data.status == ZugSolutionStatuses.LEARNING_STAGE_1        
+        return self._queue_insertion_offset
+
+class ZugQueue():
+
+    def __init__(self):
+        self._queue = []
+
+    @property
+    def queue(self):
+        return self._queue
+
+    def insert(
+            self,
+            item: ZugQueueItem,
+            index: Union[int,None]=None
+    ) -> None:
+        if index is not None:
+            self._queue.insert(index, item)
+        else:
+            self._queue.append(item)
+
+    def play(self) -> None:
+        while self._queue:
+            item = self._queue.pop(0)
+            queue_position = item.play()
+            print(queue_position)
+            if queue_position:
+                self.insert(item, queue_position)
 
 
 class ZugBoard():
