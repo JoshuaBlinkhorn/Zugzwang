@@ -38,7 +38,7 @@ def test_ZuqQueueItem_play():
     assert ZugQueueItem().play() == None
 
 
-def testZugTrainingPosition_play_inactive_solution_status(solution_node):
+def testZugTrainingPosition_play_solution_status_inactive(solution_node):
     solution_data = ZugSolutionData(
         status = ZugSolutionStatuses.INACTIVE,
         previous_date = datetime.date(day=1, month=1, year=2000),
@@ -51,17 +51,9 @@ def testZugTrainingPosition_play_inactive_solution_status(solution_node):
     with pytest.raises(ZugSolutionStatusError):    
         ZugTrainingPosition(solution_node)
     
-@pytest.mark.parametrize(
-    'training_result, expected_queue_position',
-    (
-        (ZugTrainingPosition.SUCCESS, 3),
-        (ZugTrainingPosition.FAILURE, 3),
-    )
-)
-def testZugTrainingPosition_play_new_solution_status(
+
+def testZugTrainingPosition_play_solution_status_new(
         solution_node,
-        training_result,
-        expected_queue_position,
 ):
     solution_data = ZugSolutionData(
         status = ZugSolutionStatuses.NEW,
@@ -73,10 +65,56 @@ def testZugTrainingPosition_play_new_solution_status(
     solution_node.comment = solution_data.make_comment()
     
     tp = ZugTrainingPosition(solution_node)
-    tp._present = mock.MagicMock(return_value=training_result)
+    tp._show_problem = mock.MagicMock()
+    tp._show_solution = mock.MagicMock()
+    tp._continue_prompt = mock.MagicMock()    
+    tp._result_prompt = mock.MagicMock()
 
     queue_position = tp.play()
 
+    expected_queue_position = 3    
+    solution_data.status = ZugSolutionStatuses.LEARNING_STAGE_1
+    expected_comment = solution_data.make_comment()
+
+    assert queue_position == 3
+    assert solution_node.comment == expected_comment
+    
+@pytest.mark.parametrize(
+    'user_prompt, expected_status, expected_queue_position',
+    (
+        (True, ZugSolutionStatuses.LEARNING_STAGE_2, 3),
+        (False, ZugSolutionStatuses.LEARNING_STAGE_1, 3),
+    )
+)
+def testZugTrainingPosition_play_solution_status_learning_stage_1(
+        solution_node,
+        user_prompt,
+        expected_status,        
+        expected_queue_position,
+):
+    solution_data = ZugSolutionData(
+        status = ZugSolutionStatuses.LEARNING_STAGE_1,
+        previous_date = datetime.date(day=1, month=1, year=2000),
+        due_date = datetime.date(day=1, month=1, year=2001),
+        successes = 10,
+        failures = 0,
+    )
+    solution_node.comment = solution_data.make_comment()
+    
+    tp = ZugTrainingPosition(solution_node)
+    tp._show_problem = mock.MagicMock()
+    tp._show_solution = mock.MagicMock()
+    tp._continue_prompt = mock.MagicMock()    
+    tp._result_prompt = mock.MagicMock(return_value=user_prompt)
+    
+    queue_position = tp.play()
+
+    expected_queue_position = 3
+    solution_data.status = expected_status
+    expected_comment = solution_data.make_comment()
+
+    assert queue_position == 3
+    assert solution_node.comment == expected_comment
     assert queue_position == expected_queue_position
     
     
