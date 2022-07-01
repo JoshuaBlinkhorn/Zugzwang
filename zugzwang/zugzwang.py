@@ -349,7 +349,9 @@ class ZugQueueItem():
 
 class ZugTrainingPosition(ZugQueueItem):
 
-    _queue_insertion_offset = 3
+    _SUCCESS = 'SUCCESS'
+    _FAILURE = 'FAILURE'    
+    _QUEUE_INSERTION_OFFSET = 3
 
     def __init__(self, solution_node: chess.pgn.ChildNode):
         self._solution_node = solution_node
@@ -359,17 +361,47 @@ class ZugTrainingPosition(ZugQueueItem):
             msg = 'ZugTrainingPosition solution has invalid status INACTIVE'
             raise ZugSolutionStatusError(msg)
 
-    def _present():        
+    def _present(self):
+        self._show_problem()
+        self._show_solution()
         if self._solution_data.status == ZugSolutionStatuses.NEW:
-            return None
+            self._continue_prompt()
+            return self._SUCCESS
+        else:
+            return self._SUCCESS if self._result_prompt() else self._FAILURE
+
+    def _show_problem(self):
+        pass
+            
+    def _show_solution(self):
+        pass
+
+    def _continue_prompt(self):
+        pass
+            
+    def _result_prompt(self):
+        pass
             
     def _interpret_result(self, result):
-        if self._solution_data.status == ZugSolutionStatuses.NEW:
-            return self._interpret_new(result)
+        next_status, is_requeueable = self._determine(
+            self._solution_data.status,
+            result
+        )
+        self._solution_data.status = next_status
+        self._solution_node.comment = self._solution_data.make_comment()
+        return self._QUEUE_INSERTION_OFFSET if is_requeueable else None
 
-    def _interpret_new(self, result):
-        self._solution_data.status == ZugSolutionStatuses.LEARNING_STAGE_1        
-        return self._queue_insertion_offset
+    def _determine(self, status: str, result: str):
+        determination_map = {
+            (ZugSolutionStatuses.NEW, self._SUCCESS):
+            (ZugSolutionStatuses.LEARNING_STAGE_1, True),
+            (ZugSolutionStatuses.LEARNING_STAGE_1, self._SUCCESS):
+            (ZugSolutionStatuses.LEARNING_STAGE_2, True),
+            (ZugSolutionStatuses.LEARNING_STAGE_1, self._FAILURE):
+            (ZugSolutionStatuses.LEARNING_STAGE_1, True),
+        }
+        return determination_map.get((status, result))
+
 
 class ZugQueue():
 
