@@ -44,17 +44,18 @@ def test_ZuqQueue_play_with_reinsertion():
     # twice for each with index 3
 
     q = ZugQueue()
-
+    is_reinsertable_list = [q.REINSERT, q.REINSERT, q.DISCARD]
+    
     first_item = ZugQueueItem()
-    first_item.play = mock.MagicMock(side_effect = [3,3,None])
+    first_item.play = mock.MagicMock(side_effect = is_reinsertable_list)
     q.insert(first_item)
 
     second_item = ZugQueueItem()
-    second_item.play = mock.MagicMock(side_effect = [3,3,None])
+    second_item.play = mock.MagicMock(side_effect = is_reinsertable_list)
     q.insert(second_item)
 
     third_item = ZugQueueItem()
-    third_item.play = mock.MagicMock(side_effect = [3,3,None])
+    third_item.play = mock.MagicMock(side_effect = is_reinsertable_list)
     q.insert(third_item)
 
     q.insert = mock.MagicMock(side_effect=q.insert)    
@@ -92,6 +93,3 @@ def test_ZuqQueue_insert():
     middle_item = ZugQueueItem()
     q.insert(middle_item, 1)
     assert q.queue == [first_item, middle_item, second_item]
-    
-
-

@@ -41,6 +41,7 @@ import time
 import datetime
 import shutil
 from colorama import Fore, Back, Style
+from random import randint
 
 from typing import Union        
 
@@ -71,7 +72,7 @@ NEW_LIMIT = 2
 
 # training data indexes for string parsing
 STATUS = 0
-LAST_DATE = 1
+LAST_STUDY_DATE = 1
 DUE_DATE = 2
 SUCCESSES = 3
 FAILURES = 4
@@ -105,7 +106,7 @@ def date_from_string(string) :
 class TrainingData :
     def __init__(self) :
         self.status = INACTIVE
-        self.last_date = datetime.date.today()
+        self.last_study_date = datetime.date.today()
         self.due_date = datetime.date.today()
         
 class MetaData:
@@ -279,13 +280,13 @@ class ZugSolutionData():
     def __init__(
             self,
             status: str = ZugSolutionStatuses.INACTIVE,
-            previous_date: datetime.date = yesterday(),
+            last_study_date: datetime.date = yesterday(),
             due_date: datetime.date = yesterday(),
             successes: int = 0,
             failures: int = 0,
     ):
         self.status = status
-        self.previous_date = previous_date
+        self.last_study_date = last_study_date
         self.due_date = due_date
         self.successes = successes
         self.failures = failures
@@ -294,26 +295,28 @@ class ZugSolutionData():
     def from_comment(cls, comment: str):
         data = comment.split(';')
         status = data[0].split('=')[1]
-        previous_date = data[1].split('=')[1]
-        previous_date = datetime.datetime.strptime(previous_date, '%d-%m-%Y').date()
+        last_study_date = data[1].split('=')[1]
+        last_study_date = datetime.datetime.strptime(last_study_date, '%d-%m-%Y').date()
         due_date = data[2].split('=')[1]
         due_date = datetime.datetime.strptime(due_date, '%d-%m-%Y').date()
         successes = int(data[3].split('=')[1])
         failures = int(data[4].split('=')[1])
-        return ZugSolutionData(status, previous_date, due_date, successes, failures)
+        return ZugSolutionData(status, last_study_date, due_date, successes, failures)
 
     def make_comment(self) -> str:
         return ';'.join(
             (
                 f'status={self.status}',
-                f'previous_date={self.previous_date.strftime("%d-%m-%Y")}',
+                f'last_study_date={self.last_study_date.strftime("%d-%m-%Y")}',
                 f'due_date={self.due_date.strftime("%d-%m-%Y")}',
                 f'successes={self.successes}',
                 f'failures={self.failures}'
             )
         )
 
-
+    def update(self, changes):
+        for key, val in changes.items():
+            setattr(self, key, val)
 
 
 class ZugSolution():
@@ -334,77 +337,171 @@ class ZugSolution():
 
 class ZugQueueItem():
 
-    SUCCESS = 'SUCCESS'
-    FAILURE = 'FAILURE'
-    
     def play(self) -> Union[int, None]:
         return self._interpret_result(self._present())
 
     def _present(self) -> str:
-        return self.SUCCESS
+        pass
 
     def _interpret_result(self, result: str) -> Union[int,None]:
         pass
 
 
+class ZugTrainingPositionPresenter():
+
+    SUCCESS = True
+    FAILURE = False
+
+    def __init__(self, solution_node: chess.pgn.ChildNode):
+        self.status = ZugSolutionData.from_comment(solution_node.comment).status
+        self.front = ZugBoard(solution_node.parent.board())
+        self.back = ZugBoard(solution_node.board())        
+        
+    
+    def present(self):
+        self._present_front()
+        return self._present_back()
+
+    def _present_front(self):
+        self._interpret_user_input()
+        pass
+
+    def _present_back(self):
+        result = self._interpret_user_input()
+        while result is None:
+            result = self._interpret_user_input()            
+        return result
+    
+    @classmethod
+    def _get_user_input(cls):
+        return input(':')
+
+    @classmethod
+    def _interpret_user_input(cls):
+        accepted_input = {
+            '': cls.SUCCESS,
+            'h': cls.FAILURE,             
+        }
+        return accepted_input.get(cls._get_user_input(), None)
+
+    
+    
+
+# factored out of ZugTriainingPosition._present
+#    def _present(self):
+#        self._show_problem()
+#        self._show_solution()
+#        if self._solution_data.status == ZugSolutionStatuses.NEW:
+#            self._continue_prompt()
+#            return self._SUCCESS
+#        else:
+#            return self._SUCCESS if self._result_prompt() else self._FAILURE
+
+
 class ZugTrainingPosition(ZugQueueItem):
 
-    _SUCCESS = 'SUCCESS'
-    _FAILURE = 'FAILURE'    
-    _QUEUE_INSERTION_OFFSET = 3
+    # return values for public method .play()
+    REINSERT = True
+    DISCARD = False
+
+    _RECALL_FACTOR = 2 # inverse ratio of consecutive absolute recall dates
+    _RECALL_RADIUS = 3 # maximum distance from absolute recall date
 
     def __init__(self, solution_node: chess.pgn.ChildNode):
         self._solution_node = solution_node
-        self._problem_node = solution_node.parent
         self._solution_data = ZugSolutionData.from_comment(solution_node.comment)
+        self._presenter = ZugTrainingPositionPresenter(solution_node)
+        
         if self._solution_data.status  == ZugSolutionStatuses.INACTIVE:
             msg = 'ZugTrainingPosition solution has invalid status INACTIVE'
             raise ZugSolutionStatusError(msg)
-
+        
     def _present(self):
-        self._show_problem()
-        self._show_solution()
-        if self._solution_data.status == ZugSolutionStatuses.NEW:
-            self._continue_prompt()
-            return self._SUCCESS
-        else:
-            return self._SUCCESS if self._result_prompt() else self._FAILURE
-
-    def _show_problem(self):
-        pass
-            
-    def _show_solution(self):
-        pass
-
-    def _continue_prompt(self):
-        pass
-            
-    def _result_prompt(self):
-        pass
+        return self._presenter.present()        
             
     def _interpret_result(self, result):
-        next_status, is_requeueable = self._determine(
-            self._solution_data.status,
-            result
-        )
-        self._solution_data.status = next_status
+        if self._solution_data.status == ZugSolutionStatuses.REVIEW:
+            changes, is_reinsertable = self._interpret_review_phase_result(result)
+        else:
+            changes, is_reinsertable = self._interpret_learning_phase_result(result)
+
+        self._solution_data.update(changes)
         self._solution_node.comment = self._solution_data.make_comment()
-        return self._QUEUE_INSERTION_OFFSET if is_requeueable else None
+        return is_reinsertable 
 
-    def _determine(self, status: str, result: str):
-        determination_map = {
-            (ZugSolutionStatuses.NEW, self._SUCCESS):
-            (ZugSolutionStatuses.LEARNING_STAGE_1, True),
-            (ZugSolutionStatuses.LEARNING_STAGE_1, self._SUCCESS):
-            (ZugSolutionStatuses.LEARNING_STAGE_2, True),
-            (ZugSolutionStatuses.LEARNING_STAGE_1, self._FAILURE):
-            (ZugSolutionStatuses.LEARNING_STAGE_1, True),
-        }
-        return determination_map.get((status, result))
+    def _interpret_learning_phase_result(self, result):
+        update_map = {
+            (ZugSolutionStatuses.NEW, ZugTrainingPositionPresenter.SUCCESS):
+            (
+                {'status': ZugSolutionStatuses.LEARNING_STAGE_1},
+                ZugQueue.REINSERT,
+            ),            
+            (ZugSolutionStatuses.LEARNING_STAGE_1, ZugTrainingPositionPresenter.SUCCESS):
+            (
+                {'status': ZugSolutionStatuses.LEARNING_STAGE_2},
+                ZugQueue.REINSERT,
+            ),            
+            (ZugSolutionStatuses.LEARNING_STAGE_1, ZugTrainingPositionPresenter.FAILURE):
+            (
+                {'status': ZugSolutionStatuses.LEARNING_STAGE_1},
+                ZugQueue.REINSERT,
+            ),            
+            (ZugSolutionStatuses.LEARNING_STAGE_2, ZugTrainingPositionPresenter.SUCCESS):
+            (
+                {
+                    'status': ZugSolutionStatuses.REVIEW,
+                    'last_study_date': datetime.date.today(),
+                    'due_date': datetime.date.today() + datetime.timedelta(days = 1),
+                    'successes': self._solution_data.successes + 1,
+                },
+                ZugQueue.DISCARD,
+            ),            
+            (ZugSolutionStatuses.LEARNING_STAGE_2, ZugTrainingPositionPresenter.FAILURE):
+            (
+                {'status': ZugSolutionStatuses.LEARNING_STAGE_1},
+                ZugQueue.REINSERT,
+            ),            
+        }        
+        return update_map.get((self._solution_data.status, result))
 
+    def _interpret_review_phase_result(self, result):
+        if result == ZugTrainingPositionPresenter.FAILURE:
+            update = {
+                'status': ZugSolutionStatuses.LEARNING_STAGE_1,
+                'failures': self._solution_data.failures + 1,
+            }
+            is_queueable = ZugQueue.REINSERT
+        else:
+            due_date = self._calculate_due_date(
+                self._solution_data.last_study_date,                
+                self._solution_data.due_date,                
+            )
+            update = {
+                'successes': self._solution_data.successes + 1,
+                'last_study_date': datetime.date.today(),
+                'due_date': due_date,
+            }
+            is_queueable = ZugQueue.DISCARD
+
+        return update, is_queueable
+
+    def _calculate_due_date(self, last_study_date, current_due_date):
+        previous_diff = (current_due_date - last_study_date).days
+        radius = min(previous_diff, self._RECALL_RADIUS)
+        diff = previous_diff * self._RECALL_FACTOR
+        absolute_recall_date = current_due_date + datetime.timedelta(days = diff)
+        offset = randint(0, (radius*2)) - radius
+        recall_date = absolute_recall_date + datetime.timedelta(days = offset)
+        return recall_date
+        
 
 class ZugQueue():
 
+    REINSERT = True
+    DISCARD = False
+
+    _REINSERTION_INDEX = 3
+    
     def __init__(self):
         self._queue = []
 
@@ -416,7 +513,7 @@ class ZugQueue():
             self,
             item: ZugQueueItem,
             index: Union[int,None]=None
-    ) -> None:
+    ):
         if index is not None:
             self._queue.insert(index, item)
         else:
@@ -425,10 +522,8 @@ class ZugQueue():
     def play(self) -> None:
         while self._queue:
             item = self._queue.pop(0)
-            queue_position = item.play()
-            print(queue_position)
-            if queue_position:
-                self.insert(item, queue_position)
+            if item.play() == self.REINSERT:
+                self.insert(item, self._REINSERTION_INDEX)
 
 
 class ZugBoard():
@@ -543,7 +638,7 @@ def default_meta_data_string() :
 def default_training_data_string() :
     today = datetime.date.today()
     yesterday = string_from_date(today - datetime.timedelta(days = 1))
-    string = "status=INACTIVE;last_date=" + yesterday + ";due_date=" 
+    string = "status=INACTIVE;last_study_date=" + yesterday + ";due_date=" 
     string += yesterday + ";successes=0;failures=0;"
     return string
 
@@ -645,9 +740,9 @@ def append_data(node) :
         if (node.board().turn != player) :
             training_data = node.comment.split(';')
             node.status = training_data[STATUS].split('=')[VALUE]
-            last_date_string = training_data[LAST_DATE].split('=')[VALUE]
+            last_study_date_string = training_data[LAST_STUDY_DATE].split('=')[VALUE]
             due_date_string = training_data[DUE_DATE].split('=')[VALUE]
-            node.last_date = date_from_string(last_date_string)
+            node.last_study_date = date_from_string(last_study_date_string)
             node.due_date = date_from_string(due_date_string)
             node.successes = int(training_data[SUCCESSES].split('=')[VALUE])
             node.failures = int(training_data[FAILURES].split('=')[VALUE])
@@ -673,7 +768,7 @@ def rewrite_pgn_comments(node) :
         player = not node.game().board().turn
         if (node.board().turn != player) :
             comment = "status=" + node.status + ";" \
-                + "last_date=" + string_from_date(node.last_date) + ";" \
+                + "last_study_date=" + string_from_date(node.last_study_date) + ";" \
                 + "due_date=" + string_from_date(node.due_date)+ ";" \
                 + "successes=" + str(node.successes) + ";" \
                 + "failures=" + str(node.failures) + ";"
@@ -1120,7 +1215,7 @@ def handle_card_result(result,card,queue,pgn) :
     elif (status == "FIRST_STEP") :
         if (result == "EASY") :
             node.status = "REVIEW"
-            node.last_date = today
+            node.last_study_date = today
             node.due_date = tomorrow
             pgn.new_remaining -= 1
         elif (result == "OK") :
@@ -1137,12 +1232,12 @@ def handle_card_result(result,card,queue,pgn) :
     elif (status == "SECOND_STEP") :
         if (result == "EASY") :
             node.status = "REVIEW"
-            node.last_date = today
+            node.last_study_date = today
             node.due_date = today + datetime.timedelta(days=3)
             pgn.new_remaining -= 1
         elif (result == "OK") :
             node.status = "REVIEW"
-            node.last_date = today
+            node.last_study_date = today
             node.due_date = tomorrow
             pgn.new_remaining -= 1            
         elif (result == "HARD") :
@@ -1152,7 +1247,7 @@ def handle_card_result(result,card,queue,pgn) :
             queue.insert(offset,card)
             
     elif (status == "REVIEW") :
-        previous_gap = (node.due_date - node.last_date).days
+        previous_gap = (node.due_date - node.last_study_date).days
 
         if (result == "HARD") :
             node.status = "FIRST_STEP"
@@ -1167,7 +1262,7 @@ def handle_card_result(result,card,queue,pgn) :
                 multiplier = 2 + random.random()
             new_gap = int(round(previous_gap * multiplier))
             node.status = "REVIEW"
-            node.last_date = today
+            node.last_study_date = today
             node.due_date = today + datetime.timedelta(days=new_gap)
 
 ##############
