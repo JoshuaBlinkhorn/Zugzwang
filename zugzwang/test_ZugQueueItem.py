@@ -5,18 +5,29 @@ import datetime
 import chess.pgn
 
 from zugzwang import (
+    ZugQueue,    
     ZugQueueItem,
     ZugTrainingPosition,
+    ZugTrainingPositionPresenter,    
     ZugSolutionData,
     ZugSolutionStatuses,
     ZugSolutionStatusError,
 )
 
+TODAY = datetime.date.today()
+YESTERDAY = TODAY - datetime.timedelta(days=1)
+TOMORROW = TODAY + datetime.timedelta(days=1)
+PAST_EPOCH = TODAY - datetime.timedelta(days=1000)
+FUTURE_EPOCH = TODAY + datetime.timedelta(days=1000)
+
+FAILURES = 5
+SUCCESSES = 5
+
 @pytest.fixture
 def solution_data():
     return ZugSolutionData(
         status = ZugSolutionStatuses.INACTIVE,
-        previous_date = datetime.date(day=1, month=1, year=2000),
+        last_study_date = datetime.date(day=1, month=1, year=2000),
         due_date = datetime.date(day=1, month=1, year=2001),
         successes = 10,
         failures = 0,
@@ -29,7 +40,6 @@ def solution_node():
     problem_node = chess.pgn.ChildNode(root, move)
     move = chess.Move.from_uci('e7e5')
     solution_node = chess.pgn.ChildNode(problem_node, move)
-    #solution_node.comment = solution_data.make_comment()
     return solution_node
 
 def test_ZuqQueueItem_play():
@@ -41,7 +51,7 @@ def test_ZuqQueueItem_play():
 def testZugTrainingPosition_play_solution_status_inactive(solution_node):
     solution_data = ZugSolutionData(
         status = ZugSolutionStatuses.INACTIVE,
-        previous_date = datetime.date(day=1, month=1, year=2000),
+        last_study_date = datetime.date(day=1, month=1, year=2000),
         due_date = datetime.date(day=1, month=1, year=2001),
         successes = 10,
         failures = 0,
@@ -52,69 +62,230 @@ def testZugTrainingPosition_play_solution_status_inactive(solution_node):
         ZugTrainingPosition(solution_node)
     
 
-def testZugTrainingPosition_play_solution_status_new(
-        solution_node,
-):
-    solution_data = ZugSolutionData(
-        status = ZugSolutionStatuses.NEW,
-        previous_date = datetime.date(day=1, month=1, year=2000),
-        due_date = datetime.date(day=1, month=1, year=2001),
-        successes = 10,
-        failures = 0,
-    )
-    solution_node.comment = solution_data.make_comment()
-    
-    tp = ZugTrainingPosition(solution_node)
-    tp._show_problem = mock.MagicMock()
-    tp._show_solution = mock.MagicMock()
-    tp._continue_prompt = mock.MagicMock()    
-    tp._result_prompt = mock.MagicMock()
-
-    queue_position = tp.play()
-
-    expected_queue_position = 3    
-    solution_data.status = ZugSolutionStatuses.LEARNING_STAGE_1
-    expected_comment = solution_data.make_comment()
-
-    assert queue_position == 3
-    assert solution_node.comment == expected_comment
-    
 @pytest.mark.parametrize(
-    'user_prompt, expected_status, expected_queue_position',
-    (
-        (True, ZugSolutionStatuses.LEARNING_STAGE_2, 3),
-        (False, ZugSolutionStatuses.LEARNING_STAGE_1, 3),
-    )
+    'status, presenter_result, updated_solution_data, expected_is_reinsertable',
+    [
+        (
+            ZugSolutionStatuses.NEW,
+            ZugTrainingPositionPresenter.SUCCESS,
+            ZugSolutionData(
+                status = ZugSolutionStatuses.LEARNING_STAGE_1,
+                last_study_date = YESTERDAY,
+                due_date = YESTERDAY,
+                successes = SUCCESSES,
+                failures = FAILURES,
+            ),
+            ZugQueue.REINSERT,
+        ),
+        (
+            ZugSolutionStatuses.LEARNING_STAGE_1,
+            ZugTrainingPositionPresenter.SUCCESS,
+            ZugSolutionData(
+                status = ZugSolutionStatuses.LEARNING_STAGE_2,
+                last_study_date = YESTERDAY,
+                due_date = YESTERDAY,
+                successes = SUCCESSES,
+                failures = FAILURES,
+            ),
+            ZugQueue.REINSERT,
+        ),
+        (
+            ZugSolutionStatuses.LEARNING_STAGE_1,
+            ZugTrainingPositionPresenter.FAILURE,
+            ZugSolutionData(
+                status = ZugSolutionStatuses.LEARNING_STAGE_1,
+                last_study_date = YESTERDAY,
+                due_date = YESTERDAY,
+                successes = SUCCESSES,
+                failures = FAILURES,
+            ),
+            ZugQueue.REINSERT,
+        ),
+        (
+            ZugSolutionStatuses.LEARNING_STAGE_2,
+            ZugTrainingPositionPresenter.SUCCESS,
+            ZugSolutionData(
+                status = ZugSolutionStatuses.REVIEW,
+                last_study_date = TODAY,
+                due_date = TOMORROW,
+                successes = SUCCESSES + 1,
+                failures = FAILURES,
+            ),
+            ZugQueue.DISCARD,
+        ),
+        (
+            ZugSolutionStatuses.LEARNING_STAGE_2,
+            ZugTrainingPositionPresenter.FAILURE,
+            ZugSolutionData(
+                status = ZugSolutionStatuses.LEARNING_STAGE_1,
+                last_study_date = YESTERDAY,
+                due_date = YESTERDAY,
+                successes = SUCCESSES,
+                failures = FAILURES,
+            ),
+            ZugQueue.REINSERT,
+        ),
+    ]
 )
-def testZugTrainingPosition_play_solution_status_learning_stage_1(
+def test_ZugTrainingPosition_play_learning_phase(
         solution_node,
-        user_prompt,
-        expected_status,        
-        expected_queue_position,
+        status,
+        presenter_result,
+        updated_solution_data,
+        expected_is_reinsertable,
 ):
+    # create a typical solution node
     solution_data = ZugSolutionData(
-        status = ZugSolutionStatuses.LEARNING_STAGE_1,
-        previous_date = datetime.date(day=1, month=1, year=2000),
-        due_date = datetime.date(day=1, month=1, year=2001),
-        successes = 10,
-        failures = 0,
+        status = status,
+        last_study_date = YESTERDAY,
+        due_date = YESTERDAY,
+        successes = SUCCESSES,
+        failures = FAILURES,
     )
     solution_node.comment = solution_data.make_comment()
-    
+
+    # create the training position, mocking out the presenter
     tp = ZugTrainingPosition(solution_node)
-    tp._show_problem = mock.MagicMock()
-    tp._show_solution = mock.MagicMock()
-    tp._continue_prompt = mock.MagicMock()    
-    tp._result_prompt = mock.MagicMock(return_value=user_prompt)
-    
-    queue_position = tp.play()
+    tp._presenter.present = mock.MagicMock(return_value=presenter_result)
 
-    expected_queue_position = 3
-    solution_data.status = expected_status
-    expected_comment = solution_data.make_comment()
+    # call
+    is_reinsertable = tp.play()
 
-    assert queue_position == 3
+    # assert the expected change to the solution node comment
+    # and the function call return value
+    expected_comment = updated_solution_data.make_comment()
     assert solution_node.comment == expected_comment
-    assert queue_position == expected_queue_position
-    
-    
+    assert is_reinsertable == expected_is_reinsertable
+
+def test_ZugTrainingPosition_play_review_phase_failure(solution_node):
+    # create a typical solution node
+    solution_data = ZugSolutionData(
+        status = ZugSolutionStatuses.REVIEW,
+        last_study_date = YESTERDAY,
+        due_date = TODAY,
+        successes = SUCCESSES,
+        failures = FAILURES,
+    )
+    solution_node.comment = solution_data.make_comment()
+
+    # create the training position, mocking out the presenter
+    tp = ZugTrainingPosition(solution_node)
+    tp._presenter.present = mock.MagicMock(
+        return_value=ZugTrainingPositionPresenter.FAILURE
+    )
+
+    # call
+    is_reinsertable = tp.play()
+
+    # assert the expected change to the solution node comment
+    # and the function call return value
+    updated_solution_data = ZugSolutionData(
+        status = ZugSolutionStatuses.LEARNING_STAGE_1,
+        last_study_date = YESTERDAY,
+        due_date = TODAY,
+        successes = SUCCESSES,
+        failures = FAILURES + 1,
+    )
+    expected_comment = updated_solution_data.make_comment()
+    assert solution_node.comment == expected_comment
+    assert is_reinsertable == ZugQueue.REINSERT
+
+@pytest.mark.parametrize(
+    'last_study_date, due_date_lower_bound, due_date_upper_bound',
+    [
+        (
+            YESTERDAY,
+            TOMORROW,
+            TOMORROW + datetime.timedelta(days = 2),
+        ),
+        (
+            TODAY - datetime.timedelta(days = 2),
+            TODAY + datetime.timedelta(days = 2),
+            TODAY + datetime.timedelta(days = 6),                        
+        ),
+        (
+            TODAY - datetime.timedelta(days = 10),
+            TODAY + datetime.timedelta(days = 17),
+            TODAY + datetime.timedelta(days = 23),                        
+        ),
+    ]
+)
+def test_ZugTrainingPosition_play_review_phase_success(
+        solution_node,
+        last_study_date,
+        due_date_lower_bound,
+        due_date_upper_bound,
+):
+    # create a typical solution node
+    solution_data = ZugSolutionData(
+        status = ZugSolutionStatuses.REVIEW,
+        last_study_date = last_study_date,
+        due_date = TODAY,
+        successes = SUCCESSES,
+        failures = FAILURES,
+    )
+    solution_node.comment = solution_data.make_comment()
+
+    # create the training position, mocking out the presenter
+    tp = ZugTrainingPosition(solution_node)
+    tp._presenter.present = mock.MagicMock(
+        return_value=ZugTrainingPositionPresenter.SUCCESS
+    )
+
+    # call
+    is_reinsertable = tp.play()
+
+    # convert the solution node's comment into solution data
+    updated_solution_data = ZugSolutionData.from_comment(solution_node.comment)
+
+    # assert the updated solution data, and hence the node's comment, is correct
+    # the important point here is that the new due date is within the expected range
+    assert updated_solution_data.status == ZugSolutionStatuses.REVIEW
+    assert updated_solution_data.last_study_date == TODAY
+    assert updated_solution_data.due_date >= due_date_lower_bound
+    assert updated_solution_data.due_date <= due_date_upper_bound
+    assert updated_solution_data.successes == SUCCESSES + 1
+    assert updated_solution_data.failures == FAILURES    
+    assert is_reinsertable == ZugQueue.DISCARD
+
+def test_ZugTrainingPositionPresenter(solution_node, solution_data):
+    solution_node.comment = solution_data.make_comment()
+    p = ZugTrainingPositionPresenter(solution_node)
+    p._get_user_input = mock.MagicMock(return_value = '')
+    #assert p.present() == p.SUCCESS
+
+@pytest.mark.parametrize(
+    'user_input',
+    [
+        ('',''), # perfect input
+        ('azby','bcty','asfhwrqreqrw','','assirtt','aq','h',''), # imperfect input
+        ('\n','','\n',''), # imperfect input including line breaks        
+    ]
+)
+def test_ZugTrainingPositionPresenter_present_new(
+        solution_node,
+        solution_data,
+        user_input,
+):
+    ZugTrainingPositionPresenter._get_user_input = mock.MagicMock(side_effect=user_input)
+    solution_node.comment = solution_data.make_comment()
+    p = ZugTrainingPositionPresenter(solution_node)
+    assert p.present() == p.SUCCESS
+
+@pytest.mark.parametrize(
+    'user_input',
+    [
+        ('',''), # perfect input
+        ('azby','bcty','asfhwrqreqrw','','assirtt','aq','h',''), # imperfect input
+        ('\n','','\n',''), # imperfect input including line breaks        
+    ]
+)
+def test_ZugTrainingPositionPresenter_present_new(
+        solution_node,
+        solution_data,
+        user_input
+):
+    ZugTrainingPositionPresenter._get_user_input = mock.MagicMock(side_effect=user_input)
+    solution_node.comment = solution_data.make_comment()
+    p = ZugTrainingPositionPresenter(solution_node)
+    assert p.present() == p.SUCCESS
