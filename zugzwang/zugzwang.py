@@ -43,7 +43,7 @@ import shutil
 from colorama import Fore, Back, Style
 from random import randint
 
-from typing import Union        
+from typing import Union, List
 
 #############
 # constants #
@@ -208,53 +208,50 @@ class ZugRootData():
 
     def __init__(
             self,
+            perspective: bool = ZugColours.WHITE,
             last_access: datetime.date = datetime.date.today(),
             new_remaining: int = ZugDefaults.NEW_REMAINING,
             new_limit: int = ZugDefaults.NEW_LIMIT,
-            new: int = 0,
             review: int = 0,
             inactive: int = 0,
-            reachable: int = 0,
     ):
+        self.perspective = perspective
         self.last_access = last_access
         self.new_remaining = new_remaining
         self.new_limit = new_limit
-        self.new = new
         self.review = review
         self.inactive = inactive
-        self.reachable = reachable
 
     @classmethod
     def from_comment(cls, comment: str):
         data = comment.split(';')
-        last_access = data[0].split('=')[1]
+        perspective = data[0].split('=')[1]
+        perspective = True if perspective == 'WHITE' else False
+        last_access = data[1].split('=')[1]
         last_access = datetime.datetime.strptime(last_access, '%d-%m-%Y').date()
-        new_remaining = int(data[1].split('=')[1])
-        new_limit = int(data[2].split('=')[1])
-        new = int(data[3].split('=')[1])
+        new_remaining = int(data[2].split('=')[1])
+        new_limit = int(data[3].split('=')[1])
         review = int(data[4].split('=')[1])
         inactive = int(data[5].split('=')[1])
-        reachable = int(data[6].split('=')[1])
         return ZugRootData(
+            perspective,
             last_access,
             new_remaining,
             new_limit,
-            new,
             review,
             inactive,
-            reachable
         )
 
     def make_comment(self) -> str:
+        perspective = 'WHITE' if self.perspective == ZugColours.WHITE  else 'BLACK'
         return ';'.join(
             (
+                f'perspective={perspective}',                
                 f'last_access={self.last_access.strftime("%d-%m-%Y")}',
                 f'new_remaining={self.new_remaining}',
                 f'new_limit={self.new_limit}',
-                f'new={self.new}',
                 f'review={self.review}',
                 f'inactive={self.inactive}',
-                f'reachable={self.reachable}'
             )
         )
 
@@ -262,11 +259,11 @@ class ZugRootData():
 class ZugRoot():
 
     def __init__(self, game: chess.pgn.Game):
-        self.data = ZugRootData.from_comment(game.comment)
-        self.game = game
+        self._data = ZugRootData.from_comment(game.comment)
+        self._game = game
 
     def update_game_comment(self):
-        self.game.comment = self.data.make_comment()
+        self._game.comment = self.data.make_comment()
 
     def update_status_counts(self):
         pass
@@ -274,6 +271,40 @@ class ZugRoot():
     def reset_data(self):
         pass
 
+    def solution_nodes(self) -> List[chess.pgn.ChildNode]:
+        # define a list to store solutions and a recursive search function
+        solutions = []
+        def search_node(
+                node: chess.pgn.ChildNode,
+                solution_perspective: bool
+        ):
+            player_to_move = node.board().turn
+            if player_to_move != solution_perspective:
+                # the node is a solution
+                # add it to the set and work recursively on all children
+                if node != self._game:
+                    solutions.append(node)
+                for problem in node.variations:
+                    search_node(problem, solution_perspective)                
+            else:
+                # the node is a problem
+                # if it has no variations, it's a hanging problem
+                # otherwise, any variation is either a blunder or a candidate
+                # find the first candidate if it exists, and work recursively
+                candidates = [node for node in node.variations if 2 not in node.nags]
+                if candidates:                    
+                    search_node(candidates[0], solution_perspective)
+                # work recursively on blunders with reversed perspective
+                blunders = [node for node in node.variations if 2 in node.nags]
+                for blunder in blunders:
+                    search_node(blunder, not solution_perspective)
+                    
+
+        # call it on all children of the root node
+        solution_perspective = self._data.perspective                        
+        search_node(self._game, solution_perspective)
+
+        return solutions
 
 class ZugSolutionData():
 
@@ -353,9 +384,10 @@ class ZugTrainingPositionPresenter():
     FAILURE = False
 
     def __init__(self, solution_node: chess.pgn.ChildNode):
-        self.status = ZugSolutionData.from_comment(solution_node.comment).status
-        self.front = ZugBoard(solution_node.parent.board())
-        self.back = ZugBoard(solution_node.board())        
+        self._status = ZugSolutionData.from_comment(solution_node.comment).status
+        self._front = ZugBoard(solution_node.parent.board())
+        self._back = ZugBoard(solution_node.board())
+        self._perspective = self._back.perspective
         
     
     def present(self):
@@ -363,18 +395,38 @@ class ZugTrainingPositionPresenter():
         return self._present_back()
 
     def _present_front(self):
-        self._interpret_user_input()
-        pass
+        board = self._front.make_string(self._perspective)
+        print(board)
+        while not self._pause():
+            print(board)
 
     def _present_back(self):
+        is_new = self._status == ZugSolutionStatuses.NEW
+        return self._present_back_new() if is_new else self._present_back_non_new()
+    
+    def _present_back_new(self):
+        board = self._back.make_string(self._perspective)
+        print(board)
+        while not self._pause():
+            print(board)
+        return self.SUCCESS
+            
+    def _present_back_non_new(self):
+        board = self._back.make_string(self._perspective)
+        print(board)
         result = self._interpret_user_input()
         while result is None:
+            print(board)
             result = self._interpret_user_input()            
         return result
-    
+
     @classmethod
     def _get_user_input(cls):
         return input(':')
+
+    @classmethod
+    def _pause(cls):
+        return cls._get_user_input() == ''
 
     @classmethod
     def _interpret_user_input(cls):
@@ -385,19 +437,6 @@ class ZugTrainingPositionPresenter():
         return accepted_input.get(cls._get_user_input(), None)
 
     
-    
-
-# factored out of ZugTriainingPosition._present
-#    def _present(self):
-#        self._show_problem()
-#        self._show_solution()
-#        if self._solution_data.status == ZugSolutionStatuses.NEW:
-#            self._continue_prompt()
-#            return self._SUCCESS
-#        else:
-#            return self._SUCCESS if self._result_prompt() else self._FAILURE
-
-
 class ZugTrainingPosition(ZugQueueItem):
 
     # return values for public method .play()
@@ -529,7 +568,8 @@ class ZugQueue():
 class ZugBoard():
 
     def __init__(self, board: chess.Board):
-        self.board = board        
+        self._board = board
+        self.perspective = board.turn
     
     PIECE_TYPE_TO_UNICODE = {
         ZugPieces.KING: ZugUnicodePieces.KING,
@@ -594,7 +634,7 @@ class ZugBoard():
             for col in range(8):
                 square_index = square_index_by_row_and_col(row, col)
                 square_colour = self._square_colour(square_index)
-                piece = self.board.piece_map().get(square_index, None)
+                piece = self._board.piece_map().get(square_index, None)
                 piece_type = piece.piece_type if piece else None
                 piece_colour = piece.color if piece else ZugPieceColours.WHITE
                 string += self._render_square(piece_type, piece_colour, square_colour)
