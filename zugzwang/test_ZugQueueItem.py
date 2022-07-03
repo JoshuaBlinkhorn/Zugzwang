@@ -258,6 +258,7 @@ def test_ZugTrainingPositionPresenter(solution_node, solution_data):
     'user_input',
     [
         ('',''), # perfect input
+        ('azby','bcty','asfhwrqreqrw','','assirtt','aq',''), # imperfect input
         ('azby','bcty','asfhwrqreqrw','','assirtt','aq','h',''), # imperfect input
         ('\n','','\n',''), # imperfect input including line breaks        
     ]
@@ -268,24 +269,47 @@ def test_ZugTrainingPositionPresenter_present_new(
         user_input,
 ):
     ZugTrainingPositionPresenter._get_user_input = mock.MagicMock(side_effect=user_input)
+    solution_data.status = ZugSolutionStatuses.NEW
     solution_node.comment = solution_data.make_comment()
     p = ZugTrainingPositionPresenter(solution_node)
     assert p.present() == p.SUCCESS
 
 @pytest.mark.parametrize(
-    'user_input',
+    'user_input, expected_result',
     [
-        ('',''), # perfect input
-        ('azby','bcty','asfhwrqreqrw','','assirtt','aq','h',''), # imperfect input
-        ('\n','','\n',''), # imperfect input including line breaks        
+        (
+            ('',''), # perfect input, success
+            ZugTrainingPositionPresenter.SUCCESS,
+        ),
+        (
+            ('q749gb','sd','','asggnrpgnpir',''), # imperfect, success
+            ZugTrainingPositionPresenter.SUCCESS,            
+        ),        
+        (
+            ('asdfas\nasdf','\n','','\n',''), # imperfect including line breaks, success
+            ZugTrainingPositionPresenter.SUCCESS,
+        ),
+        (
+            ('','h'), # perfect failure
+            ZugTrainingPositionPresenter.FAILURE,            
+        ),
+        (
+            ('azby','bcty','asfhwrqreqrw','','assirtt','aq','h'), # imperfect, failure
+            ZugTrainingPositionPresenter.FAILURE,
+        ),
+        (
+            ('asdf\nasdf','','\n','h'), # imperfect input including line breaks, failure
+            ZugTrainingPositionPresenter.FAILURE,
+        ),
     ]
 )
-def test_ZugTrainingPositionPresenter_present_new(
+def test_ZugTrainingPositionPresenter_present_non_new(
         solution_node,
         solution_data,
-        user_input
+        user_input,
+        expected_result,
 ):
     ZugTrainingPositionPresenter._get_user_input = mock.MagicMock(side_effect=user_input)
     solution_node.comment = solution_data.make_comment()
     p = ZugTrainingPositionPresenter(solution_node)
-    assert p.present() == p.SUCCESS
+    assert p.present() == expected_result
