@@ -193,34 +193,71 @@ class ZugSquareColours(ZugColours):
     pass
     
 
-class ZugSolutionStatuses():
+class ZugTrainingStatus():
     NEW = 'NEW'
     LEARNING_STAGE_1 = 'LEARNING_STAGE_1'
     LEARNING_STAGE_2 = 'LEARNING_STAGE_2'
     REVIEW = 'REVIEW'
-    INACTIVE = 'INACTIVE'
+
+
+class ZugSolutionStatus():
+    LEARNED = 'LEARNED'
+    UNLEARNED = 'UNLEARNED'
+
+    @classmethod
+    def from_training_position_status(cls, training_status: str):
+        is_review = training_status == ZugTrainingStatus.REVIEW
+        return cls.LEARNED if is_review else cls.UNLEARNED
 
 
 class ZugSolutionStatusError(ValueError):
     pass
+
+
+class ZugDates():
+    
+    @classmethod
+    def today(cls):
+        return datetime.date.today()
+
+    @classmethod
+    def yesterday(cls):
+        return datetime.date.today() - datetime.timedelta(days=1)
+
+    @classmethod
+    def calculate_due_date(
+            cls,
+            last_study_date,
+            current_due_date,
+            recall_factor,
+            recall_radius
+    ):
+        previous_diff = (current_due_date - last_study_date).days
+        radius = min(previous_diff, recall_radius)
+        diff = previous_diff * recall_radius
+        absolute_recall_date = current_due_date + datetime.timedelta(days = diff)
+        offset = randint(0, (radius*2)) - radius
+        recall_date = absolute_recall_date + datetime.timedelta(days = offset)
+        return recall_date
+
 
 class ZugRootData():
 
     def __init__(
             self,
             perspective: bool = ZugColours.WHITE,
-            last_access: datetime.date = datetime.date.today(),
+            last_access: datetime.date = ZugDates.today(),
             new_remaining: int = ZugDefaults.NEW_REMAINING,
             new_limit: int = ZugDefaults.NEW_LIMIT,
-            review: int = 0,
-            inactive: int = 0,
+            recall_radius: float = 3.0,
+            recall_factor: float = 2.0,
     ):
         self.perspective = perspective
         self.last_access = last_access
         self.new_remaining = new_remaining
         self.new_limit = new_limit
-        self.review = review
-        self.inactive = inactive
+        self.recall_radius = recall_radius
+        self.recall_factor = recall_factor
 
     @classmethod
     def from_comment(cls, comment: str):
@@ -231,15 +268,15 @@ class ZugRootData():
         last_access = datetime.datetime.strptime(last_access, '%d-%m-%Y').date()
         new_remaining = int(data[2].split('=')[1])
         new_limit = int(data[3].split('=')[1])
-        review = int(data[4].split('=')[1])
-        inactive = int(data[5].split('=')[1])
+        recall_radius = float(data[4].split('=')[1])
+        recall_factor = float(data[5].split('=')[1])
         return ZugRootData(
             perspective,
             last_access,
             new_remaining,
             new_limit,
-            review,
-            inactive,
+            recall_radius,
+            recall_factor,
         )
 
     def make_comment(self) -> str:
@@ -250,8 +287,8 @@ class ZugRootData():
                 f'last_access={self.last_access.strftime("%d-%m-%Y")}',
                 f'new_remaining={self.new_remaining}',
                 f'new_limit={self.new_limit}',
-                f'review={self.review}',
-                f'inactive={self.inactive}',
+                f'recall_radius={self.recall_radius}',
+                f'recall_factor={self.recall_factor}',
             )
         )
 
@@ -262,14 +299,48 @@ class ZugRoot():
         self._data = ZugRootData.from_comment(game.comment)
         self._game = game
 
+    def _reset_solution_data(self):
+        solution_data = ZugSolutionData()
+        for solution in root.solution_nodes():
+            solution.comment = solution_data.make_comment()                
+
+    @classmethod
+    def from_naked_game(cls, game):
+        game.comment = ZugRootData().make_comment()
+        root = ZugRoot(game)
+        root._reset_solution_data()
+        return root
+
+    @property
+    def new_remaining(self):
+        return self._data.new_remaining
+    
+    @property
+    def recall_radius(self):
+        return self._data.recall_radius
+    
+    @property
+    def recall_factor(self):
+        return self._data.recall_factor
+    
+    def reset_training_data(self):
+        new_data = ZugSolutionData(
+            perspective=self._data.perspective,
+        )
+        self._reset_solution_data()
+
+    def decrement_new_remaining(self):
+        self._data.new_remaining -= 1
+
+    def has_new_capacity(self):
+        return self._data.new_remaining > 0
+
     def update_game_comment(self):
         self._game.comment = self.data.make_comment()
 
-    def update_status_counts(self):
-        pass
-
-    def reset_data(self):
-        pass
+    def update_new_remaining(self):
+        if self._data.last_access < ZugDates.today():
+            self._data.new_remaining = self._data.new_limit
 
     def solution_nodes(self) -> List[chess.pgn.ChildNode]:
         # define a list to store solutions and a recursive search function
@@ -306,13 +377,14 @@ class ZugRoot():
 
         return solutions
 
+
 class ZugSolutionData():
 
     def __init__(
             self,
-            status: str = ZugSolutionStatuses.INACTIVE,
-            last_study_date: datetime.date = yesterday(),
-            due_date: datetime.date = yesterday(),
+            status: str = ZugSolutionStatus.UNLEARNED,
+            last_study_date: datetime.date = ZugDates.yesterday(),
+            due_date: datetime.date = ZugDates.yesterday(),
             successes: int = 0,
             failures: int = 0,
     ):
@@ -321,6 +393,17 @@ class ZugSolutionData():
         self.due_date = due_date
         self.successes = successes
         self.failures = failures
+
+    def __eq__(self, other) -> bool:
+        return all(
+            (
+                self.status == other.status,
+                self.last_study_date == other.last_study_date,
+                self.due_date == other.due_date,
+                self.successes == other.successes,
+                self.failures == other.failures,
+            )
+        )
 
     @classmethod
     def from_comment(cls, comment: str):
@@ -352,16 +435,51 @@ class ZugSolutionData():
 
 class ZugSolution():
 
-    def __init__(self, node: chess.pgn.ChildNode):
-        self.data = ZugSolutionData.from_comment(node.comment)
-        self.node = node
+    def __init__(self, node: chess.pgn.ChildNode, root: ZugRoot):
+        self._data = ZugSolutionData.from_comment(node.comment)
+        self._node = node
+        self._root = root
 
+    @property
+    def node():
+        return self._node
+        
     def update_node_comment(self):
-        self.node.comment = self.data.make_comment()
+        self._node.comment = self.data.make_comment()
 
-    def update_status_counts(self):
-        pass
-
+    def learned(self):
+        self._data.update(
+            {
+                'status': ZugSolutionStatus.LEARNED,
+                'last_study_date': ZugDates.today(),
+                'due_date': ZugDates.tomorrow(),
+                'successes': self.data.successes + 1,
+            }
+        )
+        
+    def recalled(self):
+        next_due_date = ZugDates.due_date(
+            self._data.last_study_date,
+            self._data.due_date,
+            self._root.recall_radius,
+            self._root.recall_factor
+        )
+        self._data.update(
+            {
+                'successes': self.data.successes + 1,
+                'last_study_date': ZugDates.today(),
+                'due_date': next_due_date,
+            }
+        )
+        
+    def forgotten(self):
+        self._data.update(
+            {
+                'status': ZugSolutionStatuses.UNLEARNED,                
+                'failures': self._data.failures + 1,
+            }
+        )
+        
     def reset_data(self):
         pass
 
@@ -446,93 +564,48 @@ class ZugTrainingPosition(ZugQueueItem):
     _RECALL_FACTOR = 2 # inverse ratio of consecutive absolute recall dates
     _RECALL_RADIUS = 3 # maximum distance from absolute recall date
 
-    def __init__(self, solution_node: chess.pgn.ChildNode):
-        self._solution_node = solution_node
-        self._solution_data = ZugSolutionData.from_comment(solution_node.comment)
-        self._presenter = ZugTrainingPositionPresenter(solution_node)
-        
-        if self._solution_data.status  == ZugSolutionStatuses.INACTIVE:
-            msg = 'ZugTrainingPosition solution has invalid status INACTIVE'
-            raise ZugSolutionStatusError(msg)
+    def __init__(self, solution: ZugSolution, status: ZugTrainingStatus):
+        self._solution = solution
+        self._status = status
+
+    @property
+    def solution(self):
+        return self._solution
         
     def _present(self):
-        return self._presenter.present()        
+        return ZugTrainingPositionPresenter(solution.node).present()        
             
     def _interpret_result(self, result):
-        if self._solution_data.status == ZugSolutionStatuses.REVIEW:
-            changes, is_reinsertable = self._interpret_review_phase_result(result)
-        else:
-            changes, is_reinsertable = self._interpret_learning_phase_result(result)
+        if (self._status == ZugTrainingStatus.NEW and
+            result == ZugTrainingPositionPresenter.SUCCESS):
+            self._status = ZugTrainingStatus.LEARNING_STAGE_1
+            return ZugQueue.REINSERT
+        if (self._status ==ZugTrainingStatus.LEARNING_STAGE_1 and
+            result == ZugTrainingPositionPresenter.SUCCESS):
+            self._status = ZugTrainingStatus.LEARNING_STAGE_2
+            return ZugQueue.REINSERT
+        if (self._status == ZugTrainingStatus.LEARNING_STAGE_1
+            and result == ZugTrainingPositionPresenter.FAILURE):
+            self._status = ZugTrainingStatus.LEARNING_STAGE_1
+            return ZugQueue.REINSERT
+        if (self._status == ZugTrainingStatus.LEARNING_STAGE_2 and
+            ZugTrainingPositionPresenter.SUCCESS):
+            self._solution.learned()
+            return ZugQueue.DISCARD
+        if (self._status == ZugTrainingStatus.LEARNING_STAGE_2 and
+            result == ZugTrainingPositionPresenter.FAILURE):
+            self._status = ZugTrainingStatus.LEARNING_STAGE_1
+            return ZugQueue.REINSERT
+        if (self._status == ZugTrainingStatus.REVIEW and
+            result == ZugTrainingPositionPresenter.FAILURE):
+            self._status = ZugTrainingStatus.LEARNING_STAGE_1
+            self._solution.forgotten()
+            return ZugQueue.REINSERT
+        if (self._status == ZugTrainingStatus.REVIEW and
+            result == ZugTrainingPositionPresenter.SUCCESS):
+            self._solution.recalled()
+            return ZugQueue.DISCARD
 
-        self._solution_data.update(changes)
-        self._solution_node.comment = self._solution_data.make_comment()
-        return is_reinsertable 
-
-    def _interpret_learning_phase_result(self, result):
-        update_map = {
-            (ZugSolutionStatuses.NEW, ZugTrainingPositionPresenter.SUCCESS):
-            (
-                {'status': ZugSolutionStatuses.LEARNING_STAGE_1},
-                ZugQueue.REINSERT,
-            ),            
-            (ZugSolutionStatuses.LEARNING_STAGE_1, ZugTrainingPositionPresenter.SUCCESS):
-            (
-                {'status': ZugSolutionStatuses.LEARNING_STAGE_2},
-                ZugQueue.REINSERT,
-            ),            
-            (ZugSolutionStatuses.LEARNING_STAGE_1, ZugTrainingPositionPresenter.FAILURE):
-            (
-                {'status': ZugSolutionStatuses.LEARNING_STAGE_1},
-                ZugQueue.REINSERT,
-            ),            
-            (ZugSolutionStatuses.LEARNING_STAGE_2, ZugTrainingPositionPresenter.SUCCESS):
-            (
-                {
-                    'status': ZugSolutionStatuses.REVIEW,
-                    'last_study_date': datetime.date.today(),
-                    'due_date': datetime.date.today() + datetime.timedelta(days = 1),
-                    'successes': self._solution_data.successes + 1,
-                },
-                ZugQueue.DISCARD,
-            ),            
-            (ZugSolutionStatuses.LEARNING_STAGE_2, ZugTrainingPositionPresenter.FAILURE):
-            (
-                {'status': ZugSolutionStatuses.LEARNING_STAGE_1},
-                ZugQueue.REINSERT,
-            ),            
-        }        
-        return update_map.get((self._solution_data.status, result))
-
-    def _interpret_review_phase_result(self, result):
-        if result == ZugTrainingPositionPresenter.FAILURE:
-            update = {
-                'status': ZugSolutionStatuses.LEARNING_STAGE_1,
-                'failures': self._solution_data.failures + 1,
-            }
-            is_queueable = ZugQueue.REINSERT
-        else:
-            due_date = self._calculate_due_date(
-                self._solution_data.last_study_date,                
-                self._solution_data.due_date,                
-            )
-            update = {
-                'successes': self._solution_data.successes + 1,
-                'last_study_date': datetime.date.today(),
-                'due_date': due_date,
-            }
-            is_queueable = ZugQueue.DISCARD
-
-        return update, is_queueable
-
-    def _calculate_due_date(self, last_study_date, current_due_date):
-        previous_diff = (current_due_date - last_study_date).days
-        radius = min(previous_diff, self._RECALL_RADIUS)
-        diff = previous_diff * self._RECALL_FACTOR
-        absolute_recall_date = current_due_date + datetime.timedelta(days = diff)
-        offset = randint(0, (radius*2)) - radius
-        recall_date = absolute_recall_date + datetime.timedelta(days = offset)
-        return recall_date
-        
 
 class ZugQueue():
 
@@ -565,6 +638,76 @@ class ZugQueue():
                 self.insert(item, self._REINSERTION_INDEX)
 
 
+class ZugChapter():
+    
+    def __init__(self, pgn_filepath: str):
+        with open(pgn_filepath) as pgn_file:
+            game = chess.pgn.read_game(pgn_file)                
+        self._pgn_filepath = pgn_filepath
+        self._root = ZugRoot(game)
+        self._solutions = [ZugSolution(node, root) for node in self._root.solution_nodes()]
+
+    @property
+    def root(self):
+        return self._root
+        
+    @property
+    def solutions(self):
+        return self._solutions
+
+    @property
+    def new_remaining(self):
+        return self._root.new_remaining
+        
+    def save(self):
+        self._root.update_game_comment()
+        for solution in self._solutions:
+            solution.update_node_comment()
+        print(self._root.game, file=open(self._pgn_filepath, 'w'))
+
+
+class ZugTrainer():
+    
+    def __init__(self, chapter: ZugChapter):
+        self._chapter = chapter
+        self._queue = ZugQueue()
+
+    def _fill_queue(self):
+        pass
+        
+    def train(self):
+        self._fill_queue()
+        self._queue.play()
+
+
+class ZugPositionTrainer(ZugTrainer):
+    
+    def _fill_queue(self):
+        new_remaining = self._chapter.new_remaining
+        for solution in self._chapter.solutions:
+            if (not solution.is_learned()) and new_capacity > 0:
+                self._queue.insert(
+                    ZugTrainingPosition(solution, ZugTrainingStatuses.NEW)
+                )
+                new_remaining -= 1
+                continue
+            if solution.is_learned() and solution.is_due():
+                self._queue.insert(
+                    ZugTrainingPosition(solution, ZugTrainingStatuses.REVIEW)
+                )
+                continue
+
+
+class ZugLineTrainer():
+
+    def _fill_queue(self):
+        for line in _get_lines():
+            self._queue.insert(line)
+
+    def _get_lines(self):
+        return []
+    
+        
 class ZugBoard():
 
     def __init__(self, board: chess.Board):
