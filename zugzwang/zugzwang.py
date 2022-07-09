@@ -45,6 +45,8 @@ from random import randint
 
 from typing import Union, List
 
+import ZugDates
+
 #############
 # constants #
 #############
@@ -67,7 +69,7 @@ STATS_TOTAL = 6
 
 # meta data indexes for string parsing
 LAST_ACCESS = 0 
-NEW_REMAINING = 1
+LEARNING_REMAINING = 1
 NEW_LIMIT = 2
 
 # training data indexes for string parsing
@@ -153,9 +155,10 @@ def print_turn(board) :
     else :
         print("BLACK to play.")
 
+
 class ZugDefaults():
-    NEW_REMAINING = 10
-    NEW_LIMIT = 10
+    LEARNING_REMAINING = 10
+    LEARNING_LIMIT = 10
 
 
 class ZugPieces():
@@ -176,21 +179,9 @@ class ZugUnicodePieces():
     PAWN = '\u2659'    
 
 
-class ZugColours():
+class ZugColour():
     WHITE = True
     BLACK = False
-    
-
-class ZugPlayers(ZugColours):
-    pass
-
-
-class ZugPieceColours(ZugColours):
-    pass
-    
-
-class ZugSquareColours(ZugColours):
-    pass
     
 
 class ZugTrainingStatus():
@@ -214,48 +205,21 @@ class ZugSolutionStatusError(ValueError):
     pass
 
 
-class ZugDates():
-    
-    @classmethod
-    def today(cls):
-        return datetime.date.today()
-
-    @classmethod
-    def yesterday(cls):
-        return datetime.date.today() - datetime.timedelta(days=1)
-
-    @classmethod
-    def calculate_due_date(
-            cls,
-            last_study_date,
-            current_due_date,
-            recall_factor,
-            recall_radius
-    ):
-        previous_diff = (current_due_date - last_study_date).days
-        radius = min(previous_diff, recall_radius)
-        diff = previous_diff * recall_radius
-        absolute_recall_date = current_due_date + datetime.timedelta(days = diff)
-        offset = randint(0, (radius*2)) - radius
-        recall_date = absolute_recall_date + datetime.timedelta(days = offset)
-        return recall_date
-
-
 class ZugRootData():
 
     def __init__(
             self,
-            perspective: bool = ZugColours.WHITE,
+            perspective: bool = ZugColour.WHITE,
             last_access: datetime.date = ZugDates.today(),
-            new_remaining: int = ZugDefaults.NEW_REMAINING,
-            new_limit: int = ZugDefaults.NEW_LIMIT,
+            learning_remaining: int = ZugDefaults.LEARNING_REMAINING,
+            learning_limit: int = ZugDefaults.NEW_LIMIT,
             recall_radius: float = 3.0,
             recall_factor: float = 2.0,
     ):
         self.perspective = perspective
         self.last_access = last_access
-        self.new_remaining = new_remaining
-        self.new_limit = new_limit
+        self.learning_remaining = learning_remaining
+        self.learning_limit = learning_limit
         self.recall_radius = recall_radius
         self.recall_factor = recall_factor
 
@@ -266,27 +230,27 @@ class ZugRootData():
         perspective = True if perspective == 'WHITE' else False
         last_access = data[1].split('=')[1]
         last_access = datetime.datetime.strptime(last_access, '%d-%m-%Y').date()
-        new_remaining = int(data[2].split('=')[1])
-        new_limit = int(data[3].split('=')[1])
+        learning_remaining = int(data[2].split('=')[1])
+        learning_limit = int(data[3].split('=')[1])
         recall_radius = float(data[4].split('=')[1])
         recall_factor = float(data[5].split('=')[1])
         return ZugRootData(
             perspective,
             last_access,
-            new_remaining,
-            new_limit,
+            learning_remaining,
+            learning_limit,
             recall_radius,
             recall_factor,
         )
 
     def make_comment(self) -> str:
-        perspective = 'WHITE' if self.perspective == ZugColours.WHITE  else 'BLACK'
+        perspective = 'WHITE' if self.perspective == ZugColour.WHITE  else 'BLACK'
         return ';'.join(
             (
                 f'perspective={perspective}',                
                 f'last_access={self.last_access.strftime("%d-%m-%Y")}',
-                f'new_remaining={self.new_remaining}',
-                f'new_limit={self.new_limit}',
+                f'learning_remaining={self.learning_remaining}',
+                f'learning_limit={self.learning_limit}',
                 f'recall_radius={self.recall_radius}',
                 f'recall_factor={self.recall_factor}',
             )
@@ -312,8 +276,8 @@ class ZugRoot():
         return root
 
     @property
-    def new_remaining(self):
-        return self._data.new_remaining
+    def learning_remaining(self):
+        return self._data.learning_remaining
     
     @property
     def recall_radius(self):
@@ -329,18 +293,18 @@ class ZugRoot():
         )
         self._reset_solution_data()
 
-    def decrement_new_remaining(self):
-        self._data.new_remaining -= 1
+    def decrement_learning_remaining(self):
+        self._data.learning_remaining -= 1
 
     def has_new_capacity(self):
-        return self._data.new_remaining > 0
+        return self._data.learning_remaining > 0
 
     def update_game_comment(self):
         self._game.comment = self.data.make_comment()
 
-    def update_new_remaining(self):
+    def update_learning_remaining(self):
         if self._data.last_access < ZugDates.today():
-            self._data.new_remaining = self._data.new_limit
+            self._data.learning_remaining = self._data.learning_limit
 
     def solution_nodes(self) -> List[chess.pgn.ChildNode]:
         # define a list to store solutions and a recursive search function
@@ -656,8 +620,8 @@ class ZugChapter():
         return self._solutions
 
     @property
-    def new_remaining(self):
-        return self._root.new_remaining
+    def learning_remaining(self):
+        return self._root.learning_remaining
         
     def save(self):
         self._root.update_game_comment()
@@ -683,13 +647,13 @@ class ZugTrainer():
 class ZugPositionTrainer(ZugTrainer):
     
     def _fill_queue(self):
-        new_remaining = self._chapter.new_remaining
+        learning_remaining = self._chapter.learning_remaining
         for solution in self._chapter.solutions:
             if (not solution.is_learned()) and new_capacity > 0:
                 self._queue.insert(
                     ZugTrainingPosition(solution, ZugTrainingStatuses.NEW)
                 )
-                new_remaining -= 1
+                learning_remaining -= 1
                 continue
             if solution.is_learned() and solution.is_due():
                 self._queue.insert(
@@ -728,8 +692,8 @@ class ZugBoard():
         return cls.PIECE_TYPE_TO_UNICODE.get(piece_type, ' ')
         
     PIECE_COLOUR_TO_FORE = {
-        ZugPieceColours.WHITE: Fore.WHITE,
-        ZugPieceColours.BLACK: Fore.BLACK,        
+        ZugColour.WHITE: Fore.WHITE,
+        ZugColour.BLACK: Fore.BLACK,        
     }
 
     @classmethod
@@ -737,8 +701,8 @@ class ZugBoard():
         return cls.PIECE_COLOUR_TO_FORE.get(piece_colour)
         
     SQUARE_COLOUR_TO_BACK = {
-        ZugSquareColours.WHITE: Back.GREEN,
-        ZugSquareColours.BLACK: Back.CYAN,
+        ZugColour.WHITE: Back.GREEN,
+        ZugColour.BLACK: Back.CYAN,
     }
 
     @classmethod
@@ -759,13 +723,13 @@ class ZugBoard():
     @classmethod
     def _square_colour(cls, square):
         if (chess.square_rank(square) + chess.square_file(square)) % 2:
-            return ZugSquareColours.WHITE
+            return ZugColour.WHITE
         else:
-            return ZugSquareColours.BLACK
+            return ZugColour.BLACK
 
     @classmethod
     def _square_index_by_row_and_col(cls, perspective):
-        if perspective == ZugPlayers.WHITE:
+        if perspective == ZugColour.WHITE:
             return lambda row, col: ((7 - row) * 8) + col
         else:
             return lambda row, col: (row * 8) + (7 - col)
@@ -779,7 +743,7 @@ class ZugBoard():
                 square_colour = self._square_colour(square_index)
                 piece = self._board.piece_map().get(square_index, None)
                 piece_type = piece.piece_type if piece else None
-                piece_colour = piece.color if piece else ZugPieceColours.WHITE
+                piece_colour = piece.color if piece else ZugColour.WHITE
                 string += self._render_square(piece_type, piece_colour, square_colour)
             string += self._render_newline()
         return string
@@ -816,7 +780,7 @@ def pgn_name(filename) :
 def default_meta_data_string() :
     today = datetime.date.today()
     yesterday = string_from_date(today - datetime.timedelta(days = 1))
-    return "last_access=" + yesterday + ";new_remaining=10;new_limit=10;"
+    return "last_access=" + yesterday + ";learning_remaining=10;learning_limit=10;"
 
 def default_training_data_string() :
     today = datetime.date.today()
