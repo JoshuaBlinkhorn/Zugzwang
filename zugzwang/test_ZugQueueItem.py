@@ -43,7 +43,7 @@ def solution_node():
     return solution_node
 
 def test_ZuqQueueItem_play():
-    # the bass class's play() method returns None
+    # the base class's play() method returns None
     # the present method returns
     assert ZugQueueItem().play() == None
 
@@ -63,7 +63,7 @@ def testZugTrainingPosition_play_solution_status_inactive(solution_node):
     
 
 @pytest.mark.parametrize(
-    'status, presenter_result, updated_solution_data, expected_is_reinsertable',
+    'status, presenter_result, expected_solution_data, expected_is_reinsertable',
     [
         (
             ZugSolutionStatuses.NEW,
@@ -131,7 +131,7 @@ def test_ZugTrainingPosition_play_learning_phase(
         solution_node,
         status,
         presenter_result,
-        updated_solution_data,
+        expected_solution_data,
         expected_is_reinsertable,
 ):
     # create a typical solution node
@@ -151,10 +151,9 @@ def test_ZugTrainingPosition_play_learning_phase(
     # call
     is_reinsertable = tp.play()
 
-    # assert the expected change to the solution node comment
+    # assert the expected change to the solution data
     # and the function call return value
-    expected_comment = updated_solution_data.make_comment()
-    assert solution_node.comment == expected_comment
+    assert tp.solution_data == expected_solution_data
     assert is_reinsertable == expected_is_reinsertable
 
 def test_ZugTrainingPosition_play_review_phase_failure(solution_node):
@@ -187,7 +186,7 @@ def test_ZugTrainingPosition_play_review_phase_failure(solution_node):
         failures = FAILURES + 1,
     )
     expected_comment = updated_solution_data.make_comment()
-    assert solution_node.comment == expected_comment
+    assert tp.solution_data == updated_solution_data
     assert is_reinsertable == ZugQueue.REINSERT
 
 @pytest.mark.parametrize(
@@ -236,7 +235,7 @@ def test_ZugTrainingPosition_play_review_phase_success(
     is_reinsertable = tp.play()
 
     # convert the solution node's comment into solution data
-    updated_solution_data = ZugSolutionData.from_comment(solution_node.comment)
+    updated_solution_data = tp.solution_data
 
     # assert the updated solution data, and hence the node's comment, is correct
     # the important point here is that the new due date is within the expected range
