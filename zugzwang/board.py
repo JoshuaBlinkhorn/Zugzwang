@@ -1,4 +1,17 @@
 import chess
+from colorama import Fore, Back, Style
+
+from zugzwang.constants import ZugPieces, ZugColours
+
+
+class ZugUnicodePieces():
+    KING = '\u2654'
+    QUEEN = '\u2655'
+    ROOK = '\u2656'
+    BISHOP = '\u2657'
+    KNIGHT = '\u2658'        
+    PAWN = '\u2659'    
+
 
 class ZugBoard():
 
@@ -20,8 +33,8 @@ class ZugBoard():
         return cls.PIECE_TYPE_TO_UNICODE.get(piece_type, ' ')
         
     PIECE_COLOUR_TO_FORE = {
-        ZugColour.WHITE: Fore.WHITE,
-        ZugColour.BLACK: Fore.BLACK,        
+        ZugColours.WHITE: Fore.WHITE,
+        ZugColours.BLACK: Fore.BLACK,        
     }
 
     @classmethod
@@ -29,8 +42,8 @@ class ZugBoard():
         return cls.PIECE_COLOUR_TO_FORE.get(piece_colour)
         
     SQUARE_COLOUR_TO_BACK = {
-        ZugColour.WHITE: Back.GREEN,
-        ZugColour.BLACK: Back.CYAN,
+        ZugColours.WHITE: Back.GREEN,
+        ZugColours.BLACK: Back.CYAN,
     }
 
     @classmethod
@@ -51,13 +64,13 @@ class ZugBoard():
     @classmethod
     def _square_colour(cls, square):
         if (chess.square_rank(square) + chess.square_file(square)) % 2:
-            return ZugColour.WHITE
+            return ZugColours.WHITE
         else:
-            return ZugColour.BLACK
+            return ZugColours.BLACK
 
     @classmethod
     def _square_index_by_row_and_col(cls, perspective):
-        if perspective == ZugColour.WHITE:
+        if perspective == ZugColours.WHITE:
             return lambda row, col: ((7 - row) * 8) + col
         else:
             return lambda row, col: (row * 8) + (7 - col)
@@ -71,7 +84,7 @@ class ZugBoard():
                 square_colour = self._square_colour(square_index)
                 piece = self._board.piece_map().get(square_index, None)
                 piece_type = piece.piece_type if piece else None
-                piece_colour = piece.color if piece else ZugColour.WHITE
+                piece_colour = piece.color if piece else ZugColours.WHITE
                 string += self._render_square(piece_type, piece_colour, square_colour)
             string += self._render_newline()
         return string

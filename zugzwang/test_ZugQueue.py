@@ -75,7 +75,7 @@ def test_ZuqQueue_play_with_reinsertion():
     assert second_item.play.mock_calls == [mock.call()] * 3
     assert third_item.play.mock_calls == [mock.call()] * 3
     assert q.insert.mock_calls == expected_insert_calls
-    
+
 def test_ZuqQueue_insert():
     # items inserted without an index go to the front of the queue
     q = ZugQueue()
