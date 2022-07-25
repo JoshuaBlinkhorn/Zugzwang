@@ -156,36 +156,6 @@ def print_turn(board) :
         print("BLACK to play.")
 
 
-class ZugPieces():
-    KING = chess.KING
-    QUEEN = chess.QUEEN
-    ROOK = chess.ROOK
-    BISHOP = chess.BISHOP
-    KNIGHT = chess.KNIGHT    
-    PAWN = chess.PAWN
-    
-
-class ZugUnicodePieces():
-    KING = '\u2654'
-    QUEEN = '\u2655'
-    ROOK = '\u2656'
-    BISHOP = '\u2657'
-    KNIGHT = '\u2658'        
-    PAWN = '\u2659'    
-
-
-class ZugColour():
-    WHITE = True
-    BLACK = False
-    
-
-class ZugTrainingStatus():
-    NEW = 'NEW'
-    LEARNING_STAGE_1 = 'LEARNING_STAGE_1'
-    LEARNING_STAGE_2 = 'LEARNING_STAGE_2'
-    REVIEW = 'REVIEW'
-
-
 class ZugQueueItem():
 
     def play(self) -> Union[int, None]:

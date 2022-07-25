@@ -1,0 +1,10 @@
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[ECO "C55"]
+
+{ perspective=WHITE;last_access=09-07-2022;new_remaining=10;new_limit=10;review=0;inactive=0 } 1. e4 { status=INACTIVE;last_study_date=08-07-2022;due_date=08-07-2022;successes=0;failures=0 } 1... e5 2. Nf3 { status=INACTIVE;last_study_date=08-07-2022;due_date=08-07-2022;successes=0;failures=0 } 2... Nc6 3. d4 { status=INACTIVE;last_study_date=08-07-2022;due_date=08-07-2022;successes=0;failures=0 } 3... exd4 4. Bc4 { status=INACTIVE;last_study_date=08-07-2022;due_date=08-07-2022;successes=0;failures=0 } 4... Nf6 5. e5 { status=INACTIVE;last_study_date=08-07-2022;due_date=08-07-2022;successes=0;failures=0 } 5... d5 *

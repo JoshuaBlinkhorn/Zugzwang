@@ -1,68 +1,47 @@
+# Python's workaround to annotate method's return type as enclosing class
+from __future__ import annotations  
+
+import chess.pgn
 import datetime
+import dataclasses
+import json
+from typing import List
 
-from constants import ZugColour
 
-
-class ZugDefaults():
-    LEARNING_REMAINING = 10
-    LEARNING_LIMIT = 10
-
+from zugzwang.constants import ZugColours, ZugDefaults
+from zugzwang.dates import ZugDates
 
 class ZugSolutionStatus():
     LEARNED = 'LEARNED'
     UNLEARNED = 'UNLEARNED'
 
-
+@dataclasses.dataclass
 class ZugRootData():
 
-    def __init__(
-            self,
-            perspective: bool = ZugColour.WHITE,
-            last_access: datetime.date = ZugDates.today(),
-            learning_remaining: int = ZugDefaults.LEARNING_REMAINING,
-            learning_limit: int = ZugDefaults.NEW_LIMIT,
-            recall_radius: float = 3.0,
-            recall_factor: float = 2.0,
-    ):
-        self.perspective = perspective
-        self.last_access = last_access
-        self.learning_remaining = learning_remaining
-        self.learning_limit = learning_limit
-        self.recall_radius = recall_radius
-        self.recall_factor = recall_factor
+    perspective: bool = ZugColours.WHITE
+    last_access: datetime.date = ZugDates.today()
+    learning_remaining: int = ZugDefaults.LEARNING_REMAINING
+    learning_limit: int = ZugDefaults.LEARNING_LIMIT
+    recall_factor: float = ZugDefaults.RECALL_RADIUS
+    recall_radius: float = ZugDefaults.RECALL_FACTOR
+    recall_max: int = ZugDefaults.RECALL_MAX
 
     @classmethod
-    def from_comment(cls, comment: str):
-        data = comment.split(';')
-        perspective = data[0].split('=')[1]
-        perspective = True if perspective == 'WHITE' else False
-        last_access = data[1].split('=')[1]
-        last_access = datetime.datetime.strptime(last_access, '%d-%m-%Y').date()
-        learning_remaining = int(data[2].split('=')[1])
-        learning_limit = int(data[3].split('=')[1])
-        recall_radius = float(data[4].split('=')[1])
-        recall_factor = float(data[5].split('=')[1])
-        return ZugRootData(
-            perspective,
-            last_access,
-            learning_remaining,
-            learning_limit,
-            recall_radius,
-            recall_factor,
-        )
+    def from_comment(cls, comment: str) -> ZugRootData:
+        # convert ISO date string to datetime.date
+        data_dict = json.loads(comment)
+        data_dict['last_access'] = datetime.date.fromisoformat(data_dict['last_access']) 
+        return ZugRootData(**data_dict)
 
+    @classmethod
+    def _json_conversion(cls, value):
+        # convert datetime.date to ISO date string
+        if isinstance(value, datetime.date):
+            return value.isoformat()
+        raise TypeError('Cannot serialise python object in JSON.')
+    
     def make_comment(self) -> str:
-        perspective = 'WHITE' if self.perspective == ZugColour.WHITE  else 'BLACK'
-        return ';'.join(
-            (
-                f'perspective={perspective}',                
-                f'last_access={self.last_access.strftime("%d-%m-%Y")}',
-                f'learning_remaining={self.learning_remaining}',
-                f'learning_limit={self.learning_limit}',
-                f'recall_radius={self.recall_radius}',
-                f'recall_factor={self.recall_factor}',
-            )
-        )
+        return json.dumps(self.__dict__, default = self._json_conversion)
 
 
 class ZugRoot():

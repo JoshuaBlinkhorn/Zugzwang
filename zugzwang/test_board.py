@@ -2,42 +2,36 @@ import pytest
 import chess
 from colorama import Fore, Back, Style
 
-from zugzwang import (
-    ZugBoard,
-    ZugPlayers,
-    ZugPieceColours,
-    ZugSquareColours,
-    ZugPieces,
-    ZugUnicodePieces,
-)
+from zugzwang.board import ZugBoard, ZugUnicodePieces
+from zugzwang.constants import ZugColours, ZugPieces
 
 WHITE_PERSPECTIVE_TOP_ROW = (
-    (ZugPieces.ROOK, ZugPieceColours.BLACK, ZugSquareColours.WHITE),
-    (ZugPieces.KNIGHT, ZugPieceColours.BLACK, ZugSquareColours.BLACK),
-    (ZugPieces.BISHOP, ZugPieceColours.BLACK, ZugSquareColours.WHITE),
-    (ZugPieces.QUEEN, ZugPieceColours.BLACK, ZugSquareColours.BLACK),
-    (ZugPieces.KING, ZugPieceColours.BLACK, ZugSquareColours.WHITE),
-    (ZugPieces.BISHOP, ZugPieceColours.BLACK, ZugSquareColours.BLACK),
-    (ZugPieces.KNIGHT, ZugPieceColours.BLACK, ZugSquareColours.WHITE),
-    (ZugPieces.ROOK, ZugPieceColours.BLACK, ZugSquareColours.BLACK),
+    (ZugPieces.ROOK, ZugColours.BLACK, ZugColours.WHITE),
+    (ZugPieces.KNIGHT, ZugColours.BLACK, ZugColours.BLACK),
+    (ZugPieces.BISHOP, ZugColours.BLACK, ZugColours.WHITE),
+    (ZugPieces.QUEEN, ZugColours.BLACK, ZugColours.BLACK),
+    (ZugPieces.KING, ZugColours.BLACK, ZugColours.WHITE),
+    (ZugPieces.BISHOP, ZugColours.BLACK, ZugColours.BLACK),
+    (ZugPieces.KNIGHT, ZugColours.BLACK, ZugColours.WHITE),
+    (ZugPieces.ROOK, ZugColours.BLACK, ZugColours.BLACK),
 )
 
 BLACK_PERSPECTIVE_TOP_ROW = (
-    (ZugPieces.ROOK, ZugPieceColours.WHITE, ZugSquareColours.WHITE),
-    (ZugPieces.KNIGHT, ZugPieceColours.WHITE, ZugSquareColours.BLACK),
-    (ZugPieces.BISHOP, ZugPieceColours.WHITE, ZugSquareColours.WHITE),
-    (ZugPieces.KING, ZugPieceColours.WHITE, ZugSquareColours.BLACK),
-    (ZugPieces.QUEEN, ZugPieceColours.WHITE, ZugSquareColours.WHITE),
-    (ZugPieces.BISHOP, ZugPieceColours.WHITE, ZugSquareColours.BLACK),
-    (ZugPieces.KNIGHT, ZugPieceColours.WHITE, ZugSquareColours.WHITE),
-    (ZugPieces.ROOK, ZugPieceColours.WHITE, ZugSquareColours.BLACK),
+    (ZugPieces.ROOK, ZugColours.WHITE, ZugColours.WHITE),
+    (ZugPieces.KNIGHT, ZugColours.WHITE, ZugColours.BLACK),
+    (ZugPieces.BISHOP, ZugColours.WHITE, ZugColours.WHITE),
+    (ZugPieces.KING, ZugColours.WHITE, ZugColours.BLACK),
+    (ZugPieces.QUEEN, ZugColours.WHITE, ZugColours.WHITE),
+    (ZugPieces.BISHOP, ZugColours.WHITE, ZugColours.BLACK),
+    (ZugPieces.KNIGHT, ZugColours.WHITE, ZugColours.WHITE),
+    (ZugPieces.ROOK, ZugColours.WHITE, ZugColours.BLACK),
 )
 
 @pytest.mark.parametrize(
     'top_row, perspective',
     [
-        (WHITE_PERSPECTIVE_TOP_ROW, ZugPlayers.WHITE),
-        (BLACK_PERSPECTIVE_TOP_ROW, ZugPlayers.BLACK),
+        (WHITE_PERSPECTIVE_TOP_ROW, ZugColours.WHITE),
+        (BLACK_PERSPECTIVE_TOP_ROW, ZugColours.BLACK),
     ]
 )
 def test_ZugBoard_make_string(top_row, perspective):
@@ -55,44 +49,44 @@ def test_ZugBoard_make_string(top_row, perspective):
     [
         (
             chess.ROOK,
-            ZugPieceColours.WHITE,
-            ZugSquareColours.WHITE,
+            ZugColours.WHITE,
+            ZugColours.WHITE,
             Back.GREEN + Fore.WHITE + ZugUnicodePieces.ROOK            
         ),
         (
             chess.BISHOP,
-            ZugPieceColours.WHITE,
-            ZugSquareColours.BLACK,
+            ZugColours.WHITE,
+            ZugColours.BLACK,
             Back.CYAN + Fore.WHITE + ZugUnicodePieces.BISHOP            
         ),
         (
             chess.QUEEN,
-            ZugPieceColours.BLACK,
-            ZugSquareColours.WHITE,
+            ZugColours.BLACK,
+            ZugColours.WHITE,
             Back.GREEN + Fore.BLACK + ZugUnicodePieces.QUEEN            
         ),
         (
             chess.KING,
-            ZugPieceColours.BLACK,
-            ZugSquareColours.BLACK,
+            ZugColours.BLACK,
+            ZugColours.BLACK,
             Back.CYAN + Fore.BLACK + ZugUnicodePieces.KING            
         ),
         (
             chess.ROOK,
-            ZugPieceColours.BLACK,
-            ZugSquareColours.BLACK,
+            ZugColours.BLACK,
+            ZugColours.BLACK,
             Back.CYAN + Fore.BLACK + ZugUnicodePieces.ROOK            
         ),
         (
             chess.PAWN,
-            ZugPieceColours.WHITE,
-            ZugSquareColours.WHITE,
+            ZugColours.WHITE,
+            ZugColours.WHITE,
             Back.GREEN + Fore.WHITE + ZugUnicodePieces.PAWN            
         ),
         (
             None,
-            ZugPieceColours.WHITE,
-            ZugSquareColours.WHITE,
+            ZugColours.WHITE,
+            ZugColours.WHITE,
             Back.GREEN + Fore.WHITE + ' '
         ),
     ]

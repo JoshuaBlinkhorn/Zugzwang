@@ -1,6 +1,8 @@
 import datetime
 from random import randint
 
+from zugzwang.constants import ZugDefaults
+
 class ZugDates():
 
     @classmethod
@@ -24,14 +26,17 @@ class ZugDates():
             cls,
             last_study_date,
             current_due_date,
-            recall_factor,
-            recall_radius
+            recall_factor=ZugDefaults.RECALL_FACTOR,
+            recall_radius=ZugDefaults.RECALL_RADIUS,
+            recall_max=ZugDefaults.RECALL_MAX,
     ):
+        # calculate the diff based on recall factor and radius
         previous_diff = (current_due_date - last_study_date).days
-        diff = previous_diff * recall_factor
-        absolute_recall_date = cls.today() + datetime.timedelta(days=diff)
+        absolute_diff = int(previous_diff * recall_factor)
         offset = randint(-recall_radius, recall_radius)
-        recall_date = absolute_recall_date + datetime.timedelta(days=offset)
-        return recall_date if recall_date >= cls.tomorrow() else cls.tomorrow()
+
+        # impose minimum and maximum values
+        diff = max(1, min(absolute_diff + offset, recall_max))
+        return cls.today() + datetime.timedelta(days=diff)
 
 
