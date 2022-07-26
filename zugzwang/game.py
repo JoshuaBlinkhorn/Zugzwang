@@ -5,33 +5,27 @@ import chess.pgn
 import datetime
 import dataclasses
 import json
-from typing import List
+from typing import List, ClassVar
 
-
-from zugzwang.constants import ZugColours, ZugDefaults
+from zugzwang.constants import ZugColours, ZugDefaults, ZugSolutionStatuses
 from zugzwang.dates import ZugDates
 
-class ZugSolutionStatus():
-    LEARNED = 'LEARNED'
-    UNLEARNED = 'UNLEARNED'
 
-@dataclasses.dataclass
-class ZugRootData():
+class LearningRemainingError(ValueError):
+    pass
+    
 
-    perspective: bool = ZugColours.WHITE
-    last_access: datetime.date = ZugDates.today()
-    learning_remaining: int = ZugDefaults.LEARNING_REMAINING
-    learning_limit: int = ZugDefaults.LEARNING_LIMIT
-    recall_factor: float = ZugDefaults.RECALL_RADIUS
-    recall_radius: float = ZugDefaults.RECALL_FACTOR
-    recall_max: int = ZugDefaults.RECALL_MAX
+class ZugData:
+
+    def __eq__(self, other: ZugData):
+        return all([self.__dict__[key] == other.__dict__[key] for key in self.__dict__])
 
     @classmethod
-    def from_comment(cls, comment: str) -> ZugRootData:
-        # convert ISO date string to datetime.date
-        data_dict = json.loads(comment)
-        data_dict['last_access'] = datetime.date.fromisoformat(data_dict['last_access']) 
-        return ZugRootData(**data_dict)
+    def _get_date_fields(cls):
+        # returns the list of fields of type datetime.date by creating and inspecting
+        # a default class instance
+        fields = cls().__dict__.items()
+        return [key for key, value in fields if isinstance(value, datetime.date)]
 
     @classmethod
     def _json_conversion(cls, value):
@@ -39,55 +33,85 @@ class ZugRootData():
         if isinstance(value, datetime.date):
             return value.isoformat()
         raise TypeError('Cannot serialise python object in JSON.')
-    
-    def make_comment(self) -> str:
+
+    @classmethod
+    def from_json(cls, json_string: str) -> cls:
+        # convert ISO date strings to datetime.date
+        data_dict = json.loads(json_string)
+        for field in cls._get_date_fields():
+            data_dict[field] = datetime.date.fromisoformat(data_dict[field]) 
+        return cls(**data_dict)
+
+    def make_json(self) -> str:
         return json.dumps(self.__dict__, default = self._json_conversion)
+
+    def update(self, update_dict) -> None:
+        self.__dict__.update(update_dict)
+    
+
+class ZugRootData(ZugData):
+    def __init__(
+            self,
+            perspective: bool = ZugColours.WHITE,
+            last_access: datetime.date = None,
+            learning_remaining: int = ZugDefaults.LEARNING_REMAINING,
+            learning_limit: int = ZugDefaults.LEARNING_LIMIT,
+            recall_factor: float = ZugDefaults.RECALL_RADIUS,
+            recall_radius: float = ZugDefaults.RECALL_FACTOR,
+            recall_max: int = ZugDefaults.RECALL_MAX
+    ):
+        self.perspective = perspective
+        self.last_access = ZugDates.today() if last_access is None else last_access
+        self.learning_remaining = learning_remaining
+        self.learning_limit = learning_limit
+        self.recall_factor = recall_factor
+        self.recall_radius = recall_radius
+        self.recall_max = recall_max
+        
+
+class ZugSolutionData(ZugData):
+    def __init__(
+            self,
+            status: str = ZugSolutionStatuses.UNLEARNED,
+            last_study_date: datetime.date = None,
+            due_date: datetime.date = None,
+            successes: int = 0,
+            failures: int = 0,
+    ):
+        self.status = status
+        self.last_study_date = (
+            ZugDates.yesterday() if last_study_date is None else last_study_date
+        )
+        self.due_date = ZugDates.yesterday() if due_date is None else due_date
+        self.successes = successes
+        self.failures = failures        
 
 
 class ZugRoot():
 
     def __init__(self, game: chess.pgn.Game):
-        self._data = ZugRootData.from_comment(game.comment)
+        self._data = ZugRootData.from_json(game.comment)
         self._game = game
 
-    def _reset_solution_data(self):
-        solution_data = ZugSolutionData()
-        for solution in root.solution_nodes():
-            solution.comment = solution_data.make_comment()                
-
-    @classmethod
-    def from_naked_game(cls, game):
-        game.comment = ZugRootData().make_comment()
-        root = ZugRoot(game)
-        root._reset_solution_data()
-        return root
-
     @property
-    def learning_remaining(self):
-        return self._data.learning_remaining
-    
+    def game(self):
+        return self._game
+        
     @property
-    def recall_radius(self):
-        return self._data.recall_radius
-    
-    @property
-    def recall_factor(self):
-        return self._data.recall_factor
-    
-    def reset_training_data(self):
-        new_data = ZugSolutionData(
-            perspective=self._data.perspective,
-        )
-        self._reset_solution_data()
-
+    def data(self):
+        return self._data
+        
     def decrement_learning_remaining(self):
-        self._data.learning_remaining -= 1
+        if self._data.learning_remaining > 0:
+            self._data.learning_remaining -= 1
+        else:
+            raise LearningRemainingError("Cannot decrement zero 'learning_remaining'.")
 
-    def has_new_capacity(self):
+    def has_learning_capacity(self):
         return self._data.learning_remaining > 0
 
-    def update_game_comment(self):
-        self._game.comment = self.data.make_comment()
+    def bind_data_to_comment(self):
+        self._game.comment = self._data.make_json()
 
     def update_learning_remaining(self):
         if self._data.last_access < ZugDates.today():
@@ -119,8 +143,7 @@ class ZugRoot():
                 # work recursively on blunders with reversed perspective
                 blunders = [node for node in node.variations if 2 in node.nags]
                 for blunder in blunders:
-                    search_node(blunder, not solution_perspective)
-                    
+                    search_node(blunder, not solution_perspective)                    
 
         # call it on all children of the root node
         solution_perspective = self._data.perspective                        
@@ -128,84 +151,61 @@ class ZugRoot():
 
         return solutions
 
-
-class ZugSolutionData():
-
-    def __init__(
-            self,
-            status: str = ZugSolutionStatus.UNLEARNED,
-            last_study_date: datetime.date = ZugDates.yesterday(),
-            due_date: datetime.date = ZugDates.yesterday(),
-            successes: int = 0,
-            failures: int = 0,
-    ):
-        self.status = status
-        self.last_study_date = last_study_date
-        self.due_date = due_date
-        self.successes = successes
-        self.failures = failures
-
-    def __eq__(self, other) -> bool:
-        return all(
-            (
-                self.status == other.status,
-                self.last_study_date == other.last_study_date,
-                self.due_date == other.due_date,
-                self.successes == other.successes,
-                self.failures == other.failures,
-            )
-        )
-
+    # TODO: we should probably get all of these out of this class
     @classmethod
-    def from_comment(cls, comment: str):
-        data = comment.split(';')
-        status = data[0].split('=')[1]
-        last_study_date = data[1].split('=')[1]
-        last_study_date = datetime.datetime.strptime(last_study_date, '%d-%m-%Y').date()
-        due_date = data[2].split('=')[1]
-        due_date = datetime.datetime.strptime(due_date, '%d-%m-%Y').date()
-        successes = int(data[3].split('=')[1])
-        failures = int(data[4].split('=')[1])
-        return ZugSolutionData(status, last_study_date, due_date, successes, failures)
+    def from_naked_game(cls, game: chess.pgn.Game, perspective: str):
+        game.comment = ZugRootData(perspective=perspective).make_comment()
+        root = ZugRoot(game)
+        root._set_default_solution_data()
+        return root
+    
+    def _set_default_solution_data(self):
+        solution_data = ZugSolutionData()
+        for solution in self.solution_nodes():
+            solution.comment = solution_data.make_comment()                
 
-    def make_comment(self) -> str:
-        return ';'.join(
-            (
-                f'status={self.status}',
-                f'last_study_date={self.last_study_date.strftime("%d-%m-%Y")}',
-                f'due_date={self.due_date.strftime("%d-%m-%Y")}',
-                f'successes={self.successes}',
-                f'failures={self.failures}'
-            )
-        )
-
-    def update(self, changes):
-        for key, val in changes.items():
-            setattr(self, key, val)
+    def reset_training_data(self):
+        self._data = ZugRootData(perspective=self._data.perspective)
+        self._game.comment = self._data.make_comment()
+        self._reset_solution_data()
 
 
 class ZugSolution():
 
     def __init__(self, node: chess.pgn.ChildNode, root: ZugRoot):
-        self._data = ZugSolutionData.from_comment(node.comment)
+        self._data = ZugSolutionData.from_json(node.comment)
         self._node = node
         self._root = root
 
     @property
-    def node():
+    def data(self):
+        return self._data
+        
+    @property
+    def node(self):
         return self._node
         
-    def update_node_comment(self):
-        self._node.comment = self.data.make_comment()
+    @property
+    def root(self):
+        return self._root
+
+    def is_learned(self):
+        return self._data.status == ZugSolutionStatuses.LEARNED
+        
+    def is_due(self):
+        return self._data.due_date <= ZugDates.today()
+        
+    def bind_data_to_comment(self):
+        self._node.comment = self._data.make_json()
 
     def learned(self):
         self._root.decrement_learning_remaining()
         self._data.update(
             {
-                'status': ZugSolutionStatus.LEARNED,
+                'status': ZugSolutionStatuses.LEARNED,
                 'last_study_date': ZugDates.today(),
                 'due_date': ZugDates.tomorrow(),
-                'successes': self.data.successes + 1,
+                'successes': self._data.successes + 1,
             }
         )
         
@@ -213,12 +213,12 @@ class ZugSolution():
         next_due_date = ZugDates.due_date(
             self._data.last_study_date,
             self._data.due_date,
-            self._root.recall_radius,
-            self._root.recall_factor
+            self._root.data.recall_radius,
+            self._root.data.recall_factor
         )
         self._data.update(
             {
-                'successes': self.data.successes + 1,
+                'successes': self._data.successes + 1,
                 'last_study_date': ZugDates.today(),
                 'due_date': next_due_date,
             }

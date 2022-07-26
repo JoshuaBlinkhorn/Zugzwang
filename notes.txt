@@ -16,10 +16,567 @@ the following upgrades:
    - Card
    - Item, Collection, Category
    - MainMenu, CollectionMenu, CategoryMenu which subclass Menuxo
-
+4) Have a choice of colour schemes, a layer of abstraction between ZugSquareColours,
+   ZugPieceColoours and the Colorama Back.CYAN, Fore.WHITE etc.
+5) Default values (such as new_remaing, new_limit, etc) should be set in config and read
+   on start up
 ~~~~~~~~~~~~~~~~
 2022-06-24 18:52
 
 I'm going to do 2, creating my own board class, and write unit tests
 at the same time.
 So we need a venv.
+
+~~~~~~~~~~~~~~~~
+2022-06-25 23:06
+
+Yesterday, I got the ZugBoard class functioning. It uses a chess.Board by composition,
+allowing the wrapping of chess.Board to be performed outside of the chess library.
+
+I'm going to follow the same design pattern now when wrapping the nodes.
+I'll start with the problem class, as problems have no training data, so it should be
+easier.
+
+The queue architecture looks clunky, perhaps some of the design was chosen due to issues with pickle.
+It should be as simple as possible.
+We work with nodes. There are three kinds of nodes:
+
+1. Root
+2. Problem
+3. Solution
+
+The root has associated metadata
+A solution has associated training data.
+A Problem has no associated data, but may or may not have a corresponding solution.
+
+The root object is created and used during Python execution, the metadata itself is
+translated via the node's comment, which is stored in the PGN.
+Similarly for solutions.
+So these classes are temporary wrappers.
+
+~~~~~~~~~~~~~~~~
+2022-06-26 01:06
+
+Created some infrastructre for the ZugRoot class.
+The next job is to factor out the repeated code in test_ZugRoot.py into fixtures.
+
+~~~~~~~~~~~~~~~~
+2022-07-25 23:06
+
+Did some work with the fixtures.
+I tried refactoring the data classes with an embedded dict in order to use iterables
+to replace the places where we list all the data fields.
+That didn't work so well because you have to process date fields and int fields
+differently whenever you use the iterable.
+Perhaps there is a better solution for this; but let's have a think.
+
+The point of using classes like this is that refactoring should be limited to a single
+class..
+
+~~~~~~~~~~~~~~~~
+2022-07-26 00:58
+
+Spent a long time going round in circles with pytest;
+putting fixtures into conftest.py then taking them out;
+using macros for test values and then erasing them;
+and so on..
+
+What is the lesson to learn here?
+Always have a clear vision of the next step.
+Only move on to the next step when the current basis is capable of accommodating it.
+If you start to go round in circles - stop.
+Have a long break, and figure out what is the root cause of the problem.
+
+Here the root cause was that I was reluctant to put tests for two separate classes
+into a single test file.
+But this was a little irrational.
+The second class is only defined for composition into the first.
+So naturally, the tests and fixtures for the second class belong with those of the first.
+
+I think the code is in a decent state now.
+
+The next steps are:
+1. Implement error handling for the Zug*Data classes for badly formatted strings.
+2. Figure out how these classes will be used, and hence what extra methods they may need
+3. Look into @property and write setter methods for the data class properties.
+
+~~~~~~~~~~~~~~~~
+2022-07-29 23:03
+
+I'm going to write the Queue class.
+
+~~~~~~~~~~~~~~~~
+2022-07-30 10:05
+
+Writing the queue class did not go swimmingly.
+It would have been better to write all of the unit tests for the queue class first.
+That would have defined the class.
+Rather than doing incremental TDD.
+
+~~~~~~~~~~~~~~~~
+2022-07-30 10:05
+
+I believe that _handle_result() is not necessarily the best option.
+The result returned should tell play() whether or not to reinsert, and if so where.
+Perhaps what we need is interpret_result() - or rather result.interpret().
+The distinction is important.
+Probably it should be interpret_result().
+A result should not know anything about a queue.
+How the result should be requeued is really a property of the type of learning,
+or the manner of learning.
+So perhaps the ZugQueue is really a ZugLearningQueue which employs a strategy
+to handle how learning results guide reinsertion.
+
+However, this could also depend on the state of the QueueItem
+(for example Solution status in position-based learning)
+so it's not clear.
+Perhaps the item should handle it's result and instruct the queue where it is to
+be inserted.
+Yes, I think so.
+
+Let's have play return an integer queue position if it's to be reinserted;
+or None otherwise.
+
+~~~~~~~~~~~~~~~~
+2022-07-30 22:55
+
+Next up, I'm going to write a suite of tests for the training position class.
+I think I should stick with the convention of only testing the public functions.
+
+So the point is that I'll test only play().
+ZugTrainingPosition will have a chess.ChildNode as a read-only variable.
+The test should check that its comment is updated correctly.
+
+Right, the test should test the side effect that play() has on the chess.node.
+So that node remains as a private member variable. It is created outside of the tested
+function.
+So it should be created by the test, passed to the item constructor, and its state
+after the function finishes asserted.
+
+Now I have a situation where there are a lot of private member functions mocked out.
+They are all called by the private member function _present().
+Perhaps this suggests that that function should be handled by a separate class.
+
+Yes I think so: ZugTrainingPositionPresenter.
+But let's see how it look without doing that.
+
+~~~~~~~~~~~~~~~~
+2022-07-30 22:55
+
+Factoring out the presenter role into a class has worked perfectly.
+That should be noted, it has really eased the burden of testing the TrainingPosition
+class.
+
+Next, we need to look further at the use of dates and fixtures in the tests.
+In fact, there should really only be two tests now:
+1. the invalid state
+2. the learning phase
+
+So figure out how to handle dates so that it reads well,
+factor out the initial solution data to a fixture
+and add to the parameterisation for the rest of the learning phase cases - there are ony three more.
+
+~~~~~~~~~~~~~~~~
+2022-07-01 22:55
+
+I've finished the implementation of ZugTrainingPosition.
+Added a set of dates that currently cover all circumstances.
+And factored the due date generation logic into a member function.
+These due dates are randomised - so perhaps these tests should be run sufficiently many
+times.
+Or rather, the date generation should be tested.
+And since it's a private function, it should therefore be factored out into a new class.
+This helps to keep classes the right size.
+
+~~~~~~~~~~~~~~~~
+2022-07-02 16:15
+
+Okay, so now we've got all the pieces in shape for the training positions, solution data,
+and queue.
+
+Next, we need to work on the architecture that fills the queue.
+That will be the responsibility of the entry point of training, when selected by
+the user.
+
+Actually, the next thing we should do is test and implement the ZugPresenter class.
+
+~~~~~~~~~~~~~~~~
+2022-07-02 17:50
+
+Good progress with the presenter class.
+The next steps:
+1. Complete the tests for the input and output for non-new
+2. Add the board drawing to _present_front() and _present_back()
+
+~~~~~~~~~~~~~~~~
+2022-07-03 12:50
+
+The presenter class looks good.
+The next stage then is to write the part that operates on a commented PGN.
+
+What do we want to do?
+
+1. Populate the Queue from a commented PGN
+2. Update the solution statuses based on the date
+
+Let's first try to understand how the current code does this.
+
+Invariants:
+
+1. The LEARNING_STAGE_* statuses are only in operation during a training session.
+A training session should be a class.
+It has direct access to a PGN, its training file
+It creates and populates a queue, then calls play on it.
+It is responsible for saving the changes to the PGN.
+
+So it should provide a function .train()
+
+Its constructor should be something like:
+
+ZugTrainingSession(pgn=/path/to/PGN)
+
+Perhaps the first thing we should do is get the solution nodes into a set.
+Bearing in mind that this is specific to position-based training.
+
+So we need a base class TrainingSession and a derived class PositionTrainingSession
+What will the interface to this class look like?
+
+1. Get all of the solution nodes into a set
+2. Update their statuses if necessary:
+   - what constitutes necessity here? perhaps that the last access date is in the past
+   - perhaps we can assume that a training session always leaves the statuses in the
+     correct state. This is basically NEW vs INACTIVE. REVIEW status doesn't change 
+
+Perhaps it's actually simpler if there are only two statuses in the PGN,
+INACTIVE and REVIEW.
+
+We treat the learning phase statuses and training *session* concepts.
+Maybe the training session should be responsible for updating the PGN, not the
+training position item.
+
+This could cause a problem if a session is terminated when a REVIEW card has gone back in to the learning phase..
+Or will it?
+It will just remain in review if it has not been completed
+
+Hmmm, surely we can have the TrainingSession insert the NEW statuses at the point of queue generation.
+
+So a PGN will only ever have INACTIVE and REVIEW written into it anyway;
+unless a training session is allowed to be stopped early.
+In which case it's the session's responsibility to handle the nodes' comments
+and update them accordingly.
+
+So, let walk towards that from the Training Session's interface.
+We first need to get all the solution nodes into a list.
+So let's delegate this to ZugRoot.
+Something we can implement now.
+
+~~~~~~~~~~~~~~~~
+2022-07-03 14:56
+
+It turns out that here is the point where we need to consider the blunders business.
+At least, even if we don't include these into the solution set now, we need to be
+aware that items in the solution set might need to be played from the perspective
+of the opponent.
+This is a nice feature, so we may as well build it in now.
+
+I've produced some PGNs that should capture all the essential cases for 'solution
+collection'
+So now the challenge is to TDD that solution collection.
+I'll start with the most simple case,  a single line.
+It seems that it may be useful adding the perspective to the root data, as this can
+no longer be determined from the solution.
+
+~~~~~~~~~~~~~~~~
+2022-07-03 20:00
+
+Solution collection has gone excellently.
+Now that I have solution collection, I can start to build the TrainingSession class.
+
+But first, a bit of clean up in the ZugRoot tests should be done.
+In particular, a fixture for the root_data should be introduced, and the magic values
+replaced by named constants.
+
+~~~~~~~~~~~~~~~~
+2022-07-03 21:42
+
+I've cleaned up the unit tests.
+So we're all set to go with the TrainingSession class.
+
+I think this should be subclassed from a common base, as Line and Position-based training
+must have common functionality - .train() for example.
+
+I should also think about putting the tests into classes.
+I think this would work nicely, one class per test.
+
+~~~~~~~~~~~~~~~~
+2022-07-06 16:24
+
+Now I've got the best part of an evening to work on the trainer.
+The next thing to do is implement the training session class.
+One big decision is whether the training session should open the PGN, or not.
+And therefore, whether it should be responsible for writing the changes.
+
+I'm not sure.
+I'm thinking not.
+It should just be given the ZugRoot, from which it can do everything.
+
+I tnink the files should be opened by the menus, and saved when the menus exit.
+It makes sense that the item menu is really the item manager.
+So it should have sole responsibility for the file I/O.
+
+So let's go with that.
+
+So what do we expect from the class?
+
+We want to say 'go and train'.
+And tell me when you're done.
+Do we really need anything else from the class?
+Not really.
+
+But someone needs to provide the functionality to determine the statuses of solutions.
+That shouldn't be the job of the training session, as it will need to be done e.g.
+at startup.
+
+So the training session should assume that the Root is in shape when it is given it.
+This makes the class's job much easier to conceive and to test.
+
+ZugRoot should have a method that returns a list of all solutions with a particular status.
+So we can use that within the class to build the queue from the Root.
+Then we just need to call play() on the queue.
+
+It will fill its own queue.
+We should next build the functionality that updates the PGN file - if necessary.
+
+We should house this in a class that represents abstractly the training 'chapter'.
+Chapter can be small (analysis of a few lines stemming from an endgame position)
+or larger (a substantial repertoire in the sicilian).
+A Chapter should be able to:
+
+read the pgn and deliver its ZugRoot
+write a pgn from its ZugRoot
+update the ZugRoot - meaning updating the statuses of all Solution nodes, and the
+metadata. But only if the last access date is before today.
+
+Reading and writing should be indpendent of updating.
+That is, updating should take place on the python objects.
+
+A chapter should do the following:
+1. initialise a ZugRoot from 
+
+~~~~~~~~~~~~~~~~
+2022-07-09 14:56
+
+Making progress with this now, but it has been difficult.
+There have been some ad hoc changes to unit tested classes and their tests,
+along with a departure from TDD.
+
+But the interface offered by ZugChapter, via ZugPositionTrainer, is nearing completion.
+
+Now it would be useful to have a instance method offered by ZugRoot called reset().
+This methods sets all comments to their defaults.
+Then we can open a pgn via Chapter, call reset() on it to populate default comments,
+then save the pgn via. Chapter.save().
+
+From there we can start to see whether we can indeed positionally train a chapter.
+
+~~~~~~~~~~~~~~~~
+2022-07-09 16:18
+
+Now I see what the architecture should look like, at least from Chapter down.
+The Chapter is responsible for saving.
+It looks at the ZugRoot, which lives in a different space, and decides how to set
+the comments on game and the solutions.
+Then it writes the pgn file.
+
+Let's implement this save.
+Then we need to think about whether parts of ZugTrainingPosition should factored into ZugSolution.
+I think so.
+But let's handle saving first.
+
+The essential point is that there are ZugSolutionStatuses (UNLEARNED, LEARNED) and
+ZugTrainingPositionStatuses (NEW, LEARNING_STAGE_*, REVIEW) etc.
+
+It should be clear why there is a difference. TP statuses should be mapped down onto
+solution statuses during saving.
+
+~~~~~~~~~~~~~~~~
+2022-07-09 17:53
+
+Okay, so we have fairly decent interfaces for Chapter and Traininger, which
+is subclassed by PositionTrainer.
+
+Now we need to work downwards.
+
+~~~~~~~~~~~~~~~~
+2022-07-15 18:38
+
+Looking at the code now, we need to add unit tests for the classes which have been
+refactored.
+
+Then, when this is done is the nicest possible way, create some actual chapters.
+In fact, create some collection, categories, chapters.
+One for a set of endgames, another based on the PGNs I must have for openings;
+Grunfeld would be a good example, to see how the setup reacts to a large
+
+~~~~~~~~~~~~~~~~
+2022-07-25 09:43
+
+The unit tests for the dates class have been completed.
+Now we need to put similar unit tests in place for the other classes.
+
+~~~~~~~~~~~~~~~~
+2022-07-25 14:00
+
+I've used json serialisation and dataclasses to significantly simplify the
+implementation of ZugRootData.
+The next stage then is to apply the same treatment to ZugSolutionData.
+This shouldn't take more than an hour.
+
+It took forty minutes.
+I've put the common logic of the two dataclasses into a base class.
+All that is defined in the derived classes is the fields.
+
+~~~~~~~~~~~~~~~~
+2022-07-25 14:40
+
+Now we'll look at the ZugRoot class.
+It's probably not a good idea to have the ZugRoot class responsible for updating the
+comments of the solution nodes.
+That should be undertaken by the chapter, which has access to the ZugSolution.
+
+~~~~~~~~~~~~~~~~
+2022-07-25 20:11
+
+Some bugs to fix with the from_json methods.
+The big issue was that I was using a call to a function as a defualt function
+parameter, in this case the function was the class constructor.
+
+~~~~~~~~~~~~~~~~
+2022-07-26 07:40
+
+Where are we at?
+We're still in the realm of game.py and its unit tests.
+There are some parts of ZugRoot that I think don't belong there, so let's delay
+that refactoring until we come to ZugChapter.
+For now, let's close off the unit tests for the parts that we know belong in ZugRoot.
+First question, why is the equality of Data classes failing?
+Solved - it wasn't picking up the date fields correctly.
+
+We could probably go back to dataclasses there now, but all we would save would be
+the implementation of __eq__, so let's leave it at that.
+
+~~~~~~~~~~~~~~~~
+2022-07-26 07:50
+
+Is there any sense in avoiding default values in the tests?
+Perhaps there is.
+If we use default values, and constructors like ClassName(), then we're not
+testing the initialisation of objects.
+But it would feel much neater if we didn't need to specify these values in the tests.
+
+Perhaps this is pedantry and wanting to impose a niceness that is unnecessary.
+We need to test with concrete values.
+It is probably sensible to avoid the defaults, in case the defaults are somehow
+used accidentally instead of the initialised values.
+That would be a horrible bug to trace.
+So let's stick with it.
+
+~~~~~~~~~~~~~~~~
+2022-07-26 07:50
+
+Okay, in the interests of moving forward, I'm going to leave the game unit tests as they
+are for now, and revisit them in the afternoon.
+
+I think what's needed is:
+
+1) A structure of fixtures that links a root and a solution, with appropriate data for
+each, attached to the comments of the chess nodes.
+2) Tests for the defaults:
+   tests for the default constructors of ZugRootData and ZugSolutionData
+   tests for the default values themselves, i.e. ZugDefaults
+
+~~~~~~~~~~~~~~~~
+2022-07-26 11:05
+
+It seems that the ZugChapter class is quite hard to unit test.
+Does it really need unit testing?
+Perhaps a very simple test that is merely for coverage.
+But again, we can come back to that.
+
+So what is next?
+The ZugQueue and ZugTrainer classes.
+
+~~~~~~~~~~~~~~~~
+2022-07-26 11:57
+
+What we have learned in the last hour is:
+
+1) most of the work unit testing ZugQueue, ZugQueueItem, ZugTrainingPosition
+and ZugTrainingPositionPresenter have already been done.
+2) we should get a working piece of software going, that I can install in a python venv
+   it just looks for a chapters folder and cycles through the chapeter,
+   training each.
+
+Let's try to get this in place by the end of the day.
+
+~~~~~~~~~~~~~~~~
+2022-07-26 13:12
+
+This afternoon:
+Create an installation of zugzwang; i.e. clone the repository somewhere else.
+Locate those grunfeld PGNs, put some of them in the categories folder.
+Hopefully then the trainig will progress through those, and we can test what happens.
+We should add some basic formatting to the presenter.
+That should be very easy, we have all of this already in the old code.
+
+~~~~~~~~~~~~~~~~
+2022-07-26 15:00
+
+Just three hours remaining.
+So let's start by creating a some easy graphics.
+
+~~~~~~~~~~~~~~~~
+2022-07-26 15:00
+
+Looking good, so let's get the menus up and running.
+Then we'll have to get the pause signal into the training somehow.
+But that can wait.
+
+I think the menu should read:
+
+ID COV. (*) NAME              NEW DUE LEARNED TOTAL
+
+~~~~~~~~~~~~~~~~
+2022-07-26 18:00
+
+So, we have a hastily built Collection, Category, structure with some ZugStats class.
+This appears to propagate and collect the stats quite quickly.
+Let's see next whether it works on all the Grunfeld openings.
+
+But that's for tomorrow.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

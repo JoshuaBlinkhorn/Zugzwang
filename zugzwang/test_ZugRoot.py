@@ -22,17 +22,6 @@ REVIEW = 150
 INACTIVE = 50
 
 @pytest.fixture
-def root_data():
-    return ZugRootData(
-        perspective = ZugColours.WHITE,
-        last_access = TODAY,
-        new_remaining = NEW_REMAINING,
-        new_limit = NEW_LIMIT,
-        review = REVIEW,
-        inactive = INACTIVE,
-    )
-
-@pytest.fixture
 def root_data_white_perspective(root_data):
     return root_data
 
