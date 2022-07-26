@@ -3,22 +3,24 @@ import unittest
 import mock
 import datetime
 import chess.pgn
+from conftest import epoch_shift
 
-from zugzwang import (
-    ZugQueue,    
+from zugzwang.queue import (
+    ZugQueue,
     ZugQueueItem,
     ZugTrainingPosition,
-    ZugTrainingPositionPresenter,    
+    ZugTrainingPositionPresenter,
+)
+from zugzwang.game import (
     ZugSolutionData,
     ZugSolutionStatuses,
-    ZugSolutionStatusError,
 )
 
-TODAY = datetime.date.today()
-YESTERDAY = TODAY - datetime.timedelta(days=1)
-TOMORROW = TODAY + datetime.timedelta(days=1)
-PAST_EPOCH = TODAY - datetime.timedelta(days=1000)
-FUTURE_EPOCH = TODAY + datetime.timedelta(days=1000)
+TODAY = epoch_shift(0)
+YESTERDAY = epoch_shift(-1)
+TOMORROW = epoch_shift(1)
+PAST_EPOCH = epoch_shift(-1000)
+FUTURE_EPOCH = epoch_shift(1000)
 
 FAILURES = 5
 SUCCESSES = 5
@@ -58,7 +60,7 @@ def testZugTrainingPosition_play_solution_status_inactive(solution_node):
     )
     solution_node.comment = solution_data.make_comment()
 
-    with pytest.raises(ZugSolutionStatusError):    
+    with pytest.raises(Exception):
         ZugTrainingPosition(solution_node)
     
 

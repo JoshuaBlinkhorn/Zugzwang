@@ -1,3 +1,5 @@
+# Python's workaround to annotate method's return type as enclosing class
+from __future__ import annotations  
 ##########################
 # chessic -- version 2.0 #
 # chess position trainer #
@@ -46,7 +48,10 @@ from random import randint
 from typing import Union, List
 
 from zugzwang.dates import ZugDates
-
+from zugzwang.game import ZugRoot, ZugRootData, ZugSolution, ZugSolutionData
+from zugzwang.chapter import ZugChapter
+from zugzwang.training import ZugPositionTrainer
+from zugzwang.navigation import MainMenu
 #############
 # constants #
 #############
@@ -154,232 +159,6 @@ def print_turn(board) :
         print("WHITE to play.")
     else :
         print("BLACK to play.")
-
-
-class ZugQueueItem():
-
-    def play(self) -> Union[int, None]:
-        return self._interpret_result(self._present())
-
-    def _present(self) -> str:
-        pass
-
-    def _interpret_result(self, result: str) -> Union[int,None]:
-        pass
-
-
-class ZugTrainingPositionPresenter():
-
-    SUCCESS = True
-    FAILURE = False
-
-    def __init__(self, solution_node: chess.pgn.ChildNode):
-        self._status = ZugSolutionData.from_comment(solution_node.comment).status
-        self._front = ZugBoard(solution_node.parent.board())
-        self._back = ZugBoard(solution_node.board())
-        self._perspective = self._back.perspective
-        
-    
-    def present(self):
-        self._present_front()
-        return self._present_back()
-
-    def _present_front(self):
-        board = self._front.make_string(self._perspective)
-        print(board)
-        while not self._pause():
-            print(board)
-
-    def _present_back(self):
-        is_new = self._status == ZugSolutionStatuses.NEW
-        return self._present_back_new() if is_new else self._present_back_non_new()
-    
-    def _present_back_new(self):
-        board = self._back.make_string(self._perspective)
-        print(board)
-        while not self._pause():
-            print(board)
-        return self.SUCCESS
-            
-    def _present_back_non_new(self):
-        board = self._back.make_string(self._perspective)
-        print(board)
-        result = self._interpret_user_input()
-        while result is None:
-            print(board)
-            result = self._interpret_user_input()            
-        return result
-
-    @classmethod
-    def _get_user_input(cls):
-        return input(':')
-
-    @classmethod
-    def _pause(cls):
-        return cls._get_user_input() == ''
-
-    @classmethod
-    def _interpret_user_input(cls):
-        accepted_input = {
-            '': cls.SUCCESS,
-            'h': cls.FAILURE,             
-        }
-        return accepted_input.get(cls._get_user_input(), None)
-
-    
-class ZugTrainingPosition(ZugQueueItem):
-
-    # return values for public method .play()
-    REINSERT = True
-    DISCARD = False
-
-    _RECALL_FACTOR = 2 # inverse ratio of consecutive absolute recall dates
-    _RECALL_RADIUS = 3 # maximum distance from absolute recall date
-
-    def __init__(self, solution: ZugSolution, status: ZugTrainingStatus):
-        self._solution = solution
-        self._status = status
-
-    @property
-    def solution(self):
-        return self._solution
-        
-    def _present(self):
-        return ZugTrainingPositionPresenter(solution.node).present()        
-            
-    def _interpret_result(self, result):
-        if (self._status == ZugTrainingStatus.NEW and
-            result == ZugTrainingPositionPresenter.SUCCESS):
-            self._status = ZugTrainingStatus.LEARNING_STAGE_1
-            return ZugQueue.REINSERT
-        if (self._status ==ZugTrainingStatus.LEARNING_STAGE_1 and
-            result == ZugTrainingPositionPresenter.SUCCESS):
-            self._status = ZugTrainingStatus.LEARNING_STAGE_2
-            return ZugQueue.REINSERT
-        if (self._status == ZugTrainingStatus.LEARNING_STAGE_1
-            and result == ZugTrainingPositionPresenter.FAILURE):
-            self._status = ZugTrainingStatus.LEARNING_STAGE_1
-            return ZugQueue.REINSERT
-        if (self._status == ZugTrainingStatus.LEARNING_STAGE_2 and
-            ZugTrainingPositionPresenter.SUCCESS):
-            self._solution.learned()
-            return ZugQueue.DISCARD
-        if (self._status == ZugTrainingStatus.LEARNING_STAGE_2 and
-            result == ZugTrainingPositionPresenter.FAILURE):
-            self._status = ZugTrainingStatus.LEARNING_STAGE_1
-            return ZugQueue.REINSERT
-        if (self._status == ZugTrainingStatus.REVIEW and
-            result == ZugTrainingPositionPresenter.FAILURE):
-            self._status = ZugTrainingStatus.LEARNING_STAGE_1
-            self._solution.forgotten()
-            return ZugQueue.REINSERT
-        if (self._status == ZugTrainingStatus.REVIEW and
-            result == ZugTrainingPositionPresenter.SUCCESS):
-            self._solution.recalled()
-            return ZugQueue.DISCARD
-
-
-class ZugQueue():
-
-    REINSERT = True
-    DISCARD = False
-
-    _REINSERTION_INDEX = 3
-    
-    def __init__(self):
-        self._queue = []
-
-    @property
-    def queue(self):
-        return self._queue
-
-    def insert(
-            self,
-            item: ZugQueueItem,
-            index: Union[int,None]=None
-    ):
-        if index is not None:
-            self._queue.insert(index, item)
-        else:
-            self._queue.append(item)
-
-    def play(self) -> None:
-        while self._queue:
-            item = self._queue.pop(0)
-            if item.play() == self.REINSERT:
-                self.insert(item, self._REINSERTION_INDEX)
-
-
-class ZugChapter():
-    
-    def __init__(self, pgn_filepath: str):
-        with open(pgn_filepath) as pgn_file:
-            game = chess.pgn.read_game(pgn_file)                
-        self._pgn_filepath = pgn_filepath
-        self._root = ZugRoot(game)
-        self._solutions = [ZugSolution(node, root) for node in self._root.solution_nodes()]
-
-    @property
-    def root(self):
-        return self._root
-        
-    @property
-    def solutions(self):
-        return self._solutions
-
-    @property
-    def learning_remaining(self):
-        return self._root.learning_remaining
-        
-    def save(self):
-        self._root.update_game_comment()
-        for solution in self._solutions:
-            solution.update_node_comment()
-        print(self._root.game, file=open(self._pgn_filepath, 'w'))
-
-
-class ZugTrainer():
-    
-    def __init__(self, chapter: ZugChapter):
-        self._chapter = chapter
-        self._queue = ZugQueue()
-
-    def _fill_queue(self):
-        pass
-        
-    def train(self):
-        self._fill_queue()
-        self._queue.play()
-
-
-class ZugPositionTrainer(ZugTrainer):
-    
-    def _fill_queue(self):
-        learning_remaining = self._chapter.learning_remaining
-        for solution in self._chapter.solutions:
-            if (not solution.is_learned()) and new_capacity > 0:
-                self._queue.insert(
-                    ZugTrainingPosition(solution, ZugTrainingStatuses.NEW)
-                )
-                learning_remaining -= 1
-                continue
-            if solution.is_learned() and solution.is_due():
-                self._queue.insert(
-                    ZugTrainingPosition(solution, ZugTrainingStatuses.REVIEW)
-                )
-                continue
-
-
-class ZugLineTrainer():
-
-    def _fill_queue(self):
-        for line in _get_lines():
-            self._queue.insert(line)
-
-    def _get_lines(self):
-        return []
-    
-        
 # prints repertoire moves for the given node
 def print_moves(node) :
     if (node.player_to_move) :
@@ -1059,5 +838,5 @@ def handle_card_result(result,card,queue,pgn) :
 
 #backup_collections()
 if __name__ == '__main__':
-    main_menu()
-
+    collections_dir_path = '/Users/joshuablinkhorn/Chess/Zugzwang/Collections'
+    MainMenu(collections_dir_path).display()

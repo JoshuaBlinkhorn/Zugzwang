@@ -5,12 +5,16 @@ class ZugColours():
     BLACK = False
     
 
-class ZugTrainingStatus():
+class ZugTrainingStatuses():
     NEW = 'NEW'
     LEARNING_STAGE_1 = 'LEARNING_STAGE_1'
     LEARNING_STAGE_2 = 'LEARNING_STAGE_2'
     REVIEW = 'REVIEW'
 
+
+class ZugSolutionStatuses():
+    LEARNED = 'LEARNED'
+    UNLEARNED = 'UNLEARNED'
 
 class ZugPieces():
     KING = chess.KING

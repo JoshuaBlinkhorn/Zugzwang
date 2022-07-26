@@ -17,7 +17,6 @@ class ZugBoard():
 
     def __init__(self, board: chess.Board):
         self._board = board
-        self.perspective = board.turn # not sure why this is public
 
     PIECE_TYPE_TO_UNICODE = {
         ZugPieces.KING: ZugUnicodePieces.KING,
@@ -75,7 +74,7 @@ class ZugBoard():
         else:
             return lambda row, col: (row * 8) + (7 - col)
                 
-    def make_string(self, perspective):
+    def make_string(self, perspective: bool):
         square_index_by_row_and_col = self._square_index_by_row_and_col(perspective)
         string = ''
         for row in range(8):
