@@ -1,4 +1,4 @@
-from zugzwang.queue import ZugQueue, ZugTrainingPosition
+from zugzwang.queue import ZugQueue, ZugTrainingPosition, ZugTrainingLine
 from zugzwang.chapter import ZugChapter
 from zugzwang.constants import ZugTrainingStatuses
 
@@ -14,6 +14,7 @@ class ZugTrainer():
     def train(self):
         self._fill_queue()
         self._queue.play()
+        self._chapter.update_stats()
         self._chapter.save()
 
 
@@ -35,13 +36,13 @@ class ZugPositionTrainer(ZugTrainer):
                 continue
 
 
-class ZugLineTrainer():
+class ZugLineTrainer(ZugTrainer):
 
     def _fill_queue(self):
-        for line in _get_lines():
+        for line in self._get_lines():
             self._queue.insert(line)
 
     def _get_lines(self):
-        return []
+        return [ZugTrainingLine(self._chapter.root.game)]
     
         

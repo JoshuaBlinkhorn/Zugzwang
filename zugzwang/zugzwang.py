@@ -51,7 +51,10 @@ from zugzwang.dates import ZugDates
 from zugzwang.game import ZugRoot, ZugRootData, ZugSolution, ZugSolutionData
 from zugzwang.chapter import ZugChapter
 from zugzwang.training import ZugPositionTrainer
-from zugzwang.navigation import MainMenu
+from zugzwang.menu import ZugMainMenu, ZugCollectionMenu
+from zugzwang.data import ZugUserData
+
+
 #############
 # constants #
 #############
@@ -839,4 +842,5 @@ def handle_card_result(result,card,queue,pgn) :
 #backup_collections()
 if __name__ == '__main__':
     collections_dir_path = '/Users/joshuablinkhorn/Chess/Zugzwang/Collections'
-    MainMenu(collections_dir_path).display()
+    user_data = ZugUserData(collections_dir_path)
+    ZugMainMenu(user_data).display()

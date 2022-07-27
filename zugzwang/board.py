@@ -85,5 +85,6 @@ class ZugBoard():
                 piece_type = piece.piece_type if piece else None
                 piece_colour = piece.color if piece else ZugColours.WHITE
                 string += self._render_square(piece_type, piece_colour, square_colour)
+                string += ' '
             string += self._render_newline()
         return string
