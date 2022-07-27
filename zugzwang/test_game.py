@@ -530,3 +530,30 @@ class TestZugSolution():
         assert solution.data.successes == SUCCESSES
         assert solution.data.failures == FAILURES + 1                      
     
+class TestZugRootLines():
+
+    @pytest.mark.parametrize(
+        'pgn_filepath',
+        ['TestPGNs/linear.pgn','TestPGNs/linear-hanging-problem.pgn']
+    )
+    def test_linear(
+            self,
+            root_data_black_perspective,
+            pgn_filepath,
+    ):
+        # tests a PGN with no branching and five solutions, ending with or without
+        # a 'hanging problem'; i.e. a problem that is not followed by a solution
+        with open(pgn_filepath) as pgn_file:
+            game = chess.pgn.read_game(pgn_file)
+        game.comment = root_data_black_perspective.make_json()
+        root = ZugRoot(game)
+
+        line = []
+        mainline = game.mainline() 
+        for _, node in zip(range(10), game.mainline()):
+            line.append(node)
+
+        expected_lines = [line]            
+
+        import pdb; pdb.set_trace()
+        assert root.lines() == expected_lines

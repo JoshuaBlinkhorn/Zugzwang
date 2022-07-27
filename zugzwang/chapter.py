@@ -23,7 +23,7 @@ class ZugChapter():
             if solution.is_learned():
                 stats.learned += 1
             stats.total += 1
-        stats.new = min(stats.new, self._root.data.learning_limit)
+        stats.new = min(stats.new, self._root.data.learning_remaining)
         return stats
     
     def __init__(self, chp_filepath: str):
@@ -37,6 +37,9 @@ class ZugChapter():
             solution_node.comment = self._to_curly_braces(solution_node.comment)
             self._solutions.append(ZugSolution(solution_node, self._root))
         self.stats = self._get_stats()
+        self.name = chp_filepath.split('/')[-1][:-4]
+        self.category = chp_filepath.split('/')[-2]        
+        self.collection = chp_filepath.split('/')[-3]
 
     @property
     def root(self):
@@ -45,6 +48,9 @@ class ZugChapter():
     @property
     def solutions(self):
         return self._solutions
+
+    def update_stats(self):
+        self.stats = self._get_stats()
 
     def save(self):
         # prepare for writing

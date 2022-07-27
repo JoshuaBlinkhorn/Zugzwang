@@ -151,6 +151,15 @@ class ZugRoot():
 
         return solutions
 
+    def lines(self) -> List[chess.Board]:
+        # handling only the linear case
+        line = []
+        for node in self._game.mainline():
+            line.append(node)
+        return [line]
+
+
+
     # TODO: we should probably get all of these out of this class
     @classmethod
     def from_naked_game(cls, game: chess.pgn.Game, perspective: str):
@@ -193,7 +202,7 @@ class ZugSolution():
         return self._data.status == ZugSolutionStatuses.LEARNED
         
     def is_due(self):
-        return self._data.due_date <= ZugDates.today()
+        return self.is_learned() and self._data.due_date <= ZugDates.today()
         
     def bind_data_to_comment(self):
         self._node.comment = self._data.make_json()
