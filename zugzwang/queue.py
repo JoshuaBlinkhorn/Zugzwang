@@ -97,7 +97,7 @@ class ZugTrainingLinePresenter():
         accepted_input = {
             '': ZugQueueItem.SUCCESS,
             'f': ZugQueueItem.FAILURE,
-            'b': ZugQueueItem.QUIT,            
+            'q': ZugQueueItem.QUIT,
         }
         return accepted_input.get(self._get_user_input(), None)
 
@@ -151,7 +151,14 @@ class ZugTrainingPosition(ZugQueueItem):
             ZugTrainingStatuses.LEARNING_STAGE_2: ZugTrainingStatuses.REVIEW,
             ZugTrainingStatuses.REVIEW: ZugTrainingStatuses.REVIEW,             
         }
+        actions = {
+            ZugTrainingStatuses.NEW: lambda: None,
+            ZugTrainingStatuses.LEARNING_STAGE_1: lambda: None,
+            ZugTrainingStatuses.LEARNING_STAGE_2: self._solution.learned,
+            ZugTrainingStatuses.REVIEW: self._solution.recalled,  
+        }
         self._status = statuses.get(self._status)
+        actions.get(self._status).__call__()
         return directives.get(self._status)
 
     def _on_failure(self):
@@ -160,9 +167,15 @@ class ZugTrainingPosition(ZugQueueItem):
             ZugTrainingStatuses.LEARNING_STAGE_2: ZugQueue.REINSERT,
             ZugTrainingStatuses.REVIEW: ZugQueue.REINSERT,
         }
+        actions = {
+            ZugTrainingStatuses.LEARNING_STAGE_1: lambda: None,
+            ZugTrainingStatuses.LEARNING_STAGE_2: lambda: None,
+            ZugTrainingStatuses.REVIEW: self._solution.forgotten,             
+        }
         self._status = ZugTrainingStatuses.LEARNING_STAGE_1
+        actions.get(self._status).__call__()        
         return directives.get(self._status)
-    
+
 
 class ZugTrainingPositionPresenter():
 
@@ -203,13 +216,13 @@ class ZugTrainingPositionPresenter():
         if self._status == ZugTrainingStatuses.NEW:
             accepted_input = {
                 '': ZugQueueItem.SUCCESS,
-                'b': ZugQueueItem.QUIT,
+                'q': ZugQueueItem.QUIT,
             }
         else:
             accepted_input = {
                 '': ZugQueueItem.SUCCESS,
                 'f': ZugQueueItem.FAILURE,
-                'b': ZugQueueItem.QUIT,                
+                'q': ZugQueueItem.QUIT,                
             }
         return accepted_input.get(self._get_user_input(), None)
 

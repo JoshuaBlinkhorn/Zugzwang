@@ -637,6 +637,48 @@ It might be worthwhile if we want to introduce new features.
 
 Let's start with getting the game unit tests to work with .chp rather than .pgn
 
+~~~~~~~~~~~~~~~~
+2022-07-27 15:22
+
+The game.py unit tests are in shape now.
+I've also added a margin to the board so it looks much better now.
+What to do with the remainder of the day?
+I think we should look at the queue.py unit tests.
+We should start with the presenter classes.
+
+~~~~~~~~~~~~~~~~
+2022-07-27 16:43
+
+The presenter classes have been unit tested, everything is passing and it looks okay.
+Now we'll move on to the queue item classes.
+Probably we won't get these done today.
+So let's make a start and see whether we can understand what good unit testing looks like
+
+~~~~~~~~~~~~~~~~
+2022-07-27 18:00
+
+Done, it's clear what the unit tests should look like.
+It must be good, the test body and the parametristions are considerably simpler than
+they were before.
+
+Next thing to do:
+create the ZugTrainingPositions for the remaining cases:
+learning_phase_success
+learning_phase_failure
+reiew_phase_success
+
+These could be factored into a single test, by parametrising the expected ZugSolution
+method that should be called.
+Then having 'for method in method if method is not expected_method: method.assert_not_called'
+
+This might be a way forward.
+
+
+
+
+
+
+
 
 
 

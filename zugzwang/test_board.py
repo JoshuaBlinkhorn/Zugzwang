@@ -40,8 +40,9 @@ def test_ZugBoard_make_string(top_row, perspective):
         prefix += ZugBoard._render_square(
             piece_type, piece_colour, square_colour
         )
+        prefix += ' '
     prefix += ZugBoard._render_newline()
-    assert ZugBoard(chess.Board()).make_string(perspective).startswith(prefix)
+    assert ZugBoard(chess.Board()).make_string(perspective, margin=0).startswith(prefix)
 
 
 @pytest.mark.parametrize(
