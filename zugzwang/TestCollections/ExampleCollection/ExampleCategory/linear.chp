@@ -1,0 +1,10 @@
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[ECO "C55"]
+
+{ ["perspective": false, "last_access": "2022-07-28", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 3, "recall_radius": 2, "recall_max": 365] } 1. e4 e5 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } 2. Nf3 Nc6 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } 3. d4 exd4 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } 4. Bc4 Nf6 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } 5. e5 d5 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } *

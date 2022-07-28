@@ -1,13 +1,10 @@
 import chess
-from typing import Optional
+from typing import Optional, List
 
 from zugzwang.game import ZugSolution, ZugSolutionData
 from zugzwang.board import ZugBoard
 from zugzwang.constants import ZugTrainingStatuses
 
-class ZugQueueInterrupt(Exception):
-    pass
-    
 class ZugQueueItem():
     SUCCESS = 0
     FAILURE = 1
@@ -36,7 +33,7 @@ class ZugQueueItem():
 
 class ZugTrainingLine(ZugQueueItem):
 
-    def __init__(self, line: chess.pgn.Game):
+    def __init__(self, line: List[chess.pgn.GameNode]):
         self._line = line
 
     def _present(self):
@@ -48,11 +45,11 @@ class ZugTrainingLinePresenter():
 
     def __init__(
             self,
-            line: chess.pgn.Game,
+            line: List[chess.pgn.GameNode],
     ):
-        self._game = line
-        self._perspective = line.variations[0].board().turn
-
+        self._line = line
+        self._perspective = line[0].board().turn
+    
     def present(self):
         node = self._game
         result = self._present_pair(node)
@@ -65,19 +62,26 @@ class ZugTrainingLinePresenter():
                 return ZugQueueItem.FAILURE
             node = node.variations[0].variations[0]
 
-    def _present_pair(self, node):
-        self._present_front(node)
-        while not self._pause():
-            self._present_front()
-        node = node.variations[0]
-        result = self._present_back(node)
-        while result is None:
-            result = self._present_back(node)
+    def present(self):
+        for problem, solution in zip(self._line[::2], self._line[1::2]):
+            result = self._present_pair(problem, solution)
+            if result != ZugQueueItem.SUCCESS:
+                break
         return result
+
+    def _present_pair(self, problem, solution):
+        self._present_front(problem)        
+        while not self._pause():
+            self._present_front(problem)
+        result = self._present_back(solution)
+        while result is None:
+            result = self._present_back(solution)
+        return result
+        
 
     def _present_front(self, node):
         board = ZugBoard(node.board()).make_string(self._perspective)
-        self._clear_screen()        
+        self._clear_screen()
         self._print_synopsis()
         print(board)
         self._prompt_front()
@@ -98,7 +102,7 @@ class ZugTrainingLinePresenter():
         return accepted_input.get(self._get_user_input(), None)
 
     def _print_synopsis(self):
-        print("Your turn")
+        print("Your turn\n")
 
     def _prompt_front(self):
         print("Look at the position, then hit enter to see the solution\n")
