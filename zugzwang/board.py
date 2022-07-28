@@ -74,10 +74,11 @@ class ZugBoard():
         else:
             return lambda row, col: (row * 8) + (7 - col)
                 
-    def make_string(self, perspective: bool):
+    def make_string(self, perspective: bool, margin=20):
         square_index_by_row_and_col = self._square_index_by_row_and_col(perspective)
         string = ''
         for row in range(8):
+            string += ' ' * margin
             for col in range(8):
                 square_index = square_index_by_row_and_col(row, col)
                 square_colour = self._square_colour(square_index)
@@ -88,3 +89,9 @@ class ZugBoard():
                 string += ' '
             string += self._render_newline()
         return string
+
+    def make_string_with_margin(self, perspective: bool, margin_width=10):
+        margin = '' * margin_width
+        board = self.make_string(perspective)
+        return (margin + board.replace('\n','\n' + margin))[:-margin_width]
+

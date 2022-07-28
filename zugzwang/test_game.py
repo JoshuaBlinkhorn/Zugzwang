@@ -275,7 +275,7 @@ class TestZugRootSolutionNodes():
         root = ZugChapter(chp_filepath).root
         game = root.game
         
-        node = root.game
+        node = game
         expected_solution_nodes = []
         for _ in range(5):
             node = node.variations[0]
@@ -641,13 +641,7 @@ class TestZugSolution():
         assert solution.data.failures == FAILURES                        
 
     def test_recalled(self, solution, monkeypatch):
-        def mock_due_date(
-                last_study_date,
-                current_due_date,
-                recall_factor=None,
-                recall_radius=None,
-                recall_max=None
-        ):
+        def mock_due_date(*args, **kwargs):
             return epoch_shift(10)
         monkeypatch.setattr(ZugDates, 'due_date', mock_due_date)
         
