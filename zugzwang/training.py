@@ -43,6 +43,6 @@ class ZugLineTrainer(ZugTrainer):
             self._queue.insert(line)
 
     def _get_lines(self):
-        return [ZugTrainingLine(self._chapter.root.game)]
+        return [ZugTrainingLine(line) for line in self._chapter.root.lines()]
     
         

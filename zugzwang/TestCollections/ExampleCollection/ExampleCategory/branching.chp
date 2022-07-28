@@ -1,0 +1,9 @@
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+
+{ ["perspective": false, "last_access": "2022-07-28", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 3, "recall_radius": 2, "recall_max": 365] } 1. e4 ( 1. c4 Nf6 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } 2. d4 ( 2. Nf3 c5 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } ) 2... d5 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } ) 1... e5 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } 2. Nf3 ( 2. d4 exd4 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } ) 2... Nc6 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } *

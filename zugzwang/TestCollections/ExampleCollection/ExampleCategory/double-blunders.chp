@@ -1,0 +1,11 @@
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[FEN "4k3/7R/8/3KP3/8/8/8/4r3 b - - 0 1"]
+[SetUp "1"]
+
+{ ["perspective": false, "last_access": "2022-07-28", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 3, "recall_radius": 2, "recall_max": 365] } 1... Re2 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } ( 1... Rd1+ $2 2. Ke6 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } 2... Kd8 3. Rh8+ $2 Kc7 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } 4. Kf7 ( 4. Re8 Rh1 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } ) 4... Re1 { ["status": "UNLEARNED", "last_study_date": "2022-07-27", "due_date": "2022-07-27", "successes": 0, "failures": 0] } ) 2. Ke6 *

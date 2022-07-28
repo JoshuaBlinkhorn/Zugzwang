@@ -593,6 +593,54 @@ I'm quite certain a line should just be a list of nodes.
 We won't record any outcomes of line-based training at this stage.
 But having access to the nodes seems sensible.
 
+~~~~~~~~~~~~~~~~
+2022-07-27 09:22
+
+I've written code for the line generation.
+It was similar to the recursive algorithm for solution collection.
+It passes the first linear tests.
+Now I need to write the tests for the more complex PGNs and hope to see it passing.
+
+~~~~~~~~~~~~~~~~
+2022-07-27 11:22
+
+All test for ZugRoot.lines() written and passed.
+Now we need to rewrite the code from ZugLineTrainer onwards.
+This should not be difficult, but we should pay attention to the presenter.
+Why not have a default presenter implementation that displays every position in the line.
+When we can check that the lines and queue are correct with integration testing.
+
+Thereafter, work on the presenter and training item.
+
+~~~~~~~~~~~~~~~~
+2022-07-27 12:02
+
+The default implementation is already excellent.
+Let's add logic that allows to give a verdict of failure after each solution.
+Then with the default QueueItem logic, that line should be reinserted into the queue.
+And that's it for now.
+
+~~~~~~~~~~~~~~~~
+2022-07-27 12:20
+
+Implemented.
+So that's the morning's work done.
+Time to decide on how to proceed from here.
+
+Probably the way forward is to try to complete the unit testing, one module at a time.
+We should try to do this without meeting the urge to refactor.
+There may be grounds to restructure the design here and there, for example to
+factor ZugRoot.solution_nodes() into ZugPositionTrainer, and ZugRoot.lines()
+into ZugLineTrainer().
+But there is no need to do that now - the software works.
+It might be worthwhile if we want to introduce new features.
+
+Let's start with getting the game unit tests to work with .chp rather than .pgn
+
+
+
+
+
 
 
 
