@@ -41,8 +41,8 @@ class ZugBoard():
         return cls.PIECE_COLOUR_TO_FORE.get(piece_colour)
         
     SQUARE_COLOUR_TO_BACK = {
-        ZugColours.WHITE: Back.GREEN,
-        ZugColours.BLACK: Back.CYAN,
+        ZugColours.WHITE: Back.CYAN,
+        ZugColours.BLACK: Back.GREEN,
     }
 
     @classmethod

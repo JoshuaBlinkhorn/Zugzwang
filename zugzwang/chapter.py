@@ -32,6 +32,7 @@ class ZugChapter():
         game.comment = self._to_curly_braces(game.comment)
         self._chp_filepath = chp_filepath
         self._root = ZugRoot(game)
+        self._root.update_learning_remaining()
         self._solutions = []        
         for solution_node in self._root.solution_nodes():
             solution_node.comment = self._to_curly_braces(solution_node.comment)
@@ -49,10 +50,12 @@ class ZugChapter():
     def solutions(self):
         return self._solutions
 
-    def update_stats(self):
-        self.stats = self._get_stats()
-
     def save(self):
+        self.stats = self._get_stats()
+        self._root.update_learning_remaining()
+        self._update_chp()
+
+    def _update_chp(self):
         # prepare for writing
         self._root.bind_data_to_comment()
         self._root.game.comment = self._to_square_braces(self._root.game.comment)        

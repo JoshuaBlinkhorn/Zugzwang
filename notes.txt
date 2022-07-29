@@ -690,4 +690,51 @@ queue.py unit tests are complete.
 ~~~~~~~~~~~~~~~~
 2022-07-29 12:05
 
-I've neatened up the repo a bit.
+I've neatened up the repo a bit and pushed it.
+What's left?
+Not much, the queue tests should be migrated, and then we can delete all of the
+old source code.
+Let's call that the only job for this afternoon.
+
+Then the next thing to do is to use it!
+
+~~~~~~~~~~~~~~~~
+2022-07-29 14:21
+
+Two things:
+
+1. New remaining is not being reset daily. This should be added the chapter
+   constructor
+2. I think ZugRoot and ZugSolution are redundant. Perhaps consider factoring them out.
+   Everything that ZugRoot does belongs in Chapter. ZugSolution is very similar to
+   ZugTrainingPosition
+
+Perhaps a good solution is to have ZugRoot renamed as ZugGame, ZugSolution and
+ZugBoard as the only classes facing 'chess'.
+They essentially replace the chess classes Board, Game and ChildNode.
+
+We should then have a function somewhere that takes a pgn filename and returns
+a ZugGame.
+
+But best to do this slowly, one refactor at a time.
+
+~~~~~~~~~~~~~~~~
+2022-07-29 14:21
+
+We should make ZugGame (formerly ZugRoot) and ZugSolution 'transport classes', in the
+sense that they hold no data themselves, they merely exist to get the data from
+the chess GameNodes. They provide update methods, so that classes that wish to
+interact with a chapter's back end data structure have a good interface for doing so.
+For ZugSolution these are the learned, recalled, forgotten methods, along with a reset,
+and a generic update. For communicating the back end data, ZugSolution returns a
+ZugSolutionData object.
+For ZugGame these are the reset, generic update and update_learning_remaining.
+Learning remaining is unique amongst the stored data, in that it may change overnight in
+an abstract sense, but not 'on paper', and hence needs to be checked and updated
+regularly.
+Both of these classes then share a lot of common logic, so there's a good opportunity
+for a powerful base class.
+
+
+
+
