@@ -14,7 +14,6 @@ class ZugTrainer():
     def train(self):
         self._fill_queue()
         self._queue.play()
-        self._chapter.update_stats()
         self._chapter.save()
 
 
