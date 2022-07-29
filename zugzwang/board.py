@@ -90,8 +90,3 @@ class ZugBoard():
             string += self._render_newline()
         return string
 
-    def make_string_with_margin(self, perspective: bool, margin_width=10):
-        margin = '' * margin_width
-        board = self.make_string(perspective)
-        return (margin + board.replace('\n','\n' + margin))[:-margin_width]
-

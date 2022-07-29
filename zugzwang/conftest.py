@@ -3,13 +3,12 @@ import datetime
 
 from zugzwang.dates import ZugDates
 
-
-# mock 'today' as January 1st 2000, which we call the EPOCH
-# all logic in the dates module is made relative to this date by mocking
+# Mock 'today' as January 1st 2000, which we call the EPOCH.
+# All logic in the dates module is made relative to this date by mocking
 # out the unique point where that module calls datetime.date.today(), i.e.
-# ZugDates._today()
-# for test files, we provide the function epoch_shift, which returns a datetime.date
-# relative to EPOCH
+# ZugDates._today().
+# For test files, we provide the function epoch_shift(), which returns a datetime.date
+# relative to EPOCH.
 
 EPOCH = datetime.date(2000,1,1)
 
