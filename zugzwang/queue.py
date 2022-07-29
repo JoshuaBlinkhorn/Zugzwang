@@ -5,16 +5,23 @@ from zugzwang.game import ZugSolution, ZugSolutionData
 from zugzwang.board import ZugBoard
 from zugzwang.constants import ZugTrainingStatuses
 
+# TODO (non-critical)
+# 1. Decide whether to factor the _present_front() and _present_back() methods into
+#    ZugQueueItem as they appear to be identical for both subclasses.
+# 2. Decide whether the ZugTrainingPosition and ZugTrainingLine, and hence their
+#    presenters too, belong with the training session classes, rather than the queue.
+#    I think they probably do.
+
 class ZugQueueItem():
-    SUCCESS = 0
-    FAILURE = 1
-    QUIT = 2
+    SUCCESS = 'SUCCESS'
+    FAILURE = 'FAILURE'
+    QUIT = 'QUIT'
 
     def play(self) -> Optional[int]:
         return self._interpret_result(self._present())
 
     def _present(self) -> str:
-        return cls.SUCCESS
+        return self.SUCCESS
 
     def _interpret_result(self, result: str) -> Optional[int]:
         if result == self.QUIT:
@@ -26,7 +33,7 @@ class ZugQueueItem():
 
     def _on_success(self):
         return ZugQueue.DISCARD
-        
+
     def _on_failure(self):
         return ZugQueue.REINSERT
 
@@ -36,32 +43,16 @@ class ZugTrainingLine(ZugQueueItem):
     def __init__(self, line: List[chess.pgn.GameNode]):
         self._line = line
 
-    def _present(self):
-        presenter = ZugTrainingLinePresenter(self._line)
-        return presenter.present()
+    def _present(self):        
+        return ZugTrainingLinePresenter(self._line).present()
 
         
 class ZugTrainingLinePresenter():
 
-    def __init__(
-            self,
-            line: List[chess.pgn.GameNode],
-    ):
+    def __init__(self, line: List[chess.pgn.GameNode]):
         self._line = line
         self._perspective = line[0].board().turn
     
-    def present(self):
-        node = self._game
-        result = self._present_pair(node)
-        if result == ZugQueueItem.FAILURE:
-            return ZugQueueItem.FAILURE
-        node = node.variations[0].variations[0]
-        while node.variations:
-            result = self._present_pair(node)
-            if result == ZugQueueItem.FAILURE:
-                return ZugQueueItem.FAILURE
-            node = node.variations[0].variations[0]
-
     def present(self):
         for problem, solution in zip(self._line[::2], self._line[1::2]):
             result = self._present_pair(problem, solution)
@@ -78,7 +69,6 @@ class ZugTrainingLinePresenter():
             result = self._present_back(solution)
         return result
         
-
     def _present_front(self, node):
         board = ZugBoard(node.board()).make_string(self._perspective)
         self._clear_screen()
@@ -92,14 +82,6 @@ class ZugTrainingLinePresenter():
         print(board)
         self._prompt_back()
         return self._interpret_user_input()
-
-    def _interpret_user_input(self):
-        accepted_input = {
-            '': ZugQueueItem.SUCCESS,
-            'f': ZugQueueItem.FAILURE,
-            'q': ZugQueueItem.QUIT,
-        }
-        return accepted_input.get(self._get_user_input(), None)
 
     def _print_synopsis(self):
         print("Your turn\n")
@@ -122,6 +104,14 @@ class ZugTrainingLinePresenter():
     def _pause(cls):
         return cls._get_user_input() == ''
 
+    @classmethod
+    def _interpret_user_input(cls):
+        accepted_input = {
+            '': ZugQueueItem.SUCCESS,
+            'f': ZugQueueItem.FAILURE,
+            'q': ZugQueueItem.QUIT,
+        }
+        return accepted_input.get(cls._get_user_input(), None)
     
     
 class ZugTrainingPosition(ZugQueueItem):
@@ -134,17 +124,15 @@ class ZugTrainingPosition(ZugQueueItem):
     def solution(self):
         return self._solution
         
+    @property
+    def status(self):
+        return self._status
+        
     def _present(self) -> int:
         presenter = ZugTrainingPositionPresenter(self._solution.node, self._status)
         return presenter.present()
 
     def _on_success(self):
-        directives = {
-            ZugTrainingStatuses.NEW: ZugQueue.REINSERT,
-            ZugTrainingStatuses.LEARNING_STAGE_1: ZugQueue.REINSERT,
-            ZugTrainingStatuses.LEARNING_STAGE_2: ZugQueue.DISCARD,
-            ZugTrainingStatuses.REVIEW: ZugQueue.DISCARD, 
-        }
         statuses = {
             ZugTrainingStatuses.NEW: ZugTrainingStatuses.LEARNING_STAGE_1,
             ZugTrainingStatuses.LEARNING_STAGE_1: ZugTrainingStatuses.LEARNING_STAGE_2,
@@ -157,9 +145,18 @@ class ZugTrainingPosition(ZugQueueItem):
             ZugTrainingStatuses.LEARNING_STAGE_2: self._solution.learned,
             ZugTrainingStatuses.REVIEW: self._solution.recalled,  
         }
-        self._status = statuses.get(self._status)
+        directives = {
+            ZugTrainingStatuses.NEW: ZugQueue.REINSERT,
+            ZugTrainingStatuses.LEARNING_STAGE_1: ZugQueue.REINSERT,
+            ZugTrainingStatuses.LEARNING_STAGE_2: ZugQueue.DISCARD,
+            ZugTrainingStatuses.REVIEW: ZugQueue.DISCARD, 
+        }
+        # The action and directive depend on the current status.
+        # So perform the action and set the directive *before* updating the status.
         actions.get(self._status).__call__()
-        return directives.get(self._status)
+        directive = directives.get(self._status)
+        self._status = statuses.get(self._status)
+        return directive
 
     def _on_failure(self):
         directives = {
@@ -170,11 +167,14 @@ class ZugTrainingPosition(ZugQueueItem):
         actions = {
             ZugTrainingStatuses.LEARNING_STAGE_1: lambda: None,
             ZugTrainingStatuses.LEARNING_STAGE_2: lambda: None,
-            ZugTrainingStatuses.REVIEW: self._solution.forgotten,             
+            ZugTrainingStatuses.REVIEW: self._solution.forgotten,
         }
+        # The action and directive depend on the current status.
+        # So perform the action and set the directive *before* updating the status.
+        actions.get(self._status).__call__()
+        directive = directives.get(self._status)
         self._status = ZugTrainingStatuses.LEARNING_STAGE_1
-        actions.get(self._status).__call__()        
-        return directives.get(self._status)
+        return directive
 
 
 class ZugTrainingPositionPresenter():
@@ -265,9 +265,9 @@ class ZugTrainingPositionPresenter():
     
 class ZugQueue():
 
-    REINSERT = 0
-    DISCARD = 1
-    QUIT = 2    
+    REINSERT = 'REINSERT'
+    DISCARD = 'DISCARD'
+    QUIT = 'QUIT'
 
     _REINSERTION_INDEX = 3
     

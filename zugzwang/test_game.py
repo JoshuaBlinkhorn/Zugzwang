@@ -17,6 +17,11 @@ from zugzwang.constants import ZugColours, ZugSolutionStatuses
 from zugzwang.dates import ZugDates
 from zugzwang.conftest import epoch_shift
 
+# TODO (non-critical):
+#
+# 1. Generally clean up this file
+# 2. Provide unit testing for the update() method of the data classes.
+
 # fix a mock epoch and dates relative to it
 # fix root data values, different to defaults
 # perhaps having these as constants is redundant now we have dataclasses implemtation

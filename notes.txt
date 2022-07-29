@@ -673,42 +673,21 @@ Then having 'for method in method if method is not expected_method: method.asser
 
 This might be a way forward.
 
+~~~~~~~~~~~~~~~~
+2022-07-29 08:43
 
+Let's get the unit tests done for the queues and training.
+Then let's go straight to creating a package installing it.
 
+I would like to have a user installation, and a development installation.
+It would be great if I can get that happening by the end of the day today.
 
+~~~~~~~~~~~~~~~~
+2022-07-29 10:05
 
+queue.py unit tests are complete.
 
+~~~~~~~~~~~~~~~~
+2022-07-29 12:05
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+I've neatened up the repo a bit.

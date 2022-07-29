@@ -14,11 +14,13 @@ from zugzwang.queue import (
     ZugQueueItem,
     ZugTrainingPositionPresenter,
     ZugTrainingLinePresenter,
-    ZugTrainingPosition
+    ZugTrainingPosition,
+    ZugTrainingLine,
 )
 
 # TODO (non-critical):
 # 1 - can we remove the dependency on mock, use pytest monkeypatch instead?
+# 2 - translate the unit tests from test_ZugQueue into this file and format.
 
 @pytest.fixture
 def game():
@@ -184,27 +186,95 @@ class TestZugQueueItem:
             (ZugQueueItem.QUIT, ZugQueue.QUIT),
         ],
     )
-    def test_play(self, presentation_result, expected_return_value, monkeypatch):
-
-        def mock_present(*args, **kwargs):
-            return presentation_result
-        monkeypatch.setattr(ZugQueueItem, '_present', mock_present)
-        
-        assert ZugQueueItem().play() == expected_return_value
+    def test_play(self, presentation_result, expected_return_value):
+        queue_item = ZugQueueItem()
+        queue_item._present = mock.MagicMock(return_value = presentation_result)
+        assert queue_item.play() == expected_return_value
 
 class TestZugTrainingPosition:
-    def test_play_review_phase_failure(self, solution, training_status):
-        training_position = ZugTrainingPosition(
+    @pytest.mark.parametrize(
+        (
+            'training_status, presentation_result, '
+            'expected_training_status, expected_method_name, expected_directive'
+        ),
+        [
+            (
+                ZugTrainingStatuses.LEARNING_STAGE_1, ZugQueueItem.FAILURE,
+                ZugTrainingStatuses.LEARNING_STAGE_1, None, ZugQueue.REINSERT
+            ),
+            (
+                ZugTrainingStatuses.LEARNING_STAGE_2, ZugQueueItem.FAILURE,
+                ZugTrainingStatuses.LEARNING_STAGE_1, None, ZugQueue.REINSERT
+            ),
+            (
+                ZugTrainingStatuses.REVIEW, ZugQueueItem.FAILURE,
+                ZugTrainingStatuses.LEARNING_STAGE_1, 'forgotten', ZugQueue.REINSERT
+            ),
+            (
+                ZugTrainingStatuses.NEW, ZugQueueItem.SUCCESS,
+                ZugTrainingStatuses.LEARNING_STAGE_1, None, ZugQueue.REINSERT
+            ),
+            (
+                ZugTrainingStatuses.LEARNING_STAGE_1, ZugQueueItem.SUCCESS,
+                ZugTrainingStatuses.LEARNING_STAGE_2, None, ZugQueue.REINSERT
+            ),
+            (
+                ZugTrainingStatuses.LEARNING_STAGE_2, ZugQueueItem.SUCCESS,
+                ZugTrainingStatuses.REVIEW, 'learned', ZugQueue.DISCARD
+            ),
+            (
+                ZugTrainingStatuses.REVIEW, ZugQueueItem.SUCCESS, 
+                ZugTrainingStatuses.REVIEW, 'recalled', ZugQueue.DISCARD
+            ),
+        ]
+    )
+    def test_play(
+            self,
             solution,
-            ZugTrainingStatuses.REVIEW,            
-        )
-        training_position._present = mock.MagicMock(
-            return_value = ZugQueueItem.FAILURE
-        )
+            training_status,            
+            presentation_result,
+            expected_training_status,
+            expected_method_name,
+            expected_directive,
+    ):
+        # We test that the correct return value is given, and the correct side effect
+        # takes place. The return value is a ZugQueue class variable. The side effect
+        # is calling a method on the solution - or not. We could check that the
+        # side effect takes place by assessing directly the state of the solution.
+        # But the called methods are already unit tested. So we should think of this
+        # test as *defining*, as well as asserting, the desired side effect.
+        method_names = ('learned', 'recalled', 'forgotten')
+        training_position = ZugTrainingPosition(solution, training_status)
+        training_position._present = mock.MagicMock(return_value = presentation_result)
 
+        # Call the function.
         directive = training_position.play()
+
+        # Check the return value and status
+        assert directive == expected_directive
+        assert training_position.status == expected_training_status
         
-        assert directive == ZugQueue.REINSERT
-        solution.forgotten.asssert_called_once()
-        solution.learned.asssert_not_called()
-        solution.recalled.asssert_not_called()        
+        # Check the expected method is called, if there is one.
+        if expected_method_name is not None:
+            expected_method = getattr(solution, expected_method_name)
+            expected_method.asssert_called_once()
+
+        # Check that the other methods aren't called
+        for method_name in method_names:
+            if method_name != expected_method_name:
+                method = getattr(solution, method_name)                
+                method.asssert_not_called()
+
+class TestZugTrainingLine:
+    @pytest.mark.parametrize(
+        'presentation_result, expected_return_value',
+        [
+            (ZugQueueItem.SUCCESS, ZugQueue.DISCARD),
+            (ZugQueueItem.FAILURE, ZugQueue.REINSERT),
+            (ZugQueueItem.QUIT, ZugQueue.QUIT),
+        ],
+    )
+    def test_play(self, line, presentation_result, expected_return_value):
+        training_line = ZugTrainingLine(line)
+        training_line._present = mock.MagicMock(return_value = presentation_result)
+        assert training_line.play() == expected_return_value
