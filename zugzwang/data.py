@@ -15,7 +15,7 @@ class ZugGroup:
         
     def _get_children(self):
         children = []
-        for child_name in os.listdir(self._path):
+        for child_name in sorted(os.listdir(self._path)):
             child_path = os.path.join(self._path, child_name)
             children.append(self._child_type(child_path))
         return children
