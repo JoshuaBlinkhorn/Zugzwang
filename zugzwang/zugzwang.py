@@ -841,6 +841,6 @@ def handle_card_result(result,card,queue,pgn) :
 
 #backup_collections()
 if __name__ == '__main__':
-    collections_dir_path = '/Users/joshuablinkhorn/Chess/Zugzwang/Collections'
+    collections_dir_path = os.path.join(os.getcwd(),'Collections')
     user_data = ZugUserData(collections_dir_path)
     ZugMainMenu(user_data).display()

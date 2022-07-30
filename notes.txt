@@ -735,6 +735,22 @@ regularly.
 Both of these classes then share a lot of common logic, so there's a good opportunity
 for a powerful base class.
 
+~~~~~~~~~~~~~~~~
+2022-07-30 10:56
+
+Some updates:
+
+1. Sort chapter, categories, collections in alphabetic order
+2. We're not updating the last access, so learning remaining is getting updated when
+   it shouldn't do
+2. Number of lines left in training session printed to screen - but this will be easier
+   with the UI
+3. Statistics for line-based training: and a programme - line based training preceeds
+   position-based
+
+
+
+
 
 
 
