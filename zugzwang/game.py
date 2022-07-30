@@ -116,6 +116,7 @@ class ZugRoot():
     def update_learning_remaining(self):
         if self._data.last_access < ZugDates.today():
             self._data.learning_remaining = self._data.learning_limit
+            self._data.last_access = ZugDates.today()
 
     def solution_nodes(self) -> List[chess.pgn.ChildNode]:
         # define a list to store solutions and a recursive search function
