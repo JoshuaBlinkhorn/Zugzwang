@@ -11,21 +11,28 @@ from zugzwang.constants import ZugColours, ZugDefaults, ZugSolutionStatuses
 from zugzwang.dates import ZugDates
 
 
-class LearningRemainingError(ValueError):
+class ZugRootError(ValueError):
+    pass
+    
+class ZugDataError(Exception):
     pass
     
 
+class ZugDefaults():
+    LEARNING_REMAINING = 10
+    LEARNING_LIMIT = 10
+    RECALL_FACTOR = 2
+    RECALL_RADIUS = 3
+    RECALL_MAX = 365
+
+
 class ZugData:
 
+    def __init__(self):
+        pass
+            
     def __eq__(self, other: ZugData):
         return all([self.__dict__[key] == other.__dict__[key] for key in self.__dict__])
-
-    @classmethod
-    def _get_date_fields(cls):
-        # returns the list of fields of type datetime.date by creating and inspecting
-        # a default class instance
-        fields = cls().__dict__.items()
-        return [key for key, value in fields if isinstance(value, datetime.date)]
 
     @classmethod
     def _json_conversion(cls, value):
@@ -38,14 +45,20 @@ class ZugData:
     def from_json(cls, json_string: str) -> cls:
         # convert ISO date strings to datetime.date
         data_dict = json.loads(json_string)
-        for field in cls._get_date_fields():
-            data_dict[field] = datetime.date.fromisoformat(data_dict[field]) 
+        for key, val in data_dict.items():
+            try:
+                data_dict[key] = datetime.date.fromisoformat(val)
+            except (TypeError, ValueError):
+                pass
         return cls(**data_dict)
 
     def make_json(self) -> str:
-        return json.dumps(self.__dict__, default = self._json_conversion)
+        data_dict = dict(sorted(self.__dict__.items()))
+        return json.dumps(data_dict, default = self._json_conversion)
 
     def update(self, update_dict) -> None:
+        if not set(update_dict.keys()) <= set(self.__dict__.keys()):
+            raise ZugDataError('attempted to update data dict with unrecognised key')
         self.__dict__.update(update_dict)
     
 
@@ -87,36 +100,53 @@ class ZugSolutionData(ZugData):
         self.failures = failures        
 
 
-class ZugRoot():
+class ZugGameNodeWrapper:
 
-    def __init__(self, game: chess.pgn.Game):
-        self._data = ZugRootData.from_json(game.comment)
-        self._game = game
-
+    data_class = ZugData
+    
+    def __init__(self, game_node: chess.pgn.GameNode):
+        self._game_node = game_node
+        self._data = self.data_class.from_json(self._to_curly_braces(game_node.comment))
+    
     @property
-    def game(self):
-        return self._game
+    def game_node(self):
+        return self._game_node
         
     @property
     def data(self):
         return self._data
         
-    def decrement_learning_remaining(self):
-        if self._data.learning_remaining > 0:
-            self._data.learning_remaining -= 1
-        else:
-            raise LearningRemainingError("Cannot decrement zero 'learning_remaining'.")
+    @classmethod
+    def _to_square_braces(cls, string):
+        return string.replace('{','[').replace('}',']')
+    
+    @classmethod
+    def _to_curly_braces(cls, string):
+        return string.replace('[','{').replace(']','}')
 
-    def has_learning_capacity(self):
-        return self._data.learning_remaining > 0
+    def _bind(self):
+        self._game_node.comment = self._to_square_braces(self._data.make_json())
 
-    def bind_data_to_comment(self):
-        self._game.comment = self._data.make_json()
 
-    def update_learning_remaining(self):
+class ZugRoot(ZugGameNodeWrapper):
+
+    data_class = ZugRootData
+
+    def update(self) -> None:
         if self._data.last_access < ZugDates.today():
             self._data.learning_remaining = self._data.learning_limit
             self._data.last_access = ZugDates.today()
+        self._bind()
+
+    def decrement_learning_remaining(self) -> None:
+        if self._data.learning_remaining == 0:
+            error_message = "cannot decrement zero 'learning_remaining'"
+            raise ZugRootError(error_message)
+        self._data.learning_remaining -= 1
+        self._bind()        
+
+    def has_learning_capacity(self) -> bool:
+        return self._data.learning_remaining > 0
 
     def solution_nodes(self) -> List[chess.pgn.ChildNode]:
         # define a list to store solutions and a recursive search function

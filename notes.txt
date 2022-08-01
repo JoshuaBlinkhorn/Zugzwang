@@ -740,13 +740,63 @@ for a powerful base class.
 
 Some updates:
 
-1. Sort chapter, categories, collections in alphabetic order
+1. Sort chapter, categories, collections in alphabetic order - D0ne
 2. We're not updating the last access, so learning remaining is getting updated when
-   it shouldn't do
+   it shouldn't do - Done
 2. Number of lines left in training session printed to screen - but this will be easier
    with the UI
 3. Statistics for line-based training: and a programme - line based training preceeds
    position-based
+
+~~~~~~~~~~~~~~~~
+2022-07-30 15:26
+
+Fixed a couple of easy bugs - the unit tests for ZugRoot need updating.
+Now I'll get the comments binded to the Roots and Solutions, and sort out the
+curly vs straight braces at the same time.
+
+~~~~~~~~~~~~~~~~
+2022-07-31 09:02
+
+I think forgotten positions are causing a problem with learning remaining.
+Probably they go back into learning, and when learned the learning remaining gets
+decremented, and then ends up below zero at the end of the session.
+
+So, we perhaps we need a separate status for forgotten positions.
+The simplest thing to do is to set them as unlearned, they will get picked up tomorrow.
+Or we have statuses REMEMBERING_STAGE_1 and REMEMBERING_STAGE_2, and we don't decrement
+learning remaining when the fogotten positions get remembered.
+So we'll need a Solution method '.remembered()'
+
+Let's try to get that far with the unit testing for ZugSolution() and ZugRoot()
+
+~~~~~~~~~~~~~~~~
+2022-08-01 21:25
+
+We should put constraints on the allowable values of data into the data classes.
+This will be done via @property and getters.
+Then we can unit test those.
+
+e.g. success and failures must be set with non-negative integers;
+     last_access must be set with a date <= today; etc.
+
+This will be a really neat feature, it takes that error handling out of the root
+and solution classes.
+
+~~~~~~~~~~~~~~~~
+2022-08-01 22:10
+
+Good progress, the tests for ZugRoot have been completed.
+What next? Well, we need to rename that class ZugGame.
+Then we need to factor the unit test for _bind() out of TestZugRoot and into
+TestZugGameNodeWrapper, as it belongs there in the base class.
+
+Then we need to write analogous unit tests for solution, including implementing
+a method remembered().
+Then we need to factor the solution set and lines set collection into ZugChapter.
+
+So quite a lot of work for this update.
+But it will all be worth it.
 
 
 
