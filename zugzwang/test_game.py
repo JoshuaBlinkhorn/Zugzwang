@@ -6,11 +6,13 @@ import chess.pgn
 import os
 
 from zugzwang.game import (
+    ZugData,
+    ZugDataError,
     ZugRootData,
     ZugRoot,
+    ZugRootError,    
     ZugSolutionData,
     ZugSolution,
-    LearningRemainingError,
 )
 from zugzwang.chapter import ZugChapter
 from zugzwang.constants import ZugColours, ZugSolutionStatuses
@@ -20,75 +22,115 @@ from zugzwang.conftest import epoch_shift
 # TODO (non-critical):
 #
 # 1. Generally clean up this file
-# 2. Provide unit testing for the update() method of the data classes.
 
-# fix a mock epoch and dates relative to it
-# fix root data values, different to defaults
-# perhaps having these as constants is redundant now we have dataclasses implemtation
-PERSPECTIVE = ZugColours.WHITE
-LEARNING_REMAINING = 15
-LEARNING_LIMIT = 20
-RECALL_FACTOR = 2.5
-RECALL_RADIUS = 5
-RECALL_MAX = 500
+# fix a mock today and dates relative to it
+PAST_EPOCH = epoch_shift(-100)
+YESTERDAY = epoch_shift(-1)
+TODAY = epoch_shift(0)
+TOMORROW = epoch_shift(1)
+FUTURE_EPOCH = epoch_shift(100)
 
-# fix solution data
-STATUS = ZugSolutionStatuses.LEARNED
-LAST_STUDY_DATE = epoch_shift(-1)
-DUE_DATE = epoch_shift(-1)
-SUCCESSES = 5
-FAILURES = 5
+# fix default and alternative root data values
+DEFAULT_PERSPECTIVE = ZugColours.WHITE
+DEFAULT_LAST_ACCESS = TODAY
+DEFAULT_LEARNING_REMAINING = 10
+DEFAULT_LEARNING_LIMIT = 10
+DEFAULT_RECALL_FACTOR = 2.0
+DEFAULT_RECALL_RADIUS = 3
+DEFAULT_RECALL_MAX = 365
 
+ALTERNATE_PERSPECTIVE = ZugColours.BLACK
+ALTERNATE_LAST_ACCESS = YESTERDAY
+ALTERNATE_LEARNING_REMAINING = 100
+ALTERNATE_LEARNING_LIMIT = 100
+ALTERNATE_RECALL_FACTOR = 100.0
+ALTERNATE_RECALL_RADIUS = 100
+ALTERNATE_RECALL_MAX = 100
+
+# fix default and alternative solution data values
+#STATUS = ZugSolutionStatuses.LEARNED
+#LAST_STUDY_DATE = YESTERDAY
+#DUE_DATE = YESTERDAY
+#SUCCESSES = 5
+#FAILURES = 5
+
+# define the path to the example category, which holds the example chapters
 EXAMPLE_CATEGORY_PATH = os.path.join(
     os.getcwd(), 'TestCollections/ExampleCollection/ExampleCategory'
 )
 
 @pytest.fixture
-def root_data_json():
+def default_game_comment():
     return (
-        '{'
-        '"perspective": true, '
+        '['
         '"last_access": "2000-01-01", '
+        '"learning_limit": 20, '        
         '"learning_remaining": 15, '
-        '"learning_limit": 20, '
+        '"perspective": true, '        
         '"recall_factor": 2.5, '
-        '"recall_radius": 5, '
-        '"recall_max": 500'
-        '}'
+        '"recall_max": 500, '
+        '"recall_radius": 5'
+        ']'
+    )
+
+@pytest.fixture
+def alternate_game_comment():
+    return (
+        '['
+        '"last_access": "1999-12-31", '
+        '"learning_limit": 100, '
+        '"learning_remaining": 100, '
+        '"perspective": false, '
+        '"recall_factor": 100.0, '
+        '"recall_max": 100, '
+        '"recall_radius": 100'
+        ']'
+    )
+
+@pytest.fixture
+def default_game_data():
+    return ZugRootData(
+        perspective = DEFAULT_PERSPECTIVE,
+        last_access = DEFAULT_LAST_ACCESS,
+        learning_remaining = DEFAULT_LEARNING_REMAINING,
+        learning_limit = DEFAULT_LEARNING_LIMIT,
+        recall_factor = DEFAULT_RECALL_FACTOR,
+        recall_radius = DEFAULT_RECALL_RADIUS,
+        recall_max = DEFAULT_RECALL_MAX,        
+    )
+
+@pytest.fixture
+def alternate_game_data():
+    return ZugRootData(
+        perspective = ALTERNATE_PERSPECTIVE,
+        last_access = ALTERNATE_LAST_ACCESS,
+        learning_remaining = ALTERNATE_LEARNING_REMAINING,
+        learning_limit = ALTERNATE_LEARNING_LIMIT,
+        recall_factor = ALTERNATE_RECALL_FACTOR,
+        recall_radius = ALTERNATE_RECALL_RADIUS,
+        recall_max = ALTERNATE_RECALL_MAX,        
     )
 
 @pytest.fixture
 def solution_data_json():
     return (
-        '{'
+        '['
         '"status": "LEARNED", '
         '"last_study_date": "1999-12-31", '
         '"due_date": "1999-12-31", '
         '"successes": 5, '
         '"failures": 5'
-        '}'
+        ']'
     )
 
 @pytest.fixture
-def root_data():
-    return ZugRootData(
-        perspective = ZugColours.WHITE,
-        last_access = epoch_shift(0),
-        learning_remaining = LEARNING_REMAINING,
-        learning_limit = LEARNING_LIMIT,
-        recall_factor = RECALL_FACTOR,
-        recall_radius = RECALL_RADIUS,
-        recall_max = RECALL_MAX,        
-    )
-
-@pytest.fixture
-def root_data_white_perspective(root_data):
+def default_root_data_white_perspective(default_root_data):
     return root_data
 
 @pytest.fixture
-def root_data_black_perspective(root_data):
+def default_data_black_perspective(default_root_data):
     root_data.perspective = ZugColours.BLACK
-    return root_data    
+    return root_data
 
 @pytest.fixture
 def solution_data():
@@ -135,91 +177,304 @@ def simple_root(simple_game):
     return ZugRoot(simple_game)
 
 
+@pytest.fixture
+def zug_data_subclass():
+    # To test the class's functionality more thoroughly, we need to
+    # create a subclass.
+    class ZugDataSubclass(ZugData):
+        def __init__(
+                self,
+                integer=0,
+                floater=0.0,
+                string='foobar',
+                date=None,
+        ):
+            self.integer = integer
+            self.floater = floater
+            self.string = string
+            self.date = date if date is not None else epoch_shift(0)
+
+    return ZugDataSubclass
+
+
+class TestZugData:
+
+    def test_default(self):
+        # The base class never has attributes.
+        # So we test only against empty json.
+        json = '{}'
+        zug_data = ZugData()
+        assert ZugData.from_json(json) == zug_data
+        assert zug_data.make_json() == json        
+
+    @pytest.mark.parametrize(
+        'json, kwargs',
+        [
+            (
+                (
+                    '{'
+                    '"date": "2000-01-01", '
+                    '"floater": 0.0, '
+                    '"integer": 0, '
+                    '"string": "foobar"'
+                    '}'
+                ),
+                {},
+            ),
+            (
+                (
+                    '{'
+                    '"date": "2000-01-01", '
+                    '"floater": 100.0, '
+                    '"integer": 100, '
+                    '"string": "barfoo"'
+                    '}'
+                ),
+                {
+                    'floater': 100.0,
+                    'integer': 100,
+                    'string': 'barfoo',
+                },
+            ),
+            (
+                (
+                    '{'
+                    '"date": "2000-01-02", '
+                    '"floater": 0.0, '
+                    '"integer": 0, '
+                    '"string": "foobar"'
+                    '}'
+                ),
+                {
+                    'date': epoch_shift(1),
+                },
+            ),
+        ],
+        ids = [
+            'empty',
+            'non-default non-dates',
+            'non-default date',
+        ]
+    )
+    def test_json(self, zug_data_subclass, json, kwargs):
+        # Translating to and from json works with a subset of parameters.
+        zug_data = zug_data_subclass(**kwargs)
+        assert zug_data_subclass.from_json(json) == zug_data
+        assert zug_data.make_json() == json        
+
+    @pytest.mark.parametrize(
+        'update_dict, expected_dict',
+        [
+            (
+                {},
+                {
+                    'date': epoch_shift(0),
+                    'floater': 0.0,
+                    'integer': 0,
+                    'string': 'foobar',
+                } 
+            ),
+            (
+                {
+                    'floater': 100.0,
+                    'integer': 100,
+                    'string': 'barfoo',                    
+                },
+                {
+                    'date': epoch_shift(0),
+                    'floater': 100.0,
+                    'integer': 100,
+                    'string': 'barfoo',
+                } 
+            ),
+            (
+                {
+                    'date': epoch_shift(1),
+                },
+                {
+                    'date': epoch_shift(1),
+                    'floater': 0.0,
+                    'integer': 0,
+                    'string': 'foobar',
+                } 
+            ),
+        ],
+        ids = [
+            'empty',
+            'update non-dates',
+            'update date',
+        ]
+    )
+    def test_update(self, zug_data_subclass, update_dict, expected_dict):
+        # Updating with recognised arguments updates the object __dict__.
+        zug_data = zug_data_subclass()
+        zug_data.update(update_dict)
+        assert zug_data.__dict__ == expected_dict
+        
+    def test_update_foreign_attribute(self, zug_data_subclass):
+        # Updating with unrecognised arguments raises an exception.       
+        zug_data = zug_data_subclass()
+        with pytest.raises(ZugDataError):
+            zug_data.update({'unrecognised_key': 'any_value'})
+
+
 class TestZugRootData:
-
-    def test_from_json(self, root_data_json, root_data):
-        assert ZugRootData.from_json(root_data_json) == root_data
-
-    def test_make_json(self, root_data, root_data_json):
-        assert root_data.make_json() == root_data_json
+    # This class overrides __init__() only.
+    # Hence TestZugData() is sufficient to characterise its behaviour.
+    pass
 
 
 class TestZugSolutionData:
-
-    def test_from_json(self, solution_data_json, solution_data):
-        assert ZugSolutionData.from_json(solution_data_json) == solution_data
-
-    def test_make_json(self, solution_data, solution_data_json):
-        assert solution_data.make_json() == solution_data_json
-    
-    def test_update(self):
-        pass
+    # This class overrides __init__() only.
+    # Hence TestZugData() is sufficient to characterise its behaviour.
+    pass
 
 
 class TestZugRoot:
- 
-    def test_bind_data_to_comment(self):
+
+    def test_bind(
+            self,
+            default_game_comment,
+            alternate_game_comment
+    ):
         game = chess.pgn.Game()
-        game.comment = ZugRootData().make_json()
-        root = ZugRoot(game)
-
-        root.data.perspective = ZugColours.BLACK
-        root.data.last_access = epoch_shift(-1)        
-        root.data.learning_remaining = 50
-        root.data.learning_limit = 100
-        root.data.recall_radius = 10
-        root.data.recall_factor = 5.0
-        root.data.recall_max = 500
+        game.comment = alternate_game_comment        
+        zug_game = ZugRoot(game)
         
-        expected_json = (
-            '{'
-            '"perspective": false, '
-            '"last_access": "1999-12-31", '
-            '"learning_remaining": 50, '
-            '"learning_limit": 100, '
-            '"recall_factor": 5.0, '
-            '"recall_radius": 10, '
-            '"recall_max": 500'
-            '}'
-        )
-
-        root.bind_data_to_comment()
-        assert root.game.comment == expected_json
+        game.comment = default_game_comment
+        zug_game._bind()
+        assert game.comment == alternate_game_comment
 
     @pytest.mark.parametrize(
-        'last_access, expected_learning_remaining',
+        (
+            'last_access, '
+            'learning_remaining, '
+            'expected_last_access, '
+            'expected_learning_remaining'
+        ),
         [
-            (epoch_shift(0), 15),
-            (epoch_shift(-1), 20),
-            (epoch_shift(-5), 20),
+            (
+                TODAY.isoformat(),
+                DEFAULT_LEARNING_LIMIT - 1,
+                TODAY.isoformat(),
+                DEFAULT_LEARNING_LIMIT - 1,
+            ),
+            (
+                YESTERDAY.isoformat(),
+                DEFAULT_LEARNING_LIMIT,
+                TODAY.isoformat(),
+                DEFAULT_LEARNING_LIMIT,
+            ),
+            (
+                YESTERDAY.isoformat(),
+                DEFAULT_LEARNING_LIMIT - 1,
+                TODAY.isoformat(),
+                DEFAULT_LEARNING_LIMIT,
+            ),
+            (
+                PAST_EPOCH.isoformat(),
+                DEFAULT_LEARNING_LIMIT - 1,
+                TODAY.isoformat(),
+                DEFAULT_LEARNING_LIMIT,
+            ),
+        ],
+        ids = [
+            'no update',
+            'update identical learning_remaining',            
+            'update last_access yesterday',
+            'update last_access past_epoch',            
         ]
     )
-    def test_update_learning_remaining(self, last_access, expected_learning_remaining):
+    def test_update(
+            self,
+            default_game_comment,
+            last_access,
+            learning_remaining,
+            expected_last_access,
+            expected_learning_remaining,
+    ):
         game = chess.pgn.Game()
-        root_data = ZugRootData(
-            learning_limit = 20,
-            learning_remaining = 15,
-            last_access=last_access
-        )
-        game.comment = root_data.make_json()
+        game.comment = (
+            '['
+            f'"last_access": "{last_access}", '
+            '"learning_limit": 10, '            
+            f'"learning_remaining": {learning_remaining}, '
+            '"perspective": true, '            
+            '"recall_factor": 2.0, '
+            '"recall_max": 365, '            
+            '"recall_radius": 3'
+            ']'
+        )        
         root = ZugRoot(game)
         
-        root.update_learning_remaining()
-        assert root.data.learning_remaining == expected_learning_remaining
-        
-    def test_decrement_learning_remaining(self):
-        game = chess.pgn.Game()
-        root_data = ZugRootData(learning_remaining=2)
-        game.comment = root_data.make_json()        
-        root = ZugRoot(game)
-        
-        root.decrement_learning_remaining()
-        assert root.data.learning_remaining == 1
-        root.decrement_learning_remaining()
-        assert root.data.learning_remaining == 0
-        with pytest.raises(LearningRemainingError):
-            root.decrement_learning_remaining()            
+        root.update()
+        assert game.comment == (
+            '['
+            f'"last_access": "{expected_last_access}", '
+            '"learning_limit": 10, '            
+            f'"learning_remaining": {expected_learning_remaining}, '
+            '"perspective": true, '            
+            '"recall_factor": 2.0, '
+            '"recall_max": 365, '            
+            '"recall_radius": 3'
+            ']'
+        )                    
 
+    @pytest.mark.parametrize(
+        'learning_remaining, expected_learning_remaining',
+        [(1,0), (2,1), (10,9), (1000,999)],
+        ids = ['smallest', 'small', 'medium', 'large']
+    )
+    def test_decrement_learning_remaining(
+            self,
+            learning_remaining,
+            expected_learning_remaining
+    ):
+        game = chess.pgn.Game()
+        game.comment = (
+            '['
+            '"last_access": "2000-01-01", '
+            '"learning_limit": 10, '            
+            f'"learning_remaining": {learning_remaining}, '
+            '"perspective": true, '
+            '"recall_factor": 2.0, '
+            '"recall_max": 365, '            
+            '"recall_radius": 3'
+            ']'
+        )
+        root = ZugRoot(game)
+        
+        root.decrement_learning_remaining()
+        assert game.comment == (
+            '['
+            '"last_access": "2000-01-01", '
+            '"learning_limit": 10, '            
+            f'"learning_remaining": {expected_learning_remaining}, '
+            '"perspective": true, '
+            '"recall_factor": 2.0, '
+            '"recall_max": 365, '            
+            '"recall_radius": 3'
+            ']'
+        )
+
+    def test_decrement_zero_learning_remaining(self):
+        # Decrementing a zero learning
+        game = chess.pgn.Game()
+        game.comment = (
+            '['
+            '"last_access": "2000-01-01", '
+            '"learning_limit": 10, '            
+            '"learning_remaining": 0, '
+            '"perspective": true, '
+            '"recall_factor": 2.0, '
+            '"recall_max": 365, '            
+            '"recall_radius": 3'
+            ']'
+        )
+        root = ZugRoot(game)
+        with pytest.raises(ZugRootError):
+            root.decrement_learning_remaining()
+        
     @pytest.mark.parametrize(
         'learning_remaining, expected_has_learning_capacity',
         [(0, False), (1, True), (2, True), (100, True)]
@@ -230,8 +485,17 @@ class TestZugRoot:
             expected_has_learning_capacity
     ):
         game = chess.pgn.Game()
-        root_data = ZugRootData(learning_remaining=learning_remaining)
-        game.comment = root_data.make_json()
+        game.comment = (
+            '['
+            '"last_access": "2000-01-01", '
+            '"learning_limit": 10, '            
+            f'"learning_remaining": {learning_remaining}, '
+            '"perspective": true, '            
+            '"recall_factor": 2.0, '
+            '"recall_max": 365, '            
+            '"recall_radius": 3'
+            ']'
+        )
         root = ZugRoot(game)
         
         assert root.has_learning_capacity() == expected_has_learning_capacity
