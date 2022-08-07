@@ -47,8 +47,9 @@ def solution(solution_node, root):
     solution.forgotten = mock.MagicMock()
     solution.learned = mock.MagicMock()
     solution.recalled = mock.MagicMock()
+    solution.remembered = mock.MagicMock()    
     return solution
-    
+
 @pytest.fixture
 def line():
     root = chess.pgn.Game()
@@ -207,8 +208,16 @@ class TestZugTrainingPosition:
                 ZugTrainingStatuses.LEARNING_STAGE_1, None, ZugQueue.REINSERT
             ),
             (
+                ZugTrainingStatuses.REMEMBERING_STAGE_1, ZugQueueItem.FAILURE,
+                ZugTrainingStatuses.REMEMBERING_STAGE_1, None, ZugQueue.REINSERT
+            ),
+            (
+                ZugTrainingStatuses.REMEMBERING_STAGE_2, ZugQueueItem.FAILURE,
+                ZugTrainingStatuses.REMEMBERING_STAGE_1, None, ZugQueue.REINSERT
+            ),
+            (
                 ZugTrainingStatuses.REVIEW, ZugQueueItem.FAILURE,
-                ZugTrainingStatuses.LEARNING_STAGE_1, 'forgotten', ZugQueue.REINSERT
+                ZugTrainingStatuses.REMEMBERING_STAGE_1, 'forgotten', ZugQueue.REINSERT
             ),
             (
                 ZugTrainingStatuses.NEW, ZugQueueItem.SUCCESS,
@@ -221,6 +230,14 @@ class TestZugTrainingPosition:
             (
                 ZugTrainingStatuses.LEARNING_STAGE_2, ZugQueueItem.SUCCESS,
                 ZugTrainingStatuses.REVIEW, 'learned', ZugQueue.DISCARD
+            ),
+            (
+                ZugTrainingStatuses.REMEMBERING_STAGE_1, ZugQueueItem.SUCCESS,
+                ZugTrainingStatuses.REMEMBERING_STAGE_2, None, ZugQueue.REINSERT
+            ),
+            (
+                ZugTrainingStatuses.REMEMBERING_STAGE_2, ZugQueueItem.SUCCESS,
+                ZugTrainingStatuses.REVIEW, 'remembered', ZugQueue.DISCARD
             ),
             (
                 ZugTrainingStatuses.REVIEW, ZugQueueItem.SUCCESS, 

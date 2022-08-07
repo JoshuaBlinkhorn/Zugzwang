@@ -7,7 +7,7 @@ import dataclasses
 import json
 from typing import List, ClassVar
 
-from zugzwang.constants import ZugColours, ZugDefaults, ZugSolutionStatuses
+from zugzwang.constants import ZugColours, ZugSolutionStatuses
 from zugzwang.dates import ZugDates
 
 
@@ -132,6 +132,18 @@ class ZugRoot(ZugGameNodeWrapper):
 
     data_class = ZugRootData
 
+    @property
+    def recall_radius(self):
+        return self._data.recall_radius
+    
+    @property
+    def recall_factor(self):
+        return self._data.recall_factor
+    
+    @property
+    def recall_max(self):
+        return self._data.recall_max
+    
     def update(self) -> None:
         if self._data.last_access < ZugDates.today():
             self._data.learning_remaining = self._data.learning_limit
@@ -147,40 +159,6 @@ class ZugRoot(ZugGameNodeWrapper):
 
     def has_learning_capacity(self) -> bool:
         return self._data.learning_remaining > 0
-
-    def solution_nodes(self) -> List[chess.pgn.ChildNode]:
-        # define a list to store solutions and a recursive search function
-        solutions = []
-        def search_node(
-                node: chess.pgn.GameNode,
-                solution_perspective: bool
-        ):
-            player_to_move = node.board().turn
-            if player_to_move != solution_perspective:
-                # the node is a solution
-                # add it to the set and work recursively on all children
-                if node != self._game:
-                    solutions.append(node)
-                for problem in node.variations:
-                    search_node(problem, solution_perspective)                
-            else:
-                # the node is a problem
-                # if it has no variations, it's a hanging problem
-                # otherwise, any variation is either a blunder or a candidate
-                # find the first candidate if it exists, and work recursively
-                candidates = [node for node in node.variations if 2 not in node.nags]
-                if candidates:                    
-                    search_node(candidates[0], solution_perspective)
-                # work recursively on blunders with reversed perspective
-                blunders = [node for node in node.variations if 2 in node.nags]
-                for blunder in blunders:
-                    search_node(blunder, not solution_perspective)                    
-
-        # call it on the root node
-        solution_perspective = self._data.perspective                        
-        search_node(self._game, solution_perspective)
-
-        return solutions
 
     def lines(self) -> List[chess.Board]:
 
@@ -266,12 +244,13 @@ class ZugRoot(ZugGameNodeWrapper):
         self._reset_solution_data()
 
 
-class ZugSolution():
+class ZugSolution(ZugGameNodeWrapper):
 
-    def __init__(self, node: chess.pgn.ChildNode, root: ZugRoot):
-        self._data = ZugSolutionData.from_json(node.comment)
-        self._node = node
-        self._root = root
+    data_class = ZugSolutionData
+
+    def __init__(self, solution, zug_root):
+        super().__init__(solution)
+        self._root = zug_root
 
     @property
     def data(self):
@@ -291,9 +270,6 @@ class ZugSolution():
     def is_due(self):
         return self.is_learned() and self._data.due_date <= ZugDates.today()
         
-    def bind_data_to_comment(self):
-        self._node.comment = self._data.make_json()
-
     def learned(self):
         self._root.decrement_learning_remaining()
         self._data.update(
@@ -304,13 +280,14 @@ class ZugSolution():
                 'successes': self._data.successes + 1,
             }
         )
+        self._bind()        
         
     def recalled(self):
         next_due_date = ZugDates.due_date(
             self._data.last_study_date,
             self._data.due_date,
-            self._root.data.recall_radius,
-            self._root.data.recall_factor
+            self._root.recall_radius,
+            self._root.recall_factor
         )
         self._data.update(
             {
@@ -319,6 +296,7 @@ class ZugSolution():
                 'due_date': next_due_date,
             }
         )
+        self._bind()
         
     def forgotten(self):
         self._data.update(
@@ -327,3 +305,15 @@ class ZugSolution():
                 'failures': self._data.failures + 1,
             }
         )
+        self._bind()
+
+    def remembered(self):
+        self._data.update(
+            {
+                'status': ZugSolutionStatuses.LEARNED,
+                'last_study_date': ZugDates.today(),
+                'due_date': ZugDates.tomorrow(),
+                'successes': self._data.successes + 1,
+            }
+        )
+        self._bind()

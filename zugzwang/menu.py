@@ -72,12 +72,10 @@ class ZugChapterMenu(ZugMenu):
         if user_input == 'b':
             return True
         if user_input == 'p':
-            ZugPositionTrainer(self._chapter).train()
-            self._chapter.save()
+            self._chapter.train_positions()
             return None
         if user_input == 'l':
-            ZugLineTrainer(self._chapter).train()
-            self._chapter.save()            
+            self._chapter.train_lines()            
             return None
 
         
