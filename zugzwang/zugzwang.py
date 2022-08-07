@@ -52,7 +52,7 @@ from zugzwang.game import ZugRoot, ZugRootData, ZugSolution, ZugSolutionData
 from zugzwang.chapter import ZugChapter
 from zugzwang.training import ZugPositionTrainer
 from zugzwang.menu import ZugMainMenu, ZugCollectionMenu
-from zugzwang.data import ZugUserData
+from zugzwang.group import ZugUserData
 
 
 #############

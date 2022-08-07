@@ -22,9 +22,12 @@ class ZugGroup:
 
     def _get_stats(self):
         stats = ZugStats()
-        for child in self._get_children():
+        for child in self.children:
             stats = stats + child.stats
         return stats
+
+    def update_stats(self):
+        self.stats = self._get_stats()
 
 
 class ZugUserData(ZugGroup):

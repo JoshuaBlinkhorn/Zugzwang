@@ -1,5 +1,5 @@
 from typing import Union
-from zugzwang.data import ZugGroup
+from zugzwang.group import ZugGroup
 from zugzwang.chapter import ZugChapter
 from zugzwang.training import ZugPositionTrainer, ZugLineTrainer
 
@@ -160,6 +160,7 @@ class ZugGroupMenu(ZugMenu):
 
     def _load_next_menu(self, item):
         self._child_menu_type(item).display()
+        self._group.update_stats()
 
 
 class ZugCategoryMenu(ZugGroupMenu):
