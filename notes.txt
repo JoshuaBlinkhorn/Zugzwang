@@ -798,6 +798,57 @@ Then we need to factor the solution set and lines set collection into ZugChapter
 So quite a lot of work for this update.
 But it will all be worth it.
 
+~~~~~~~~~~~~~~~~
+2022-08-04 20:26
+
+Getting back to this for a few hours tonight.
+Let's start with the analogous tests for Solution.
+We'll make it tonight's goal to get this file tested, cleaned, with the remaming
+and refactoring.
+
+Okay, I've done the unit tests for solution..
+But I now feel like bind() belongs in the data classes, which should be linked to
+a node..
+But perhaps I only want this because I really would like to be able to set and access
+the data for the unit tests.
+Having to set and check the comments is sensbible if you want the data hidden in the
+class, you want the class to manipulate comments and provide an interface for that.
+So you set the comments and watch the interface manipute them correctly.
+
+The main draw back is that the comment is large. Typically the interface makes small
+changes to particular fields and we want to test that in a good set of cases.
+Using comments makes those tests unreadable.
+So maybe it's just a good idea to make that data accessible.
+Or really, perhaps it's better to have the manipulating class looking at python fields
+that are python data types, rather than a json string whose manipulation it delegates
+to the data class.
+
+Yes, I like much better the idea that the data class is the node wrapper's view of
+the node comment. It's better to look at dictionary than a string. That rings a bell?
+
+Perhaps the issue is that really, there should only be a single class.
+The nice thing about the data class is that we can use __dict__ to write the json.
+So let's not meddle with those.
+
+So lets have a think about this.
+
+~~~~~~~~~~~~~~~~
+2022-08-07 15:24
+
+Let's focus on getting the software working, we can rewrite the data layer if necessary.
+So there are two things to do:
+
+1) Get the 'forgotton' track of a training position up and running - Done
+2) Factor the line and solution set generation out of ZugRoot and into ZugChapter
+
+I've factored line and solution generation into a new class of ZugChessTools.
+The test setup makes more sense now (it doesn't need to go through ZugChapter).
+
+Time now to rewrite the chapter constructor, and to rethink how to save and update,
+now that the bind logic is in the node wrapper classes.
+
+
+
 
 
 

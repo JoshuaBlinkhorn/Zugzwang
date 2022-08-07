@@ -137,18 +137,24 @@ class ZugTrainingPosition(ZugQueueItem):
             ZugTrainingStatuses.NEW: ZugTrainingStatuses.LEARNING_STAGE_1,
             ZugTrainingStatuses.LEARNING_STAGE_1: ZugTrainingStatuses.LEARNING_STAGE_2,
             ZugTrainingStatuses.LEARNING_STAGE_2: ZugTrainingStatuses.REVIEW,
+            ZugTrainingStatuses.REMEMBERING_STAGE_1: ZugTrainingStatuses.REMEMBERING_STAGE_2,
+            ZugTrainingStatuses.REMEMBERING_STAGE_2: ZugTrainingStatuses.REVIEW,
             ZugTrainingStatuses.REVIEW: ZugTrainingStatuses.REVIEW,             
         }
         actions = {
             ZugTrainingStatuses.NEW: lambda: None,
             ZugTrainingStatuses.LEARNING_STAGE_1: lambda: None,
             ZugTrainingStatuses.LEARNING_STAGE_2: self._solution.learned,
+            ZugTrainingStatuses.REMEMBERING_STAGE_1: lambda: None,
+            ZugTrainingStatuses.REMEMBERING_STAGE_2: self._solution.remembered,
             ZugTrainingStatuses.REVIEW: self._solution.recalled,  
         }
         directives = {
             ZugTrainingStatuses.NEW: ZugQueue.REINSERT,
             ZugTrainingStatuses.LEARNING_STAGE_1: ZugQueue.REINSERT,
-            ZugTrainingStatuses.LEARNING_STAGE_2: ZugQueue.DISCARD,
+            ZugTrainingStatuses.LEARNING_STAGE_2: ZugQueue.DISCARD, 
+            ZugTrainingStatuses.REMEMBERING_STAGE_1: ZugQueue.REINSERT,
+            ZugTrainingStatuses.REMEMBERING_STAGE_2: ZugQueue.DISCARD,
             ZugTrainingStatuses.REVIEW: ZugQueue.DISCARD, 
         }
         # The action and directive depend on the current status.
@@ -159,21 +165,32 @@ class ZugTrainingPosition(ZugQueueItem):
         return directive
 
     def _on_failure(self):
+        statuses = {
+            ZugTrainingStatuses.LEARNING_STAGE_1: ZugTrainingStatuses.LEARNING_STAGE_1,
+            ZugTrainingStatuses.LEARNING_STAGE_2: ZugTrainingStatuses.LEARNING_STAGE_1,
+            ZugTrainingStatuses.REMEMBERING_STAGE_1: ZugTrainingStatuses.REMEMBERING_STAGE_1,
+            ZugTrainingStatuses.REMEMBERING_STAGE_2: ZugTrainingStatuses.REMEMBERING_STAGE_1,
+            ZugTrainingStatuses.REVIEW: ZugTrainingStatuses.REMEMBERING_STAGE_1,
+        }
         directives = {
             ZugTrainingStatuses.LEARNING_STAGE_1: ZugQueue.REINSERT,
             ZugTrainingStatuses.LEARNING_STAGE_2: ZugQueue.REINSERT,
+            ZugTrainingStatuses.REMEMBERING_STAGE_1: ZugQueue.REINSERT,
+            ZugTrainingStatuses.REMEMBERING_STAGE_2: ZugQueue.REINSERT,
             ZugTrainingStatuses.REVIEW: ZugQueue.REINSERT,
         }
         actions = {
             ZugTrainingStatuses.LEARNING_STAGE_1: lambda: None,
             ZugTrainingStatuses.LEARNING_STAGE_2: lambda: None,
+            ZugTrainingStatuses.REMEMBERING_STAGE_1: lambda: None,
+            ZugTrainingStatuses.REMEMBERING_STAGE_2: lambda: None,
             ZugTrainingStatuses.REVIEW: self._solution.forgotten,
         }
         # The action and directive depend on the current status.
         # So perform the action and set the directive *before* updating the status.
         actions.get(self._status).__call__()
         directive = directives.get(self._status)
-        self._status = ZugTrainingStatuses.LEARNING_STAGE_1
+        self._status = statuses.get(self._status)
         return directive
 
 
