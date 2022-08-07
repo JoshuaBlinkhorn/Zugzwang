@@ -1,5 +1,5 @@
 from typing import Union
-from zugzwang.data import ZugGroup
+from zugzwang.group import ZugGroup
 from zugzwang.chapter import ZugChapter
 from zugzwang.training import ZugPositionTrainer, ZugLineTrainer
 
@@ -72,12 +72,10 @@ class ZugChapterMenu(ZugMenu):
         if user_input == 'b':
             return True
         if user_input == 'p':
-            ZugPositionTrainer(self._chapter).train()
-            self._chapter.save()
+            self._chapter.train_positions()
             return None
         if user_input == 'l':
-            ZugLineTrainer(self._chapter).train()
-            self._chapter.save()            
+            self._chapter.train_lines()            
             return None
 
         
@@ -162,6 +160,7 @@ class ZugGroupMenu(ZugMenu):
 
     def _load_next_menu(self, item):
         self._child_menu_type(item).display()
+        self._group.update_stats()
 
 
 class ZugCategoryMenu(ZugGroupMenu):

@@ -27,76 +27,79 @@ BLACK_PERSPECTIVE_TOP_ROW = (
     (ZugPieces.ROOK, ZugColours.WHITE, ZugColours.BLACK),
 )
 
-@pytest.mark.parametrize(
-    'top_row, perspective',
-    [
-        (WHITE_PERSPECTIVE_TOP_ROW, ZugColours.WHITE),
-        (BLACK_PERSPECTIVE_TOP_ROW, ZugColours.BLACK),
-    ]
-)
-def test_ZugBoard_make_string(top_row, perspective):
-    prefix = ''
-    for (piece_type, piece_colour, square_colour) in top_row:
-        prefix += ZugBoard._render_square(
-            piece_type, piece_colour, square_colour
-        )
-        prefix += ' '
-    prefix += ZugBoard._render_newline()
-    assert ZugBoard(chess.Board()).make_string(perspective, margin=0).startswith(prefix)
+class TestZugBoard:
 
+    @pytest.mark.parametrize(
+        'top_row, perspective',
+        [
+            (WHITE_PERSPECTIVE_TOP_ROW, ZugColours.WHITE),
+            (BLACK_PERSPECTIVE_TOP_ROW, ZugColours.BLACK),
+        ]
+    )
+    def test_ZugBoard_make_string(self, top_row, perspective):
+        prefix = ''
+        for (piece_type, piece_colour, square_colour) in top_row:
+            prefix += ZugBoard._render_square(
+                piece_type, piece_colour, square_colour
+            )
+            prefix += ' '
+        prefix += ZugBoard._render_newline()
+        board_string = ZugBoard(chess.Board()).make_string(perspective, margin=0)
+        assert board_string.startswith(prefix)
 
-@pytest.mark.parametrize(
-    'piece_type, piece_colour, square_colour, expected_char',
-    [
-        (
-            chess.ROOK,
-            ZugColours.WHITE,
-            ZugColours.WHITE,
-            Back.GREEN + Fore.WHITE + ZugUnicodePieces.ROOK            
-        ),
-        (
-            chess.BISHOP,
-            ZugColours.WHITE,
-            ZugColours.BLACK,
-            Back.CYAN + Fore.WHITE + ZugUnicodePieces.BISHOP            
-        ),
-        (
-            chess.QUEEN,
-            ZugColours.BLACK,
-            ZugColours.WHITE,
-            Back.GREEN + Fore.BLACK + ZugUnicodePieces.QUEEN            
-        ),
-        (
-            chess.KING,
-            ZugColours.BLACK,
-            ZugColours.BLACK,
-            Back.CYAN + Fore.BLACK + ZugUnicodePieces.KING            
-        ),
-        (
-            chess.ROOK,
-            ZugColours.BLACK,
-            ZugColours.BLACK,
-            Back.CYAN + Fore.BLACK + ZugUnicodePieces.ROOK            
-        ),
-        (
-            chess.PAWN,
-            ZugColours.WHITE,
-            ZugColours.WHITE,
-            Back.GREEN + Fore.WHITE + ZugUnicodePieces.PAWN            
-        ),
-        (
-            None,
-            ZugColours.WHITE,
-            ZugColours.WHITE,
-            Back.GREEN + Fore.WHITE + ' '
-        ),
-    ]
-)
-def test_ZugBoard_render_square(
-        piece_type,
-        piece_colour,
-        square_colour,
-        expected_char
-):
-    rendered_char = ZugBoard._render_square(piece_type, piece_colour, square_colour)
-    assert rendered_char == expected_char
+    @pytest.mark.parametrize(
+        'piece_type, piece_colour, square_colour, expected_char',
+        [
+            (
+                chess.ROOK,
+                ZugColours.WHITE,
+                ZugColours.WHITE,
+                Back.CYAN + Fore.WHITE + ZugUnicodePieces.ROOK            
+            ),
+            (
+                chess.BISHOP,
+                ZugColours.WHITE,
+                ZugColours.BLACK,
+                Back.GREEN + Fore.WHITE + ZugUnicodePieces.BISHOP            
+            ),
+            (
+                chess.QUEEN,
+                ZugColours.BLACK,
+                ZugColours.WHITE,
+                Back.CYAN + Fore.BLACK + ZugUnicodePieces.QUEEN            
+            ),
+            (
+                chess.KING,
+                ZugColours.BLACK,
+                ZugColours.BLACK,
+                Back.GREEN + Fore.BLACK + ZugUnicodePieces.KING            
+            ),
+            (
+                chess.ROOK,
+                ZugColours.BLACK,
+                ZugColours.BLACK,
+                Back.GREEN + Fore.BLACK + ZugUnicodePieces.ROOK            
+            ),
+            (
+                chess.PAWN,
+                ZugColours.WHITE,
+                ZugColours.WHITE,
+                Back.CYAN + Fore.WHITE + ZugUnicodePieces.PAWN            
+            ),
+            (
+                None,
+                ZugColours.WHITE,
+                ZugColours.WHITE,
+                Back.CYAN + Fore.WHITE + ' '
+            ),
+        ]
+    )
+    def test_ZugBoard_render_square(
+            self,
+            piece_type,
+            piece_colour,
+            square_colour,
+            expected_char
+    ):
+        rendered_char = ZugBoard._render_square(piece_type, piece_colour, square_colour)
+        assert rendered_char == expected_char

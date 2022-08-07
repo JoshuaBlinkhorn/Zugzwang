@@ -6,11 +6,13 @@ import chess.pgn
 import os
 
 from zugzwang.game import (
+    ZugData,
+    ZugDataError,
     ZugRootData,
     ZugRoot,
+    ZugRootError,    
     ZugSolutionData,
     ZugSolution,
-    LearningRemainingError,
 )
 from zugzwang.chapter import ZugChapter
 from zugzwang.constants import ZugColours, ZugSolutionStatuses
@@ -20,97 +22,160 @@ from zugzwang.conftest import epoch_shift
 # TODO (non-critical):
 #
 # 1. Generally clean up this file
-# 2. Provide unit testing for the update() method of the data classes.
 
-# fix a mock epoch and dates relative to it
-# fix root data values, different to defaults
-# perhaps having these as constants is redundant now we have dataclasses implemtation
-PERSPECTIVE = ZugColours.WHITE
-LEARNING_REMAINING = 15
-LEARNING_LIMIT = 20
-RECALL_FACTOR = 2.5
-RECALL_RADIUS = 5
-RECALL_MAX = 500
+# fix a mock today and dates relative to it
+PAST_EPOCH = epoch_shift(-100)
+YESTERDAY = epoch_shift(-1)
+TODAY = epoch_shift(0)
+TOMORROW = epoch_shift(1)
+FUTURE_EPOCH = epoch_shift(100)
 
-# fix solution data
-STATUS = ZugSolutionStatuses.LEARNED
-LAST_STUDY_DATE = epoch_shift(-1)
-DUE_DATE = epoch_shift(-1)
-SUCCESSES = 5
-FAILURES = 5
+# fix default and alternative root data values
+DEFAULT_PERSPECTIVE = ZugColours.WHITE
+DEFAULT_LAST_ACCESS = TODAY
+DEFAULT_LEARNING_REMAINING = 10
+DEFAULT_LEARNING_LIMIT = 10
+DEFAULT_RECALL_FACTOR = 2.0
+DEFAULT_RECALL_RADIUS = 3
+DEFAULT_RECALL_MAX = 365
 
+ALTERNATE_PERSPECTIVE = ZugColours.BLACK
+ALTERNATE_LAST_ACCESS = YESTERDAY
+ALTERNATE_LEARNING_REMAINING = 100
+ALTERNATE_LEARNING_LIMIT = 100
+ALTERNATE_RECALL_FACTOR = 100.0
+ALTERNATE_RECALL_RADIUS = 100
+ALTERNATE_RECALL_MAX = 100
+
+# fix default solution data values
+DEFAULT_STATUS = ZugSolutionStatuses.UNLEARNED
+DEFAULT_LAST_STUDY_DATE = YESTERDAY
+DEFAULT_DUE_DATE = YESTERDAY
+DEFAULT_SUCCESSES = 0
+DEFAULT_FAILURES = 0
+
+# fix default and alternative solution data values
+#STATUS = ZugSolutionStatuses.LEARNED
+#LAST_STUDY_DATE = YESTERDAY
+#DUE_DATE = YESTERDAY
+#SUCCESSES = 5
+#FAILURES = 5
+
+# define the path to the example category, which holds the example chapters
 EXAMPLE_CATEGORY_PATH = os.path.join(
     os.getcwd(), 'TestCollections/ExampleCollection/ExampleCategory'
 )
 
-@pytest.fixture
-def root_data_json():
-    return (
-        '{'
-        '"perspective": true, '
+DEFAULT_ROOT_COMMENT = (
+        '['
         '"last_access": "2000-01-01", '
-        '"learning_remaining": 15, '
-        '"learning_limit": 20, '
-        '"recall_factor": 2.5, '
-        '"recall_radius": 5, '
-        '"recall_max": 500'
-        '}'
-    )
+        '"learning_limit": 10, '        
+        '"learning_remaining": 10, '
+        '"perspective": true, '        
+        '"recall_factor": 3.0, '
+        '"recall_max": 365, '
+        '"recall_radius": 3'
+        ']'
+)
 
-@pytest.fixture
-def solution_data_json():
-    return (
-        '{'
+ALTERNATE_ROOT_COMMENT = (
+        '['
+        '"last_access": "1999-12-31", '
+        '"learning_limit": 100, '        
+        '"learning_remaining": 100, '
+        '"perspective": false, '        
+        '"recall_factor": 100.0, '
+        '"recall_max": 1000, '
+        '"recall_radius": 100'
+        ']'
+)
+
+DEFAULT_SOLUTION_COMMENT = (
+        '['
         '"status": "LEARNED", '
         '"last_study_date": "1999-12-31", '
         '"due_date": "1999-12-31", '
-        '"successes": 5, '
-        '"failures": 5'
-        '}'
-    )
+        '"successes": 0, '
+        '"failures": 0'
+        ']'
+)
 
 @pytest.fixture
-def root_data():
-    return ZugRootData(
-        perspective = ZugColours.WHITE,
-        last_access = epoch_shift(0),
-        learning_remaining = LEARNING_REMAINING,
-        learning_limit = LEARNING_LIMIT,
-        recall_factor = RECALL_FACTOR,
-        recall_radius = RECALL_RADIUS,
-        recall_max = RECALL_MAX,        
-    )
-
-@pytest.fixture
-def root_data_white_perspective(root_data):
-    return root_data
-
-@pytest.fixture
-def root_data_black_perspective(root_data):
-    root_data.perspective = ZugColours.BLACK
-    return root_data    
-
-@pytest.fixture
-def solution_data():
+def default_solution_data():
     return ZugSolutionData(
-        status = ZugSolutionStatuses.LEARNED,
-        last_study_date = epoch_shift(-1),
-        due_date = epoch_shift(-1),
-        successes = SUCCESSES,
-        failures = FAILURES,
+        status = DEFAULT_STATUS,
+        last_study_date = DEFAULT_LAST_STUDY_DATE,
+        due_date = DEFAULT_DUE_DATE,
+        successes = DEFAULT_SUCCESSES,
+        failures = DEFAULT_FAILURES,
     )
 
 @pytest.fixture
-def root(root_data):
+def alternate_game_comment():
+    return (
+        '['
+        '"last_access": "1999-12-31", '
+        '"learning_limit": 100, '
+        '"learning_remaining": 100, '
+        '"perspective": false, '
+        '"recall_factor": 100.0, '
+        '"recall_max": 100, '
+        '"recall_radius": 100'
+        ']'
+    )
+
+@pytest.fixture
+def default_root_data():
+    return ZugRootData(
+        perspective = DEFAULT_PERSPECTIVE,
+        last_access = DEFAULT_LAST_ACCESS,
+        learning_remaining = DEFAULT_LEARNING_REMAINING,
+        learning_limit = DEFAULT_LEARNING_LIMIT,
+        recall_factor = DEFAULT_RECALL_FACTOR,
+        recall_radius = DEFAULT_RECALL_RADIUS,
+        recall_max = DEFAULT_RECALL_MAX,        
+    )
+
+@pytest.fixture
+def alternate_game_data():
+    return ZugRootData(
+        perspective = ALTERNATE_PERSPECTIVE,
+        last_access = ALTERNATE_LAST_ACCESS,
+        learning_remaining = ALTERNATE_LEARNING_REMAINING,
+        learning_limit = ALTERNATE_LEARNING_LIMIT,
+        recall_factor = ALTERNATE_RECALL_FACTOR,
+        recall_radius = ALTERNATE_RECALL_RADIUS,
+        recall_max = ALTERNATE_RECALL_MAX,        
+    )
+
+@pytest.fixture
+def default_root_data_white_perspective(default_root_data):
+    return default_root_data
+
+@pytest.fixture
+def default_data_black_perspective(default_root_data):
+    default_root_data.perspective = ZugColours.BLACK
+    return default_root_data
+
+@pytest.fixture
+def game():
     game = chess.pgn.Game()
-    game.comment = root_data.make_json()
+    game.comment = DEFAULT_ROOT_COMMENT
+    return game
+
+@pytest.fixture
+def solution(game):
+    solution = game.add_variation(chess.Move.from_uci('e2e4'))
+    solution.comment = DEFAULT_SOLUTION_COMMENT
+    return solution
+
+@pytest.fixture
+def zug_game(game):
     return ZugRoot(game)
 
 @pytest.fixture
-def solution(solution_data, root):
-    node = chess.pgn.ChildNode(root.game, chess.Move.from_uci('e2e4'))
-    node.comment = solution_data.make_json()
-    return ZugSolution(node, root)
+def zug_solution(solution, zug_game):
+    return ZugSolution(solution, zug_game)
 
 @pytest.fixture
 def root_only_game():
@@ -135,91 +200,299 @@ def simple_root(simple_game):
     return ZugRoot(simple_game)
 
 
+@pytest.fixture
+def ZugDataSubclass():
+    # To test the class's functionality more thoroughly, we need to
+    # create a subclass.
+    class ZugDataSubclass(ZugData):
+        def __init__(
+                self,
+                integer=0,
+                floater=0.0,
+                string='foobar',
+                date=None,
+        ):
+            self.integer = integer
+            self.floater = floater
+            self.string = string
+            self.date = date if date is not None else epoch_shift(0)
+
+    return ZugDataSubclass
+
+
+class TestZugData:
+
+    def test_default(self):
+        # The base class never has attributes.
+        # So we test only against empty json.
+        json = '{}'
+        zug_data = ZugData()
+        assert ZugData.from_json(json) == zug_data
+        assert zug_data.make_json() == json        
+
+    @pytest.mark.parametrize(
+        'json, kwargs',
+        [
+            (
+                (
+                    '{'
+                    '"date": "2000-01-01", '
+                    '"floater": 0.0, '
+                    '"integer": 0, '
+                    '"string": "foobar"'
+                    '}'
+                ),
+                {},
+            ),
+            (
+                (
+                    '{'
+                    '"date": "2000-01-01", '
+                    '"floater": 100.0, '
+                    '"integer": 100, '
+                    '"string": "barfoo"'
+                    '}'
+                ),
+                {
+                    'floater': 100.0,
+                    'integer': 100,
+                    'string': 'barfoo',
+                },
+            ),
+            (
+                (
+                    '{'
+                    '"date": "2000-01-02", '
+                    '"floater": 0.0, '
+                    '"integer": 0, '
+                    '"string": "foobar"'
+                    '}'
+                ),
+                {
+                    'date': epoch_shift(1),
+                },
+            ),
+        ],
+        ids = [
+            'empty',
+            'non-default non-dates',
+            'non-default date',
+        ]
+    )
+    def test_json(self, ZugDataSubclass, json, kwargs):
+        # Translating to and from json works with a subset of parameters.
+        zug_data = ZugDataSubclass(**kwargs)
+        assert ZugDataSubclass.from_json(json) == zug_data
+        assert zug_data.make_json() == json        
+
+    @pytest.mark.parametrize(
+        'update_dict, expected_dict',
+        [
+            (
+                {},
+                {
+                    'date': epoch_shift(0),
+                    'floater': 0.0,
+                    'integer': 0,
+                    'string': 'foobar',
+                } 
+            ),
+            (
+                {
+                    'floater': 100.0,
+                    'integer': 100,
+                    'string': 'barfoo',                    
+                },
+                {
+                    'date': epoch_shift(0),
+                    'floater': 100.0,
+                    'integer': 100,
+                    'string': 'barfoo',
+                } 
+            ),
+            (
+                {
+                    'date': epoch_shift(1),
+                },
+                {
+                    'date': epoch_shift(1),
+                    'floater': 0.0,
+                    'integer': 0,
+                    'string': 'foobar',
+                } 
+            ),
+        ],
+        ids = [
+            'empty',
+            'update non-dates',
+            'update date',
+        ]
+    )
+    def test_update(self, ZugDataSubclass, update_dict, expected_dict):
+        # Updating with recognised arguments updates the object __dict__.
+        zug_data = ZugDataSubclass()
+        zug_data.update(update_dict)
+        assert zug_data.__dict__ == expected_dict
+        
+    def test_update_foreign_attribute(self, ZugDataSubclass):
+        # Updating with unrecognised arguments raises an exception.       
+        zug_data = ZugDataSubclass()
+        with pytest.raises(ZugDataError):
+            zug_data.update({'unrecognised_key': 'any_value'})
+
+
 class TestZugRootData:
 
-    def test_from_json(self, root_data_json, root_data):
-        assert ZugRootData.from_json(root_data_json) == root_data
-
-    def test_make_json(self, root_data, root_data_json):
-        assert root_data.make_json() == root_data_json
-
+    def test_defaults(self, default_root_data):
+        assert ZugRootData() == default_root_data
+    
 
 class TestZugSolutionData:
 
-    def test_from_json(self, solution_data_json, solution_data):
-        assert ZugSolutionData.from_json(solution_data_json) == solution_data
-
-    def test_make_json(self, solution_data, solution_data_json):
-        assert solution_data.make_json() == solution_data_json
-    
-    def test_update(self):
-        pass
+    def test_defaults(self, default_solution_data):
+        assert ZugSolutionData() == default_solution_data    
 
 
 class TestZugRoot:
- 
-    def test_bind_data_to_comment(self):
+
+    def test_bind(self):
         game = chess.pgn.Game()
-        game.comment = ZugRootData().make_json()
-        root = ZugRoot(game)
-
-        root.data.perspective = ZugColours.BLACK
-        root.data.last_access = epoch_shift(-1)        
-        root.data.learning_remaining = 50
-        root.data.learning_limit = 100
-        root.data.recall_radius = 10
-        root.data.recall_factor = 5.0
-        root.data.recall_max = 500
+        game.comment = ALTERNATE_ROOT_COMMENT        
+        zug_root = ZugRoot(game)
         
-        expected_json = (
-            '{'
-            '"perspective": false, '
-            '"last_access": "1999-12-31", '
-            '"learning_remaining": 50, '
-            '"learning_limit": 100, '
-            '"recall_factor": 5.0, '
-            '"recall_radius": 10, '
-            '"recall_max": 500'
-            '}'
-        )
-
-        root.bind_data_to_comment()
-        assert root.game.comment == expected_json
+        game.comment = DEFAULT_ROOT_COMMENT
+        zug_root._bind()
+        assert game.comment == ALTERNATE_ROOT_COMMENT
 
     @pytest.mark.parametrize(
-        'last_access, expected_learning_remaining',
+        (
+            'last_access, '
+            'learning_remaining, '
+            'expected_last_access, '
+            'expected_learning_remaining'
+        ),
         [
-            (epoch_shift(0), 15),
-            (epoch_shift(-1), 20),
-            (epoch_shift(-5), 20),
+            (
+                TODAY.isoformat(),
+                DEFAULT_LEARNING_REMAINING - 1,
+                TODAY.isoformat(),
+                DEFAULT_LEARNING_REMAINING - 1,
+            ),
+            (
+                YESTERDAY.isoformat(),
+                DEFAULT_LEARNING_REMAINING,
+                TODAY.isoformat(),
+                DEFAULT_LEARNING_REMAINING,
+            ),
+            (
+                YESTERDAY.isoformat(),
+                DEFAULT_LEARNING_REMAINING - 1,
+                TODAY.isoformat(),
+                DEFAULT_LEARNING_REMAINING,
+            ),
+            (
+                PAST_EPOCH.isoformat(),
+                DEFAULT_LEARNING_REMAINING - 1,
+                TODAY.isoformat(),
+                DEFAULT_LEARNING_REMAINING,
+            ),
+        ],
+        ids = [
+            'no update',
+            'update with identical learning_remaining',            
+            'update with last_access yesterday',
+            'update with last_access past_epoch',            
         ]
     )
-    def test_update_learning_remaining(self, last_access, expected_learning_remaining):
+    def test_update(
+            self,
+            last_access,
+            learning_remaining,
+            expected_last_access,
+            expected_learning_remaining,
+    ):
         game = chess.pgn.Game()
-        root_data = ZugRootData(
-            learning_limit = 20,
-            learning_remaining = 15,
-            last_access=last_access
-        )
-        game.comment = root_data.make_json()
+        game.comment = (
+            '['
+            f'"last_access": "{last_access}", '
+            '"learning_limit": 10, '            
+            f'"learning_remaining": {learning_remaining}, '
+            '"perspective": true, '            
+            '"recall_factor": 2.0, '
+            '"recall_max": 365, '            
+            '"recall_radius": 3'
+            ']'
+        )        
         root = ZugRoot(game)
         
-        root.update_learning_remaining()
-        assert root.data.learning_remaining == expected_learning_remaining
-        
-    def test_decrement_learning_remaining(self):
-        game = chess.pgn.Game()
-        root_data = ZugRootData(learning_remaining=2)
-        game.comment = root_data.make_json()        
-        root = ZugRoot(game)
-        
-        root.decrement_learning_remaining()
-        assert root.data.learning_remaining == 1
-        root.decrement_learning_remaining()
-        assert root.data.learning_remaining == 0
-        with pytest.raises(LearningRemainingError):
-            root.decrement_learning_remaining()            
+        root.update()
+        assert game.comment == (
+            '['
+            f'"last_access": "{expected_last_access}", '
+            '"learning_limit": 10, '            
+            f'"learning_remaining": {expected_learning_remaining}, '
+            '"perspective": true, '            
+            '"recall_factor": 2.0, '
+            '"recall_max": 365, '            
+            '"recall_radius": 3'
+            ']'
+        )                    
 
+    @pytest.mark.parametrize(
+        'learning_remaining, expected_learning_remaining',
+        [(1,0), (2,1), (10,9), (1000,999)],
+        ids = ['smallest', 'small', 'medium', 'large']
+    )
+    def test_decrement_learning_remaining(
+            self,
+            learning_remaining,
+            expected_learning_remaining
+    ):
+        game = chess.pgn.Game()
+        game.comment = (
+            '['
+            '"last_access": "2000-01-01", '
+            '"learning_limit": 10, '            
+            f'"learning_remaining": {learning_remaining}, '
+            '"perspective": true, '
+            '"recall_factor": 2.0, '
+            '"recall_max": 365, '            
+            '"recall_radius": 3'
+            ']'
+        )
+        root = ZugRoot(game)
+        
+        root.decrement_learning_remaining()
+        assert game.comment == (
+            '['
+            '"last_access": "2000-01-01", '
+            '"learning_limit": 10, '            
+            f'"learning_remaining": {expected_learning_remaining}, '
+            '"perspective": true, '
+            '"recall_factor": 2.0, '
+            '"recall_max": 365, '            
+            '"recall_radius": 3'
+            ']'
+        )
+
+    def test_decrement_zero_learning_remaining(self):
+        # Decrementing a zero learning-remaining raises and exception
+        game = chess.pgn.Game()
+        game.comment = (
+            '['
+            '"last_access": "2000-01-01", '
+            '"learning_limit": 10, '            
+            '"learning_remaining": 0, '
+            '"perspective": true, '
+            '"recall_factor": 2.0, '
+            '"recall_max": 365, '            
+            '"recall_radius": 3'
+            ']'
+        )
+        root = ZugRoot(game)
+        with pytest.raises(ZugRootError):
+            root.decrement_learning_remaining()
+        
     @pytest.mark.parametrize(
         'learning_remaining, expected_has_learning_capacity',
         [(0, False), (1, True), (2, True), (100, True)]
@@ -230,12 +503,134 @@ class TestZugRoot:
             expected_has_learning_capacity
     ):
         game = chess.pgn.Game()
-        root_data = ZugRootData(learning_remaining=learning_remaining)
-        game.comment = root_data.make_json()
+        game.comment = (
+            '['
+            '"last_access": "2000-01-01", '
+            '"learning_limit": 10, '            
+            f'"learning_remaining": {learning_remaining}, '
+            '"perspective": true, '            
+            '"recall_factor": 2.0, '
+            '"recall_max": 365, '            
+            '"recall_radius": 3'
+            ']'
+        )
         root = ZugRoot(game)
         
         assert root.has_learning_capacity() == expected_has_learning_capacity
 
+
+class TestZugSolution():
+
+    def test_learned(self, game, solution, zug_game):
+
+        zug_game.decrement_learning_remaining = mock.MagicMock()
+        solution.comment = (
+            '['
+            '"due_date": "1999-12-31", '
+            '"failures": 0, '
+            '"last_study_date": "1999-12-31", '
+            '"status": "UNLEARNED", '            
+            '"successes": 0'
+            ']'
+        )
+        zug_solution = ZugSolution(solution, zug_game)
+        
+        zug_solution.learned()
+        
+        zug_game.decrement_learning_remaining.assert_called_once()
+        assert solution.comment == (
+        '['
+        '"due_date": "2000-01-02", '
+        '"failures": 0, '
+        '"last_study_date": "2000-01-01", '
+        '"status": "LEARNED", '            
+        '"successes": 1'
+        ']'
+        )
+
+    def test_recalled(self, game, solution, zug_game):
+        zug_game.decrement_learning_remaining = mock.MagicMock()
+        ZugDates.due_date = mock.MagicMock(return_value = FUTURE_EPOCH)        
+        solution.comment = (
+            '['
+            '"due_date": "2000-01-01", '
+            '"failures": 0, '
+            '"last_study_date": "1999-12-01", '
+            '"status": "LEARNED", '            
+            '"successes": 1'
+            ']'
+        )
+        zug_solution = ZugSolution(solution, zug_game)
+        
+        zug_solution.recalled()
+        
+        zug_game.decrement_learning_remaining.assert_not_called()
+        assert solution.comment == (
+        '['
+        '"due_date": "2000-04-10", '
+        '"failures": 0, '
+        '"last_study_date": "2000-01-01", '
+        '"status": "LEARNED", '            
+        '"successes": 2'
+        ']'
+        )
+
+    def test_forgotten(self, solution):
+        zug_game.decrement_learning_remaining = mock.MagicMock()
+        ZugDates.due_date = mock.MagicMock(return_value = FUTURE_EPOCH)        
+        solution.comment = (
+            '['
+            '"due_date": "2000-01-01", '
+            '"failures": 0, '
+            '"last_study_date": "1999-12-01", '
+            '"status": "LEARNED", '            
+            '"successes": 1'
+            ']'
+        )
+        zug_solution = ZugSolution(solution, zug_game)
+        
+        zug_solution.forgotten()
+        
+        zug_game.decrement_learning_remaining.assert_not_called()
+        assert solution.comment == (
+        '['
+        '"due_date": "2000-01-01", '
+        '"failures": 1, '
+        '"last_study_date": "1999-12-01", '
+        '"status": "UNLEARNED", '            
+        '"successes": 1'
+        ']'
+        )
+    
+    def test_remembered(self, solution):
+        zug_game.decrement_learning_remaining = mock.MagicMock()
+        ZugDates.due_date = mock.MagicMock(return_value = FUTURE_EPOCH)        
+        solution.comment = (
+            '['
+            '"due_date": "2000-01-01", '
+            '"failures": 1, '
+            '"last_study_date": "1999-12-01", '
+            '"status": "UNLEARNED", '            
+            '"successes": 1'
+            ']'
+        )
+        zug_solution = ZugSolution(solution, zug_game)
+        
+        zug_solution.remembered()
+        
+        zug_game.decrement_learning_remaining.assert_not_called()
+        assert solution.comment == (
+        '['
+        '"due_date": "2000-01-02", '
+        '"failures": 1, '
+        '"last_study_date": "2000-01-01", '
+        '"status": "LEARNED", '            
+        '"successes": 2'
+        ']'
+        )
+    
+class RedundantTests:
+    
     # This should go into Chapter
     def redundant_test_from_naked_game(self):
         naked_game = chess.pgn.Game()
@@ -265,407 +660,5 @@ class TestZugRoot:
         
         # the root and solution should have default comments
         assert game.comment == ZugRootData().make_json()
-        assert problem.comment == ZugSolutionData().make_json()        
+        assert problem.comment == ZugSolutionData().make_json()
 
-
-class TestZugRootSolutionNodes():
-
-    @pytest.mark.parametrize(
-        'chp_filename', ['linear.chp', 'linear-hanging-problem.chp']
-    )
-    def test_linear(self, chp_filename):
-        # tests a chapter with no branching and five solutions, ending with or without
-        # a 'hanging problem'; i.e. a problem that is not followed by a solution
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, chp_filename)
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-        
-        node = game
-        expected_solution_nodes = []
-        for _ in range(5):
-            node = node.variations[0]
-            node = node.variations[0]
-            expected_solution_nodes.append(node)
-
-        assert root.solution_nodes() == expected_solution_nodes
-
-    @pytest.mark.parametrize(
-        'chp_filename', ['branching.chp','branching-hanging-problems.chp']
-    )
-    def test_branching(self, chp_filename ):
-        # tests a PGN with branching, three moves deep and no unreachable solutions
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, chp_filename)
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-
-        # the easist strategy to grab the expected solution nodes is just nesting
-        # for loops to cover three-move depth
-        expected_solution_nodes = []    
-        for problem in game.variations:
-            for solution in problem.variations:
-                expected_solution_nodes.append(solution)
-                for problem in solution.variations:
-                    for solution in problem.variations:
-                        expected_solution_nodes.append(solution)
-
-        assert root.solution_nodes() == expected_solution_nodes
-
-    def test_unreachable(self):
-        # tests a PGN with unreachable solutions
-        # for throroughness, the PGN also has branching and hanging problems
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'unreachable.chp')
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-
-        # the easist strategy to grab the expected solution nodes is just nesting
-        # for loops to cover two-move depth, and searching only the first variation
-        # of problems
-        expected_solution_nodes = []
-        for problem in game.variations:
-            solution = problem.variations[0]
-            expected_solution_nodes.append(solution)
-            for problem in solution.variations:
-                solution = problem.variations[0]
-                expected_solution_nodes.append(solution)
-
-        assert root.solution_nodes() == expected_solution_nodes
-
-    def test_basic_blunder(self):
-        # tests a PGN with single blunder
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'blunder.chp')
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-
-        # there are only two solutions, so grab them explicity
-        expected_solution_nodes = []
-        problem = game.variations[0]
-        expected_solution_nodes.append(problem.variations[0])
-        blunder = problem.variations[1]
-        expected_solution_nodes.append(blunder.variations[0])
-    
-        assert root.solution_nodes() == expected_solution_nodes
-
-
-    def test_blunders_and_branching(self):
-        # tests a PGN with branching and single blunders, i.e. the opponent does not
-        # blunder back in the refutation
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'blunders-and-branching.chp')
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-    
-        expected_solution_nodes = []
-        problem = game.variations[0]
-        solution = problem.variations[0]    
-        expected_solution_nodes.append(solution)
-        blunder = problem.variations[1]
-        refutation = blunder.variations[0]
-        expected_solution_nodes.append(refutation)
-
-        problem = game.variations[1]    
-        solution = problem.variations[0]    
-        expected_solution_nodes.append(solution)
-        blunder = problem.variations[1]
-        refutation = blunder.variations[0]
-        expected_solution_nodes.append(refutation)
-        for problem in refutation.variations:
-            expected_solution_nodes.append(problem.variations[0])
-    
-        assert root.solution_nodes() == expected_solution_nodes
-
-    def test_hanging_blunders(self):
-        # tests a PGN with hanging blunders, i.e. the blunder has no refutation
-        # we also test blunders which aren't qualified by a proper solution
-        # the distinction is important; a blunder is a problem, but it is also
-        # an error; solutions to both exist, but their perspectives are different
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'hanging-blunders.chp')
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-    
-        expected_solution_nodes = []
-        problem = game.variations[0]
-        solution = problem.variations[0]
-        expected_solution_nodes.append(solution)
-        problem = solution.variations[0]
-        blunder = problem.variations[0]
-        expected_solution_nodes.append(blunder.variations[0])    
-    
-        assert root.solution_nodes() == expected_solution_nodes
-
-    def test_blunder_and_unreachable(self):
-        # tests a PGN with a node that has a solution, a blunder and an unreachable
-        # candidate
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'blunder-and-unreachable.chp')
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-        
-        expected_solution_nodes = []
-        problem = game.variations[0]
-        expected_solution_nodes.append(problem.variations[0])
-        blunder = problem.variations[1]
-        expected_solution_nodes.append(blunder.variations[0])    
-
-        assert root.solution_nodes() == expected_solution_nodes
-
-    def test_double_blunders(self):
-        # tests a PGN in which the opponent blunders back in the refutation
-        # hence the perspective will reverse twice in one line
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'double-blunders.chp')
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-        
-        expected_solution_nodes = []
-        expected_solution_nodes.append(game.variations[0])
-        blunder = game.variations[1]
-        refutation = blunder.variations[0]
-        expected_solution_nodes.append(refutation)
-        problem = refutation.variations[0]
-        return_blunder = problem.variations[0]
-        refutation = return_blunder.variations[0]            
-        expected_solution_nodes.append(refutation)
-        for problem in refutation.variations:
-            expected_solution_nodes.append(problem.variations[0])
-
-        assert root.solution_nodes() == expected_solution_nodes
-
-    def test_white_from_starting_position(self):
-        # tests a PGN in which the training player has the move in the root position.
-        # the other case is tested implicitly in several tests above
-        chp_filepath = os.path.join(
-            EXAMPLE_CATEGORY_PATH,
-            'white-from-starting-position.chp'
-        )
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-
-        expected_solution_nodes = []
-        solution = game.variations[0]
-        expected_solution_nodes.append(solution)
-        for problem in solution.variations:
-            expected_solution_nodes.append(problem.variations[0])
-
-        assert root.solution_nodes() == expected_solution_nodes
-
-
-class TestZugRootLines():
-
-    @pytest.mark.parametrize(
-        'chp_filename',
-        ['linear.chp','linear-hanging-problem.chp'],
-    )
-    def test_linear(self, chp_filename):
-        # tests a PGN with no branching and five solutions, ending with or without
-        # a 'hanging problem'; i.e. a problem that is not followed by a solution
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, chp_filename)
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-
-        line = list(game.mainline())[:10]
-        expected_lines = [line]            
-
-        assert root.lines() == expected_lines
-
-    @pytest.mark.parametrize(
-        'chp_filename',
-        ['branching.chp','branching-hanging-problems.chp']
-    )
-    def test_branching(self, chp_filename):
-        # tests a PGN with branching, three moves deep and no unreachable solutions
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, chp_filename)
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-        
-        # there is no simpler way to do this than construct the lines manually.
-        main = list(game.mainline())[0:4]
-        line_a = main[:]
-        variation = main[-3].variations[1]
-        line_b = main[:-2] + [variation, variation.variations[0]]
-        variation = game.variations[1]
-        line_c = [variation] + list(variation.mainline())[:3]
-        variation = line_c[-3].variations[1]
-        line_d = line_c[:2] + [variation, variation.variations[0]]        
-        expected_lines = [line_a, line_b, line_c, line_d]
-
-        assert root.lines() == expected_lines
-        
-    def test_unreachable(self):
-        # tests a PGN with unreachable solutions
-        # for throroughness, the PGN also has branching and hanging problems
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'unreachable.chp')
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-
-        # there is only one line, the main line
-        expected_lines = [list(game.mainline())]
-
-        assert root.lines() == expected_lines
-
-    def test_basic_blunder(self):
-        # tests a PGN with single blunder
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'blunder.chp')
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-
-        # there two lines, the main line and the blunder line
-        line_a = list(game.mainline())
-        blunder = line_a[0].variations[1]
-        line_b = [blunder, blunder.variations[0]]
-        expected_lines = [line_a, line_b]
-        
-        assert root.lines() == expected_lines
-
-    def test_blunders_and_branching(self):
-        # tests a PGN with branching and single blunders, i.e. the opponent does not
-        # blunder back in the refutation
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'blunders-and-branching.chp')
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-
-        # again, there is no clever way, we just build the lines
-        line_a = list(game.mainline())
-        blunder = line_a[0].variations[1]
-        line_b = [blunder, blunder.variations[0]]
-        variation = game.variations[1]
-        line_c = [variation, variation.variations[0]]
-        blunder = variation.variations[1]
-        line_d = [blunder] + list(blunder.mainline())
-        variation = line_d[-3].variations[1]
-        line_e = line_d[:2] + [variation, variation.variations[0]]
-        expected_lines = [line_a, line_b, line_c, line_d, line_e]        
-        
-        assert root.lines() == expected_lines
-
-    def test_hanging_blunders(self, root_data_black_perspective):
-        # tests a PGN with hanging blunders, i.e. the blunder has no refutation
-        # we also test blunders which aren't qualified by a proper solution
-        # the distinction is important; a blunder is a problem, but it is also
-        # an error; solutions to both exist, but their perspectives are different
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'hanging-blunders.chp')
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-
-        # there are just two lines
-        main = list(game.mainline())
-        line_a = main[:2]
-        line_b = main[-2:]
-        expected_lines = [line_a, line_b]
-
-        assert root.lines() == expected_lines
-
-    def test_blunder_and_unreachable(self):
-        # tests a PGN with a node that has a solution, a blunder and an unreachable
-        # candidate
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'blunder-and-unreachable.chp')
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-
-        # there two lines, the main line and the blunder line
-        line_a = list(game.mainline())
-        blunder = line_a[0].variations[1]
-        line_b = [blunder, blunder.variations[0]]
-        expected_lines = [line_a, line_b]
-        
-        assert root.lines() == expected_lines        
-
-    def test_double_blunders(self):
-        # tests a PGN in which the opponent blunders back in the refutation
-        # hence the perspective will reverse twice in one line
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'double-blunders.chp')
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-
-        # there are four lines
-        line_a = [game, game.variations[0]]
-        blunder = game.variations[1]
-        line_b = [blunder, blunder.variations[0]]
-        blunder = list(blunder.mainline())[2]
-        line_c = [blunder] + list(blunder.mainline())
-        variation = line_c[-3].variations[1]
-        line_d = line_c[:2] + [variation, variation.variations[0]]
-        expected_lines = [line_a, line_b, line_c, line_d]
-        
-        assert root.lines() == expected_lines
-
-    def test_white_from_starting_position(self):
-        # tests a PGN in which the training player has the move in the root position.
-        # the other case is tested implicitly in several tests above
-        chp_filepath = os.path.join(
-            EXAMPLE_CATEGORY_PATH,
-            'white-from-starting-position.chp')
-        root = ZugChapter(chp_filepath).root
-        game = root.game
-
-        # here there are four lines, but we can exploit the structure or the PGN
-        # with a for loop
-        mainline = [game] + list(game.mainline())
-        expected_lines = [mainline]
-        junction = mainline[1]
-        for variation in junction.variations[1:]:
-            expected_lines.append(mainline[:2] + [variation, variation.variations[0]])
-
-        assert root.lines() == expected_lines
-
-
-class TestZugSolution():
-
-    def test_bind_data_to_comment(self):
-        game = chess.pgn.Game()
-        game.comment = ZugRootData().make_json()
-        root = ZugRoot(game)
-
-        node = chess.pgn.ChildNode
-        node.comment = ZugSolutionData().make_json()
-        solution = ZugSolution(node, root)
-
-        solution.data.status = ZugSolutionStatuses.LEARNED
-        solution.data.last_study_date = epoch_shift(0)
-        solution.data.due_date = epoch_shift(1)
-        solution.data.successes = 10
-        solution.data.failures = 10
-        
-        expected_json = (
-            '{'
-            '"status": "LEARNED", '
-            '"last_study_date": "2000-01-01", '
-            '"due_date": "2000-01-02", '
-            '"successes": 10, '
-            '"failures": 10'
-            '}'
-        )
-
-        solution.bind_data_to_comment()
-        assert solution.node.comment == expected_json
-
-    def test_learned(self, solution):
-        solution.learned()
-
-        assert solution.root.data.learning_remaining == LEARNING_REMAINING - 1
-        assert solution.data.status == ZugSolutionStatuses.LEARNED
-        assert solution.data.last_study_date == epoch_shift(0)
-        assert solution.data.due_date == epoch_shift(1)
-        assert solution.data.successes == SUCCESSES + 1
-        assert solution.data.failures == FAILURES                        
-
-    def test_recalled(self, solution, monkeypatch):
-        def mock_due_date(*args, **kwargs):
-            return epoch_shift(10)
-        monkeypatch.setattr(ZugDates, 'due_date', mock_due_date)
-        
-        solution.recalled()
-
-        assert solution.root.data.learning_remaining == LEARNING_REMAINING
-        assert solution.data.status == ZugSolutionStatuses.LEARNED
-        assert solution.data.last_study_date == epoch_shift(0)
-        assert solution.data.due_date == epoch_shift(10)
-        assert solution.data.successes == SUCCESSES + 1
-        assert solution.data.failures == FAILURES                        
-
-    def test_forgotten(self, solution):
-        solution.forgotten()
-
-        assert solution.root.data.learning_remaining == LEARNING_REMAINING
-        assert solution.data.status == ZugSolutionStatuses.UNLEARNED
-        assert solution.data.last_study_date == LAST_STUDY_DATE
-        assert solution.data.due_date == DUE_DATE
-        assert solution.data.successes == SUCCESSES
-        assert solution.data.failures == FAILURES + 1                      
-    
