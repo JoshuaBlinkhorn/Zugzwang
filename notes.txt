@@ -740,13 +740,131 @@ for a powerful base class.
 
 Some updates:
 
-1. Sort chapter, categories, collections in alphabetic order
+1. Sort chapter, categories, collections in alphabetic order - D0ne
 2. We're not updating the last access, so learning remaining is getting updated when
-   it shouldn't do
+   it shouldn't do - Done
 2. Number of lines left in training session printed to screen - but this will be easier
    with the UI
 3. Statistics for line-based training: and a programme - line based training preceeds
    position-based
+
+~~~~~~~~~~~~~~~~
+2022-07-30 15:26
+
+Fixed a couple of easy bugs - the unit tests for ZugRoot need updating.
+Now I'll get the comments binded to the Roots and Solutions, and sort out the
+curly vs straight braces at the same time.
+
+~~~~~~~~~~~~~~~~
+2022-07-31 09:02
+
+I think forgotten positions are causing a problem with learning remaining.
+Probably they go back into learning, and when learned the learning remaining gets
+decremented, and then ends up below zero at the end of the session.
+
+So, we perhaps we need a separate status for forgotten positions.
+The simplest thing to do is to set them as unlearned, they will get picked up tomorrow.
+Or we have statuses REMEMBERING_STAGE_1 and REMEMBERING_STAGE_2, and we don't decrement
+learning remaining when the fogotten positions get remembered.
+So we'll need a Solution method '.remembered()'
+
+Let's try to get that far with the unit testing for ZugSolution() and ZugRoot()
+
+~~~~~~~~~~~~~~~~
+2022-08-01 21:25
+
+We should put constraints on the allowable values of data into the data classes.
+This will be done via @property and getters.
+Then we can unit test those.
+
+e.g. success and failures must be set with non-negative integers;
+     last_access must be set with a date <= today; etc.
+
+This will be a really neat feature, it takes that error handling out of the root
+and solution classes.
+
+~~~~~~~~~~~~~~~~
+2022-08-01 22:10
+
+Good progress, the tests for ZugRoot have been completed.
+What next? Well, we need to rename that class ZugGame.
+Then we need to factor the unit test for _bind() out of TestZugRoot and into
+TestZugGameNodeWrapper, as it belongs there in the base class.
+
+Then we need to write analogous unit tests for solution, including implementing
+a method remembered().
+Then we need to factor the solution set and lines set collection into ZugChapter.
+
+So quite a lot of work for this update.
+But it will all be worth it.
+
+~~~~~~~~~~~~~~~~
+2022-08-04 20:26
+
+Getting back to this for a few hours tonight.
+Let's start with the analogous tests for Solution.
+We'll make it tonight's goal to get this file tested, cleaned, with the remaming
+and refactoring.
+
+Okay, I've done the unit tests for solution..
+But I now feel like bind() belongs in the data classes, which should be linked to
+a node..
+But perhaps I only want this because I really would like to be able to set and access
+the data for the unit tests.
+Having to set and check the comments is sensbible if you want the data hidden in the
+class, you want the class to manipulate comments and provide an interface for that.
+So you set the comments and watch the interface manipute them correctly.
+
+The main draw back is that the comment is large. Typically the interface makes small
+changes to particular fields and we want to test that in a good set of cases.
+Using comments makes those tests unreadable.
+So maybe it's just a good idea to make that data accessible.
+Or really, perhaps it's better to have the manipulating class looking at python fields
+that are python data types, rather than a json string whose manipulation it delegates
+to the data class.
+
+Yes, I like much better the idea that the data class is the node wrapper's view of
+the node comment. It's better to look at dictionary than a string. That rings a bell?
+
+Perhaps the issue is that really, there should only be a single class.
+The nice thing about the data class is that we can use __dict__ to write the json.
+So let's not meddle with those.
+
+So lets have a think about this.
+
+~~~~~~~~~~~~~~~~
+2022-08-07 15:24
+
+Let's focus on getting the software working, we can rewrite the data layer if necessary.
+So there are two things to do:
+
+1) Get the 'forgotton' track of a training position up and running - Done
+2) Factor the line and solution set generation out of ZugRoot and into ZugChapter
+
+I've factored line and solution generation into a new class of ZugChessTools.
+The test setup makes more sense now (it doesn't need to go through ZugChapter).
+
+Time now to rewrite the chapter constructor, and to rethink how to save and update,
+now that the bind logic is in the node wrapper classes.
+
+~~~~~~~~~~~~~~~~
+2022-08-07 20:00
+
+We now appear to have a working version of the trainer again, but there are still
+a couple of things that are a little messy.
+
+1) The classes ZugTrainingPosition and ZugTrainingLine are in queue.py
+   They should be in training.py, and their associated unit tests too.
+
+2) The ZugChapter constructor still feels a little messy
+
+3) There are failing unit tests
+
+Let's try to sort 1 and 3 out.
+1 is now sorted, I've put them into fresh files positions.py and lines.py
+Let's have a look at the extent of 3
+
+
 
 
 

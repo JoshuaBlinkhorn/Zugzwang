@@ -1,4 +1,7 @@
 import pytest
+import os
+
+from zugzwang.chapter import ZugChapter
 
 # TODO
 # Figure out how to unit test this class.
@@ -20,4 +23,3 @@ class TestZugChapter:
         pass
 
 
-        

@@ -1,8 +1,6 @@
 import datetime
 from random import randint
 
-from zugzwang.constants import ZugDefaults
-
 class ZugDates():
 
     @classmethod
@@ -26,9 +24,9 @@ class ZugDates():
             cls,
             last_study_date,
             current_due_date,
-            recall_factor=ZugDefaults.RECALL_FACTOR,
-            recall_radius=ZugDefaults.RECALL_RADIUS,
-            recall_max=ZugDefaults.RECALL_MAX,
+            recall_factor,
+            recall_radius,
+            recall_max,
     ):
         # calculate the diff based on recall factor and radius
         previous_diff = (current_due_date - last_study_date).days
