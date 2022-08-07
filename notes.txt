@@ -847,6 +847,23 @@ The test setup makes more sense now (it doesn't need to go through ZugChapter).
 Time now to rewrite the chapter constructor, and to rethink how to save and update,
 now that the bind logic is in the node wrapper classes.
 
+~~~~~~~~~~~~~~~~
+2022-08-07 20:00
+
+We now appear to have a working version of the trainer again, but there are still
+a couple of things that are a little messy.
+
+1) The classes ZugTrainingPosition and ZugTrainingLine are in queue.py
+   They should be in training.py, and their associated unit tests too.
+
+2) The ZugChapter constructor still feels a little messy
+
+3) There are failing unit tests
+
+Let's try to sort 1 and 3 out.
+1 is now sorted, I've put them into fresh files positions.py and lines.py
+Let's have a look at the extent of 3
+
 
 
 

@@ -48,6 +48,7 @@ ALTERNATE_RECALL_RADIUS = 100
 ALTERNATE_RECALL_MAX = 100
 
 # fix default solution data values
+DEFAULT_STATUS = ZugSolutionStatuses.UNLEARNED
 DEFAULT_LAST_STUDY_DATE = YESTERDAY
 DEFAULT_DUE_DATE = YESTERDAY
 DEFAULT_SUCCESSES = 0
@@ -65,7 +66,7 @@ EXAMPLE_CATEGORY_PATH = os.path.join(
     os.getcwd(), 'TestCollections/ExampleCollection/ExampleCategory'
 )
 
-DEFAULT_GAME_COMMENT = (
+DEFAULT_ROOT_COMMENT = (
         '['
         '"last_access": "2000-01-01", '
         '"learning_limit": 10, '        
@@ -74,6 +75,18 @@ DEFAULT_GAME_COMMENT = (
         '"recall_factor": 3.0, '
         '"recall_max": 365, '
         '"recall_radius": 3'
+        ']'
+)
+
+ALTERNATE_ROOT_COMMENT = (
+        '['
+        '"last_access": "1999-12-31", '
+        '"learning_limit": 100, '        
+        '"learning_remaining": 100, '
+        '"perspective": false, '        
+        '"recall_factor": 100.0, '
+        '"recall_max": 1000, '
+        '"recall_radius": 100'
         ']'
 )
 
@@ -112,7 +125,7 @@ def alternate_game_comment():
     )
 
 @pytest.fixture
-def default_game_data():
+def default_root_data():
     return ZugRootData(
         perspective = DEFAULT_PERSPECTIVE,
         last_access = DEFAULT_LAST_ACCESS,
@@ -147,7 +160,7 @@ def default_data_black_perspective(default_root_data):
 @pytest.fixture
 def game():
     game = chess.pgn.Game()
-    game.comment = DEFAULT_GAME_COMMENT
+    game.comment = DEFAULT_ROOT_COMMENT
     return game
 
 @pytest.fixture
@@ -342,18 +355,14 @@ class TestZugSolutionData:
 
 class TestZugRoot:
 
-    def test_bind(
-            self,
-            default_game_comment,
-            alternate_game_comment
-    ):
+    def test_bind(self):
         game = chess.pgn.Game()
-        game.comment = alternate_game_comment        
-        zug_game = ZugRoot(game)
+        game.comment = ALTERNATE_ROOT_COMMENT        
+        zug_root = ZugRoot(game)
         
-        game.comment = default_game_comment
-        zug_game._bind()
-        assert game.comment == alternate_game_comment
+        game.comment = DEFAULT_ROOT_COMMENT
+        zug_root._bind()
+        assert game.comment == ALTERNATE_ROOT_COMMENT
 
     @pytest.mark.parametrize(
         (

@@ -1,9 +1,10 @@
 import chess
 from typing import List
 
-
 from zugzwang.game import ZugRoot, ZugSolution
+from zugzwang.training import ZugPositionTrainer, ZugLineTrainer
 from zugzwang.stats import ZugStats
+from zugzwang.tools import ZugChessTools
 
 class ZugChapter():
 
@@ -18,13 +19,20 @@ class ZugChapter():
         with open(chp_filepath) as chp_file:
             self._game = chess.pgn.read_game(chp_file)
         self._root = ZugRoot(self._game)
+        self._perspective = self._root.data.perspective
         self._solutions = []  
-        for solution_node in ZugChessTools.get_solution_nodes():
+        for solution_node in ZugChessTools.get_solution_nodes(
+                self._game,
+                self._perspective
+        ):
             self._solutions.append(ZugSolution(solution_node, self._root))
 
+        # build the lines
+        self._lines = ZugChessTools.get_lines(self._game, self._perspective)
+
         # update the root and the stats
+        self._update_root()                
         self._update_stats()
-        self._update_root()        
 
     @property
     def root(self):
@@ -33,6 +41,10 @@ class ZugChapter():
     @property
     def solutions(self):
         return self._solutions
+
+    @property
+    def lines(self):
+        return self._lines
 
     def train_positions(self):
         ZugPositionTrainer(self).train()
@@ -47,7 +59,7 @@ class ZugChapter():
         self._update_stats()
 
     def _save(self):
-        print(self._root.game, file=open(self._chp_filepath, 'w'))
+        print(self._game, file=open(self._chp_filepath, 'w'))
 
     def _update_root(self):
         self._root.update()

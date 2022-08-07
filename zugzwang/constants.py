@@ -18,15 +18,6 @@ class ZugColours():
     BLACK = False
     
 
-class ZugTrainingStatuses():
-    NEW = 'NEW'
-    LEARNING_STAGE_1 = 'LEARNING_STAGE_1'
-    LEARNING_STAGE_2 = 'LEARNING_STAGE_2'
-    REMEMBERING_STAGE_1 = 'REMEMBERING_STAGE_1'
-    REMEMBERING_STAGE_2 = 'REMEMBERING_STAGE_2'
-    REVIEW = 'REVIEW'
-
-
 class ZugSolutionStatuses():
     LEARNED = 'LEARNED'
     UNLEARNED = 'UNLEARNED'

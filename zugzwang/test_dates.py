@@ -7,6 +7,10 @@ from zugzwang.dates import ZugDates
 EPOCH = datetime.date(2000,1,1)  # fixes a mock today
 REPETITIONS = 10000  # were testing randomised functions, so we repeat each many times
 
+DEFAULT_RECALL_FACTOR = 2.0
+DEFAULT_RECALL_RADIUS = 3
+DEFAULT_RECALL_MAX = 365
+
 def epoch_shift(shift: int):
     return EPOCH + datetime.timedelta(days=shift)
 
@@ -111,7 +115,11 @@ class TestZugDates:
         lower_bound = epoch_shift(expected_offset_lower_bound)
         upper_bound = epoch_shift(expected_offset_upper_bound)        
         due_date_lambda = lambda: ZugDates.due_date(
-            last_study_date, current_due_date, recall_factor, recall_radius
+            last_study_date,
+            current_due_date,
+            recall_factor,
+            recall_radius,
+            DEFAULT_RECALL_MAX
         )
         due_dates = [due_date_lambda() for n in range(REPETITIONS)]
         
@@ -140,13 +148,17 @@ class TestZugDates:
             expected_offset_lower_bound,
             expected_offset_upper_bound
     ):
-        repetitions = 10000        
+        repetitions = 10000
         last_study_date = epoch_shift(-100)
         current_due_date = epoch_shift(0)
         lower_bound = epoch_shift(expected_offset_lower_bound)
         upper_bound = epoch_shift(expected_offset_upper_bound)
         due_date_lambda = lambda: ZugDates.due_date(
-            last_study_date, current_due_date, recall_max = recall_max
+            last_study_date,
+            current_due_date,
+            DEFAULT_RECALL_FACTOR,
+            DEFAULT_RECALL_RADIUS,
+            recall_max
         )
         due_dates = [due_date_lambda() for n in range(REPETITIONS)]
         
@@ -177,10 +189,16 @@ class TestZugDates:
     ):
         last_study_date = epoch_shift(-25)
         current_due_date = epoch_shift(0)
+        recall_radius = 3
+        recall_max = 365
         lower_bound = epoch_shift(expected_offset_lower_bound)
         upper_bound = epoch_shift(expected_offset_upper_bound)
         due_date_lambda = lambda: ZugDates.due_date(
-            last_study_date, current_due_date, recall_factor = recall_factor
+            last_study_date,
+            current_due_date,
+            recall_factor,            
+            DEFAULT_RECALL_RADIUS,
+            DEFAULT_RECALL_MAX
         )
         due_dates = [due_date_lambda() for n in range(REPETITIONS)]
         

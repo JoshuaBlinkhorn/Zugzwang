@@ -1,10 +1,13 @@
-from zugzwang.queue import ZugQueue, ZugTrainingPosition, ZugTrainingLine
-from zugzwang.chapter import ZugChapter
-from zugzwang.constants import ZugTrainingStatuses
+from zugzwang.queue import ZugQueue
+from zugzwang.positions import ZugTrainingPosition, ZugTrainingStatuses
+from zugzwang.lines import ZugTrainingLine
+
+# TODO fix this: we need this for typing but it creates a circular import
+#from zugzwang.chapter import ZugChapter
 
 class ZugTrainer():
     
-    def __init__(self, chapter: ZugChapter):
+    def __init__(self, chapter):
         self._chapter = chapter
         self._queue = ZugQueue()
 
@@ -14,7 +17,6 @@ class ZugTrainer():
     def train(self):
         self._fill_queue()
         self._queue.play()
-        self._chapter.save()
 
 
 class ZugPositionTrainer(ZugTrainer):
@@ -42,6 +44,6 @@ class ZugLineTrainer(ZugTrainer):
             self._queue.insert(line)
 
     def _get_lines(self):
-        return [ZugTrainingLine(line) for line in self._chapter.root.lines()]
+        return [ZugTrainingLine(line) for line in self._chapter.lines()]
     
-        
+
