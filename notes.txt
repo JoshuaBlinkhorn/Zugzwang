@@ -864,6 +864,44 @@ Let's try to sort 1 and 3 out.
 1 is now sorted, I've put them into fresh files positions.py and lines.py
 Let's have a look at the extent of 3
 
+~~~~~~~~~~~~~~~~
+2022-08-15 19:39
+
+Now I'm going to try to write a basic UI.
+It will display the starting position of the chess board and allow the user to make
+legal moves.
+
+So, we have a button that looks like a chess square, and sends it square name to
+get set by a label when clicked.
+
+Now we need to create function that handles all the input from these squares,
+and tries to create a move from them.
+If a legal move (from the starting position) is made, the label should read legal move.
+Otherwise it reads illegal move.
+
+And at the same time to style the buttons, so that they look better
+
+~~~~~~~~~~~~~~~~
+2022-10-02 21:21
+
+The UI has to wait.
+It was stopping me using it.
+Recently I've got some endgames in there.
+I think it would be a very useful feature to have multiple training trees in a
+single PGN.
+That will definitely help with the structuring of material, especially for endgames.
+Endgames will not grow much, if at all.
+And frequently there are related positions that aren't tree-connected.
+So very useful to be able to do this.
+
+One difficulty, when converting, we might have training positions from different
+perspectives in the same PGN.
+But we can always convert individually and then concatenate, if that's a problem.
+Shouldn't be too difficult to build this feature in.
+
+
+
+
 
 
 
