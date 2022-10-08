@@ -899,6 +899,49 @@ perspectives in the same PGN.
 But we can always convert individually and then concatenate, if that's a problem.
 Shouldn't be too difficult to build this feature in.
 
+~~~~~~~~~~~~~~~~
+2022-10-08 20:00
+
+Working on the multiple games in one PGN.
+The first thing to do is to figure out how chess reads the games - how do
+we figure out there are no more games?
+
+Then we read the games into a list - or maybe a dict mapping games to roots.
+The lines and positions of a chapter do not need to be indexed by root.
+So this should be fairly simple.
+All of the logic changes should be kept in the Chapter class.
+
+One minor thing is that the perspective has to be set on the root now, not on the
+chapter.
+Let's fix that afterwards.
+
+Oh, it turns out the perspective is in the root data.
+Argh, the real complication is that learning remaining etc belong on the chapter..
+That is annoying.
+An easy fix is to put the learning remaining etc on only the first root.
+Subsequent roots need only a perspective.
+They will have the learning remaing but it will never get called.
+But this is a bug waiting to happen..
+
+So let's synchronise the learning remaining on all roots.
+Until we figure out a common location in the PGN standard to put it.
+
+The trainer doesn't use the roots of the chapter. So nothing has changed there.
+
+On balance, I think the easist thing to do is have the solution linked to a list
+of roots, rather than just its own root.
+Then it can update all roots at the same time.
+Then if we want to refactor that later, we can do.
+
+~~~~~~~~~~~~~~~~
+2022-10-08 20:00
+
+Change of heart - actually I think the easiest thing to do is to link the solution
+nodes to the first root in the list.
+That way, we don't need to chage the ZugSolution at all.
+
+
+
 
 
 
