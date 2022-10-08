@@ -940,6 +940,14 @@ Change of heart - actually I think the easiest thing to do is to link the soluti
 nodes to the first root in the list.
 That way, we don't need to chage the ZugSolution at all.
 
+~~~~~~~~~~~~~~~~
+2022-10-08 23:30
+
+The feature is in place.
+Now I'll use that branch when training to test before merging into master.
+
+
+
 
 
 
