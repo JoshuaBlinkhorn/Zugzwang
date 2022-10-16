@@ -101,12 +101,13 @@ class ZugSolutionData(ZugData):
 
 
 class ZugGameNodeWrapper:
+    """Abstract base class for wrapping chess nodes with custom functionality."""
 
-    data_class = ZugData
+    _data_class = ZugData
     
     def __init__(self, game_node: chess.pgn.GameNode):
         self._game_node = game_node
-        self._data = self.data_class.from_json(self._to_curly_braces(game_node.comment))
+        self._data = self._data_class.from_json(self._to_curly_braces(game_node.comment))
     
     @property
     def game_node(self):
@@ -124,13 +125,14 @@ class ZugGameNodeWrapper:
     def _to_curly_braces(cls, string):
         return string.replace('[','{').replace(']','}')
 
-    def _bind(self):
+    def bind(self):
+        # Synchronise the node's comment with the wrapper's data
         self._game_node.comment = self._to_square_braces(self._data.make_json())
 
 
 class ZugRoot(ZugGameNodeWrapper):
 
-    data_class = ZugRootData
+    _data_class = ZugRootData
 
     @property
     def recall_radius(self):
@@ -145,17 +147,27 @@ class ZugRoot(ZugGameNodeWrapper):
         return self._data.recall_max
     
     def update(self) -> None:
+        """
+        Update the root's data.
+
+        In particular, if the root was accessed last prior to today, update its
+        learning_remaining and last_access.
+        """
         if self._data.last_access < ZugDates.today():
             self._data.learning_remaining = self._data.learning_limit
             self._data.last_access = ZugDates.today()
-        self._bind()
+        self.bind()
 
     def decrement_learning_remaining(self) -> None:
+        """
+        Decrement the learning_remaining, raising an exception if it is already
+        non-positive.
+        """
         if self._data.learning_remaining == 0:
             error_message = "cannot decrement zero 'learning_remaining'"
             raise ZugRootError(error_message)
         self._data.learning_remaining -= 1
-        self._bind()        
+        self.bind()        
 
     def has_learning_capacity(self) -> bool:
         return self._data.learning_remaining > 0
@@ -181,7 +193,7 @@ class ZugRoot(ZugGameNodeWrapper):
 
 class ZugSolution(ZugGameNodeWrapper):
 
-    data_class = ZugSolutionData
+    _data_class = ZugSolutionData
 
     def __init__(self, solution, zug_root):
         super().__init__(solution)
@@ -215,7 +227,7 @@ class ZugSolution(ZugGameNodeWrapper):
                 'successes': self._data.successes + 1,
             }
         )
-        self._bind()        
+        self.bind()        
         
     def recalled(self):
         next_due_date = ZugDates.due_date(
@@ -232,7 +244,7 @@ class ZugSolution(ZugGameNodeWrapper):
                 'due_date': next_due_date,
             }
         )
-        self._bind()
+        self.bind()
         
     def forgotten(self):
         self._data.update(
@@ -241,7 +253,7 @@ class ZugSolution(ZugGameNodeWrapper):
                 'failures': self._data.failures + 1,
             }
         )
-        self._bind()
+        self.bind()
 
     def remembered(self):
         self._data.update(
@@ -252,4 +264,4 @@ class ZugSolution(ZugGameNodeWrapper):
                 'successes': self._data.successes + 1,
             }
         )
-        self._bind()
+        self.bind()
