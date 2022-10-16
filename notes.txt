@@ -946,6 +946,20 @@ That way, we don't need to chage the ZugSolution at all.
 The feature is in place.
 Now I'll use that branch when training to test before merging into master.
 
+~~~~~~~~~~~~~~~~
+2022-10-16 13:59
+
+The feature appeared to work, so I've merged it into master.
+For today, there's a few things I'd like to put in place:
+
+1. Clean up the repo, by deleting all redundant file
+2. Assess the need for a ZugRoot on additional games in a .CHP
+3. Have the software able to open a .pgn on the fly, and save it as a .chp
+4. Have the software ignore files that are not .chp
+
+
+
+
 
 
 
