@@ -1,13 +1,13 @@
+# python caches
 __pycache__
+*.pyc
+
+# Zugzwang data directories
 Collections
 NakedPGNs
 Archive
-scratch.py
-*.png
-*.log
-*.aux
-*.tex
-#*
+
+# emacs temp files
 \#*
-.#*
 .\#*
+scratch.py
