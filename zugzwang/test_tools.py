@@ -1,14 +1,83 @@
 import pytest
+import datetime
 import chess.pgn
 import os
 
-from zugzwang.tools import ZugChessTools
+from zugzwang.tools import ZugChessTools, ZugJsonTools
 from zugzwang.constants import ZugColours
 
 # define the path to the example category, which holds the example chapters
 EXAMPLE_CATEGORY_PATH = os.path.join(
     os.getcwd(), 'TestCollections/ExampleCollection/ExampleCategory'
 )
+
+
+class TestZugJsonTools():
+    """Unit tests for ZugJsonTools."""
+
+    @pytest.mark.parametrize(
+        'data_dict, expected_string',
+        [
+            pytest.param(
+                {},
+                '{}',
+                id='empty dict'
+            ),
+            pytest.param(
+                {
+                    'integer': 0,
+                    'float': 0.0,
+                    'string': '0.0',
+                    'date': datetime.date(year=2000, month=1, day=1),
+                },
+                (
+                    '{'
+                    '"integer": 0, '
+                    '"float": 0.0, '
+                    '"string": "0.0", '
+                    '"date": "2000-01-01"'
+                    '}'
+                ),
+                id='all types'
+            ),
+        ]
+    )
+    def test_encode(self, data_dict, expected_string):
+        """Encodes a dictionary as a string, writing datetime.dates in ISO format."""
+        assert ZugJsonTools.encode(data_dict) == expected_string
+
+    @pytest.mark.parametrize(
+        'string, expected_dict',
+        [
+            pytest.param(
+                '{}',
+                {},
+                id='empty dict'
+            ),
+            pytest.param(
+                (
+                    '{'
+                    '"integer": 0, '
+                    '"float": 0.0, '
+                    '"string": "0.0", '
+                    '"date": "2000-01-01"'
+                    '}'
+                ),
+                {
+                    'integer': 0,
+                    'float': 0.0,
+                    'string': '0.0',
+                    'date': datetime.date(year=2000, month=1, day=1),
+                },
+                id='all types'
+            ),
+        ]
+    )
+    def test_decode(self, string, expected_dict):
+        """
+        Decodes a string into a dict, converting ISO format dates to datetime.date.
+        """
+        assert ZugJsonTools.decode(string) == expected_dict
 
 class TestGetSolutionNodes():
 

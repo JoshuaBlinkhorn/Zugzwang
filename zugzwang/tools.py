@@ -1,6 +1,48 @@
 from typing import List
 import chess
+import json
+import datetime
 
+class ZugJsonTools:
+    
+    @staticmethod
+    def _json_conversion(value):
+        # convert datetime.date to ISO date string
+        # leave all other values unchanged        
+        if isinstance(value, datetime.date):
+            return value.isoformat()
+        raise TypeError('Cannot serialise python object in JSON.')
+
+    @classmethod
+    def encode(cls, data_dict):
+        """Encode a dictionary of data as a json string"""
+        return json.dumps(data_dict, default=cls._json_conversion)
+
+    @staticmethod
+    def decode(json_string):
+        """Decode a json string into a dictionary"""
+        data_dict = json.loads(json_string)
+        for key, val in data_dict.items():
+            # Convert ISO format data strings into datetime.date
+            try:
+                data_dict[key] = datetime.date.fromisoformat(val)
+            except (TypeError, ValueError):
+                pass
+            
+        return data_dict
+
+
+class ZugStringTools:
+    
+    @staticmethod
+    def to_square_braces(string: str) -> str:
+        return string.replace("{", "[").replace("}", "]")
+
+    @staticmethod
+    def to_curly_braces(string: str) -> str:
+        return string.replace("[", "{").replace("]", "}")
+
+    
 class ZugChessTools:
 
     @classmethod

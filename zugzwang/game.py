@@ -5,11 +5,11 @@ import chess.pgn
 import datetime
 import dataclasses
 import json
-from typing import List, ClassVar
+from typing import List, ClassVar, Dict, Any
 
 from zugzwang.constants import ZugColours, ZugSolutionStatuses
 from zugzwang.dates import ZugDates
-
+from zugzwang.tools import ZugStringTools, ZugJsonTools
 
 class ZugRootError(ValueError):
     pass
@@ -32,35 +32,28 @@ class ZugData:
         pass
             
     def __eq__(self, other: ZugData):
-        return all([self.__dict__[key] == other.__dict__[key] for key in self.__dict__])
-
-    @classmethod
-    def _json_conversion(cls, value):
-        # convert datetime.date to ISO date string
-        if isinstance(value, datetime.date):
-            return value.isoformat()
-        raise TypeError('Cannot serialise python object in JSON.')
-
-    @classmethod
-    def from_json(cls, json_string: str) -> cls:
-        # convert ISO date strings to datetime.date
-        data_dict = json.loads(json_string)
-        for key, val in data_dict.items():
-            try:
-                data_dict[key] = datetime.date.fromisoformat(val)
-            except (TypeError, ValueError):
-                pass
-        return cls(**data_dict)
-
-    def make_json(self) -> str:
-        data_dict = dict(sorted(self.__dict__.items()))
-        return json.dumps(data_dict, default = self._json_conversion)
+        return self.as_dict() == other.as_dict()
 
     def update(self, update_dict) -> None:
         if not set(update_dict.keys()) <= set(self.__dict__.keys()):
             raise ZugDataError('attempted to update data dict with unrecognised key')
         self.__dict__.update(update_dict)
-    
+
+    def as_dict(self) -> Dict[str, Any]:
+        is_private = lambda key: key.startswith('_')
+        return {key: val for key, val in self.__dict__.items() if not is_private(key)}
+
+    def as_string(self) -> Dict[str, Any]:
+        json_string = ZugJsonTools.encode(self.as_dict())
+        return ZugStringTools.to_square_braces(json_string)
+
+    @classmethod
+    def from_string(cls, zug_string) -> ZugData:
+        return cls(**ZugJsonTools.decode(ZugStringTools.to_curly_braces(zug_string)))
+
+    @classmethod
+    def from_dict(cls, kwargs) -> ZugData:
+        return cls(**kwargs)
 
 class ZugRootData(ZugData):
     def __init__(
@@ -106,8 +99,18 @@ class ZugGameNodeWrapper:
     _data_class = ZugData
     
     def __init__(self, game_node: chess.pgn.GameNode):
+
+        # Set up the node
+        comment = game_node.comment
+        json_string = ZugStringTools.to_curly_braces(comment)
+        data_dict = ZugJsonTools.decode(json_string) if comment else {}
+        data = self._data_class(**data_dict)
+        json_string = ZugJsonTools.encode(data.as_dict())
+        game_node.comment = ZugStringTools.to_square_braces(json_string)
+
+        # assign members
+        self._data = data
         self._game_node = game_node
-        self._data = self._data_class.from_json(self._to_curly_braces(game_node.comment))
     
     @property
     def game_node(self):
@@ -117,17 +120,10 @@ class ZugGameNodeWrapper:
     def data(self):
         return self._data
         
-    @classmethod
-    def _to_square_braces(cls, string):
-        return string.replace('{','[').replace('}',']')
-    
-    @classmethod
-    def _to_curly_braces(cls, string):
-        return string.replace('[','{').replace(']','}')
-
     def bind(self):
         # Synchronise the node's comment with the wrapper's data
-        self._game_node.comment = self._to_square_braces(self._data.make_json())
+        json_string = ZugJsonTools.encode(self._data.as_dict())
+        self._game_node.comment = ZugStringTools.to_square_braces(json_string)
 
 
 class ZugRoot(ZugGameNodeWrapper):
