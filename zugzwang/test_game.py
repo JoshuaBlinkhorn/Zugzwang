@@ -12,6 +12,8 @@ from zugzwang.game import (
     ZugRoot,
     ZugSolution,
     ZugDataError,
+    ZugDataDecodeError,
+    ZugDataFieldError,    
     ZugRootError,
 )
 from zugzwang.constants import ZugColours, ZugSolutionStatuses
@@ -178,7 +180,7 @@ class TestZugData:
     def test_update_foreign_attribute(self, MyZugData):
         """Updating with unrecognised field raises an exception"""
         zug_data = MyZugData()
-        with pytest.raises(ZugDataError):
+        with pytest.raises(ZugDataFieldError):
             zug_data.update({"unrecognised_key": "any_value"})
 
     def test_as_dict(self, MyZugData):
@@ -256,6 +258,31 @@ class TestZugData:
     def test_from_string(self, zug_string, kwargs, MyZugData):
         """Creates a data object from a 'zug-string'."""
         assert MyZugData.from_string(zug_string) == MyZugData(**kwargs)
+
+    @pytest.mark.parametrize(
+        'invalid_string',
+        [
+            pytest.param(
+                '{}',
+                id='empty curly braces'
+            ),
+            pytest.param(
+                '{"string": "barfoo"}',
+                id='non empty curly braces'
+            ),
+            pytest.param(
+                'adshfapishfn',
+                id='gobbledygook'
+            ),
+            pytest.param(
+                '["string": "barfoo" "integer": 0]',
+                id='badly formatted square braces'
+            ),            
+        ]
+    )
+    def test_from_string_invalid_string(self, invalid_string, MyZugData):
+        with pytest.raises(ZugDataDecodeError):
+            MyZugData.from_string(invalid_string)
 
     @pytest.mark.parametrize(
         'data_dict',
@@ -414,6 +441,57 @@ class TestZugGameNodeWrapper:
         # Assert that the wrapper's data and node's comment are the defaults
         assert wrapper.data == zug_data
         assert node.comment == expected_comment
+
+    @pytest.mark.parametrize(
+        'invalid_comment',
+        [
+            pytest.param(
+                {},
+                id='empty dict'
+            ),
+            pytest.param(
+                {
+                    'floater': 100.0,
+                    'integer': 100,
+                },
+                id='partial dict without dates'
+            ),
+            pytest.param(
+                {
+                    'date': TOMORROW,
+                },
+                id='partial dict with dates'
+            ),
+            pytest.param(
+                {
+                    "date": TOMORROW,
+                    "floater": 100.0,
+                    "integer": 100,
+                    "string": "barfoo",
+                },
+                id='complete dict'
+            ),
+        ]
+    )
+    def test_constructor_invalid_game_node_comment(self, invalid_comment, MyZugData):
+        """If the supplied game node has an invalid comment, an exception is raised."""
+        
+        # Setup
+        game_node = chess.pgn.Game()
+        json_string = ZugJsonTools.encode(partial_data_dict)
+        game_node.comment = ZugStringTools.to_square_braces(json_string)
+
+        # formulate expectations
+        expected_data = MyZugData(**partial_data_dict)
+        json_string = ZugJsonTools.encode(expected_data.as_dict())
+        expected_comment = ZugStringTools.to_square_braces(json_string)        
+
+        # Create the wrapper
+        wrapper = MyZugGameNodeWrapper(game_node)
+
+        # Assert that the wrapper's data and node's comment are as expected
+        assert wrapper.data == expected_data
+        assert wrapper.game_node.comment == expected_comment
 
     @pytest.mark.parametrize(
         'partial_data_dict',

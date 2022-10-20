@@ -9,12 +9,23 @@ from typing import List, ClassVar, Dict, Any
 
 from zugzwang.constants import ZugColours, ZugSolutionStatuses
 from zugzwang.dates import ZugDates
-from zugzwang.tools import ZugStringTools, ZugJsonTools
+from zugzwang.tools import (
+    ZugStringTools,
+    ZugStringDelimiterError,
+    ZugJsonTools,
+    ZugJsonDecodeError,
+)
 
 class ZugRootError(ValueError):
     pass
     
 class ZugDataError(Exception):
+    pass
+    
+class ZugDataDecodeError(ZugDataError):
+    pass
+    
+class ZugDataFieldError(ZugDataError):
     pass
     
 
@@ -36,7 +47,9 @@ class ZugData:
 
     def update(self, update_dict) -> None:
         if not set(update_dict.keys()) <= set(self.__dict__.keys()):
-            raise ZugDataError('attempted to update data dict with unrecognised key')
+            raise ZugDataFieldError(
+                'attempted to update data dict with unrecognised key'
+            )
         self.__dict__.update(update_dict)
 
     def as_dict(self) -> Dict[str, Any]:
@@ -49,7 +62,21 @@ class ZugData:
 
     @classmethod
     def from_string(cls, zug_string) -> ZugData:
-        return cls(**ZugJsonTools.decode(ZugStringTools.to_curly_braces(zug_string)))
+        # Type check
+        if not isinstance(zug_string, str):
+            raise TypeError(f'{zug_string} is not a string.')
+
+        # Convert the string to json
+        try:
+            json_string = ZugStringTools.to_curly_braces(zug_string)
+        except ZugStringDelimiterError:
+            raise ZugDataDecodeError(f'Bad delimiters in this string: {zug_string}')
+
+        # Convert to a dictionary
+        try:
+            return cls(**ZugJsonTools.decode(json_string))
+        except ZugJsonDecodeError:
+            raise ZugDataDecodeError(f'Invalid string: {zug_string}')
 
     @classmethod
     def from_dict(cls, kwargs) -> ZugData:
@@ -101,9 +128,9 @@ class ZugGameNodeWrapper:
     def __init__(self, game_node: chess.pgn.GameNode):
 
         # Set up the node
-        comment = game_node.comment
+        comment = game_node.comment if game_node.comment else '[]'
         json_string = ZugStringTools.to_curly_braces(comment)
-        data_dict = ZugJsonTools.decode(json_string) if comment else {}
+        data_dict = ZugJsonTools.decode(json_string)
         data = self._data_class(**data_dict)
         json_string = ZugJsonTools.encode(data.as_dict())
         game_node.comment = ZugStringTools.to_square_braces(json_string)
