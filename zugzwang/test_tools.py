@@ -3,14 +3,20 @@ import datetime
 import chess.pgn
 import os
 
-from zugzwang.tools import ZugChessTools, ZugJsonTools
+from zugzwang.tools import (
+    ZugStringTools,
+    ZugStringDelimiterError,
+    ZugJsonDecodeError,
+    ZugJsonEncodeError,    
+    ZugJsonTools,
+    ZugChessTools,    
+)
 from zugzwang.constants import ZugColours
 
 # define the path to the example category, which holds the example chapters
 EXAMPLE_CATEGORY_PATH = os.path.join(
     os.getcwd(), 'TestCollections/ExampleCollection/ExampleCategory'
 )
-
 
 class TestZugJsonTools():
     """Unit tests for ZugJsonTools."""
@@ -47,6 +53,19 @@ class TestZugJsonTools():
         assert ZugJsonTools.encode(data_dict) == expected_string
 
     @pytest.mark.parametrize(
+        'invalid_object',
+        [
+            pytest.param([], id="list"),
+            pytest.param(tuple(), id="tuple"),
+            pytest.param("foobar", id="string"),
+            pytest.param(0, id="numeric"),
+        ]
+    )
+    def test_encode_invalid_object(self, invalid_object):
+        with pytest.raises(ZugJsonEncodeError):
+            ZugJsonTools.encode(invalid_object)
+
+    @pytest.mark.parametrize(
         'string, expected_dict',
         [
             pytest.param(
@@ -79,6 +98,101 @@ class TestZugJsonTools():
         """
         assert ZugJsonTools.decode(string) == expected_dict
 
+    @pytest.mark.parametrize(
+        'invalid_string',
+        [
+            pytest.param('asdfadh', id='gobbledygook'),
+            pytest.param('[]', id='square braces'),
+            pytest.param('()', id='round braces'),          
+            pytest.param('{"integer"}', id='invalid curly braces'),
+        ]
+    )
+    def test_decode_invalid_string(self, invalid_string):
+        with pytest.raises(ZugJsonDecodeError):
+            ZugJsonTools.decode(invalid_string)
+
+
+class TestZugStringTools:
+    """Unit tests for ZugStringTools."""
+    
+    @pytest.mark.parametrize(
+        'string, expected_output',
+        [
+            pytest.param(
+                '{}',
+                '[]',
+                id='empty',
+            ),
+            pytest.param(
+                '{foobar}',
+                '[foobar]',
+                id='non-empty non-nested',
+            ),
+            pytest.param(
+                '{foobar{barfoo}foobar}',
+                '[foobar[barfoo]foobar]',
+                id='non-empty nested',
+            ),
+        ]
+    )
+    def test_to_square_braces(self, string, expected_output):
+        """Cruly braces are made square if the string is valid."""
+        assert ZugStringTools.to_square_braces(string) == expected_output
+    
+    @pytest.mark.parametrize(
+        'invalid_string',
+        [
+            pytest.param('', id='empty',),
+            pytest.param('{', id='left only'),
+            pytest.param('}', id='right only'),
+            pytest.param('!{}!', id='flanked'),            
+        ]
+    )
+    def test_to_square_braces_bad_delimiters(self, invalid_string):
+        """An exception is raised if the string is not delimited with curly braces."""
+        with pytest.raises(ZugStringDelimiterError):
+            ZugStringTools.to_square_braces(invalid_string)
+    
+            
+    @pytest.mark.parametrize(
+        'string, expected_output',
+        [
+            pytest.param(
+                '[]',
+                '{}',
+                id='empty',
+            ),
+            pytest.param(
+                '[foobar]',
+                '{foobar}',
+                id='non-empty non-nested',
+            ),
+            pytest.param(
+                '[foobar[barfoo]foobar]',
+                '{foobar{barfoo}foobar}',
+                id='non-empty nested',
+            ),
+        ]
+    )
+    def test_to_curly_braces(self, string, expected_output):
+        """Cruly braces are made square if the string is valid."""
+        assert ZugStringTools.to_curly_braces(string) == expected_output
+    
+    @pytest.mark.parametrize(
+        'invalid_string',
+        [
+            pytest.param('', id='empty',),
+            pytest.param('[', id='left only'),
+            pytest.param(']', id='right only'),
+            pytest.param('![]!', id='flanked'),            
+        ]
+    )
+    def test_to_curly_braces_bad_delimiters(self, invalid_string):
+        """An exception is raised if the string is not delimited with curly braces."""
+        with pytest.raises(ZugStringDelimiterError):
+            ZugStringTools.to_curly_braces(invalid_string)
+    
+            
 class TestGetSolutionNodes():
 
     @pytest.mark.parametrize(

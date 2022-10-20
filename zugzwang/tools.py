@@ -3,6 +3,18 @@ import chess
 import json
 import datetime
 
+class ZugJsonError(Exception):
+    pass
+
+
+class ZugJsonDecodeError(ZugJsonError):
+    pass
+
+
+class ZugJsonEncodeError(ZugJsonError):
+    pass
+
+
 class ZugJsonTools:
     
     @staticmethod
@@ -16,12 +28,22 @@ class ZugJsonTools:
     @classmethod
     def encode(cls, data_dict):
         """Encode a dictionary of data as a json string"""
+        if not isinstance(data_dict, dict):
+            raise ZugJsonEncodeError('Non-dictionary is not decodable')
+        
         return json.dumps(data_dict, default=cls._json_conversion)
 
     @staticmethod
     def decode(json_string):
         """Decode a json string into a dictionary"""
-        data_dict = json.loads(json_string)
+        try:
+            data_dict = json.loads(json_string)
+        except json.JSONDecodeError:
+            raise ZugJsonDecodeError('String is not decodeable')
+
+        if not isinstance(data_dict, dict):
+            raise ZugJsonDecodeError('Decoded object is not a dictionary')
+
         for key, val in data_dict.items():
             # Convert ISO format data strings into datetime.date
             try:
@@ -32,14 +54,38 @@ class ZugJsonTools:
         return data_dict
 
 
+class ZugStringError(Exception):
+    pass
+
+
+class ZugStringDelimiterError(ZugStringError):
+    pass
+
+
 class ZugStringTools:
     
     @staticmethod
     def to_square_braces(string: str) -> str:
+        if not isinstance(string, str):
+            raise TypeError(f'{string} is not a string.')
+
+        if not (string.startswith('{') and string.endswith('}')):
+            raise ZugStringDelimiterError(
+                f'String not delimited by curly braces: {string}'
+            )
+        
         return string.replace("{", "[").replace("}", "]")
 
     @staticmethod
     def to_curly_braces(string: str) -> str:
+        if not isinstance(string, str):
+            raise TypeError(f'{string} is not a string.')
+
+        if not (string.startswith('[') and string.endswith(']')):
+            raise ZugStringDelimiterError(
+                f'String not delimited by square braces: {string}'
+            )
+        
         return string.replace("[", "{").replace("]", "}")
 
     
