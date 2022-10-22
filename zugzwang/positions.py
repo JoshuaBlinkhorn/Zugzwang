@@ -6,6 +6,7 @@ from zugzwang.board import ZugBoard
 
 
 class ZugTrainingStatuses():
+    """A training position has exactly one of these statuses at any point in time."""    
     NEW = 'NEW'
     LEARNING_STAGE_1 = 'LEARNING_STAGE_1'
     LEARNING_STAGE_2 = 'LEARNING_STAGE_2'
@@ -33,29 +34,30 @@ class ZugTrainingPosition(ZugQueueItem):
         return presenter.present()
 
     def _on_success(self):
+        ZTS = ZugTrainingStatuses
         statuses = {
-            ZugTrainingStatuses.NEW: ZugTrainingStatuses.LEARNING_STAGE_1,
-            ZugTrainingStatuses.LEARNING_STAGE_1: ZugTrainingStatuses.LEARNING_STAGE_2,
-            ZugTrainingStatuses.LEARNING_STAGE_2: ZugTrainingStatuses.REVIEW,
-            ZugTrainingStatuses.REMEMBERING_STAGE_1: ZugTrainingStatuses.REMEMBERING_STAGE_2,
-            ZugTrainingStatuses.REMEMBERING_STAGE_2: ZugTrainingStatuses.REVIEW,
-            ZugTrainingStatuses.REVIEW: ZugTrainingStatuses.REVIEW,             
+            ZTS.NEW: ZTS.LEARNING_STAGE_1,
+            ZTS.LEARNING_STAGE_1: ZTS.LEARNING_STAGE_2,
+            ZTS.LEARNING_STAGE_2: ZTS.REVIEW,
+            ZTS.REMEMBERING_STAGE_1: ZTS.REMEMBERING_STAGE_2,
+            ZTS.REMEMBERING_STAGE_2: ZTS.REVIEW,
+            ZTS.REVIEW: ZTS.REVIEW,             
         }
         actions = {
-            ZugTrainingStatuses.NEW: lambda: None,
-            ZugTrainingStatuses.LEARNING_STAGE_1: lambda: None,
-            ZugTrainingStatuses.LEARNING_STAGE_2: self._solution.learned,
-            ZugTrainingStatuses.REMEMBERING_STAGE_1: lambda: None,
-            ZugTrainingStatuses.REMEMBERING_STAGE_2: self._solution.remembered,
-            ZugTrainingStatuses.REVIEW: self._solution.recalled,  
+            ZTS.NEW: lambda: None,
+            ZTS.LEARNING_STAGE_1: lambda: None,
+            ZTS.LEARNING_STAGE_2: self._solution.learned,
+            ZTS.REMEMBERING_STAGE_1: lambda: None,
+            ZTS.REMEMBERING_STAGE_2: self._solution.remembered,
+            ZTS.REVIEW: self._solution.recalled,  
         }
         directives = {
-            ZugTrainingStatuses.NEW: ZugQueue.REINSERT,
-            ZugTrainingStatuses.LEARNING_STAGE_1: ZugQueue.REINSERT,
-            ZugTrainingStatuses.LEARNING_STAGE_2: ZugQueue.DISCARD, 
-            ZugTrainingStatuses.REMEMBERING_STAGE_1: ZugQueue.REINSERT,
-            ZugTrainingStatuses.REMEMBERING_STAGE_2: ZugQueue.DISCARD,
-            ZugTrainingStatuses.REVIEW: ZugQueue.DISCARD, 
+            ZTS.NEW: ZugQueue.REINSERT,
+            ZTS.LEARNING_STAGE_1: ZugQueue.REINSERT,
+            ZTS.LEARNING_STAGE_2: ZugQueue.DISCARD, 
+            ZTS.REMEMBERING_STAGE_1: ZugQueue.REINSERT,
+            ZTS.REMEMBERING_STAGE_2: ZugQueue.DISCARD,
+            ZTS.REVIEW: ZugQueue.DISCARD, 
         }
         # The action and directive depend on the current status.
         # So perform the action and set the directive *before* updating the status.
@@ -65,26 +67,27 @@ class ZugTrainingPosition(ZugQueueItem):
         return directive
 
     def _on_failure(self):
+        ZTS = ZugTrainingStatuses        
         statuses = {
-            ZugTrainingStatuses.LEARNING_STAGE_1: ZugTrainingStatuses.LEARNING_STAGE_1,
-            ZugTrainingStatuses.LEARNING_STAGE_2: ZugTrainingStatuses.LEARNING_STAGE_1,
-            ZugTrainingStatuses.REMEMBERING_STAGE_1: ZugTrainingStatuses.REMEMBERING_STAGE_1,
-            ZugTrainingStatuses.REMEMBERING_STAGE_2: ZugTrainingStatuses.REMEMBERING_STAGE_1,
-            ZugTrainingStatuses.REVIEW: ZugTrainingStatuses.REMEMBERING_STAGE_1,
+            ZTS.LEARNING_STAGE_1: ZTS.LEARNING_STAGE_1,
+            ZTS.LEARNING_STAGE_2: ZTS.LEARNING_STAGE_1,
+            ZTS.REMEMBERING_STAGE_1: ZTS.REMEMBERING_STAGE_1,
+            ZTS.REMEMBERING_STAGE_2: ZTS.REMEMBERING_STAGE_1,
+            ZTS.REVIEW: ZTS.REMEMBERING_STAGE_1,
         }
         directives = {
-            ZugTrainingStatuses.LEARNING_STAGE_1: ZugQueue.REINSERT,
-            ZugTrainingStatuses.LEARNING_STAGE_2: ZugQueue.REINSERT,
-            ZugTrainingStatuses.REMEMBERING_STAGE_1: ZugQueue.REINSERT,
-            ZugTrainingStatuses.REMEMBERING_STAGE_2: ZugQueue.REINSERT,
-            ZugTrainingStatuses.REVIEW: ZugQueue.REINSERT,
+            ZTS.LEARNING_STAGE_1: ZugQueue.REINSERT,
+            ZTS.LEARNING_STAGE_2: ZugQueue.REINSERT,
+            ZTS.REMEMBERING_STAGE_1: ZugQueue.REINSERT,
+            ZTS.REMEMBERING_STAGE_2: ZugQueue.REINSERT,
+            ZTS.REVIEW: ZugQueue.REINSERT,
         }
         actions = {
-            ZugTrainingStatuses.LEARNING_STAGE_1: lambda: None,
-            ZugTrainingStatuses.LEARNING_STAGE_2: lambda: None,
-            ZugTrainingStatuses.REMEMBERING_STAGE_1: lambda: None,
-            ZugTrainingStatuses.REMEMBERING_STAGE_2: lambda: None,
-            ZugTrainingStatuses.REVIEW: self._solution.forgotten,
+            ZTS.LEARNING_STAGE_1: lambda: None,
+            ZTS.LEARNING_STAGE_2: lambda: None,
+            ZTS.REMEMBERING_STAGE_1: lambda: None,
+            ZTS.REMEMBERING_STAGE_2: lambda: None,
+            ZTS.REVIEW: self._solution.forgotten,
         }
         # The action and directive depend on the current status.
         # So perform the action and set the directive *before* updating the status.

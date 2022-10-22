@@ -53,6 +53,10 @@ class ZugChapter():
         return self._roots[0]
         
     @property
+    def stats(self):
+        return self._stats
+        
+    @property
     def solutions(self):
         return self._solutions
 
@@ -91,5 +95,5 @@ class ZugChapter():
                 stats.learned += 1
             stats.total += 1
         stats.new = min(stats.new, self._roots[0].data.learning_remaining)
-        self.stats = stats
+        self._stats = stats
 

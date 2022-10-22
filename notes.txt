@@ -952,25 +952,329 @@ Now I'll use that branch when training to test before merging into master.
 The feature appeared to work, so I've merged it into master.
 For today, there's a few things I'd like to put in place:
 
-1. Clean up the repo, by deleting all redundant file
+1. Clean up the repo, by deleting all redundant files
 2. Assess the need for a ZugRoot on additional games in a .CHP
 3. Have the software able to open a .pgn on the fly, and save it as a .chp
 4. Have the software ignore files that are not .chp
 
+Okay, the good thing is that we now have all files accounted for, and all unit tests
+passing.
+So let's take a look at the game.py and test_game.py and assess the need for multiple
+ZugRoots.
+
+Also let's get flake8 on the go.
+Can it point to unused variables?
+
+Black code formatter is brilliant.
+Okay, now it's time to figure out why we have redundant tests in that file.
+
+I have a feeling that the fixtures used in this file need a clean up.
+
+~~~~~~~~~~~~~~~~
+2022-10-16 18:48
+
+Made quite a lot of progress with the test_game file.
+Now it's clear that quite a few of the ZugRoot tests use a root which needs to
+be set up from a game node that already has an appropriate comment.
+
+Perhaps we shoudn't write the comment as a string in the tests -
+Rather create an instance of the appropriate data class, and call its json method.
+The issue is that the outputted json has curly braces, it needs square ones.
+So what's the best way to get around this?
+
+The data class shouldn't really be responsible for squaring the braces.
+We could set up the comment with bind().. but that would require the wrapper constructor
+to be able to accept a naked (uncommented) node.
+
+Given that's the behaviour we want as default, perhaps we could try to TDD this into
+the GameNodeWrapper class.
+
+As for now, let's leave it as is, and finish off the tidying of the test_game.py.
+
+~~~~~~~~~~~~~~~~
+2022-10-17 22:28
+
+Now I'm going to go finish the clean up of test_game.py
+That's done.
+So what do we want to achieve now?
+
+I'd like to be able to load a pgn file without comments, and have ZugZwang
+automatically set it up.
+
+This means that we'll try to create ZugGameNodeWrappers whose GameNode does not
+at first have a comment.
+In that case, we should generate the default data and bind the comment straight away.
+
+How should we determine that a node is naked?
+We should insist that it has no comment.
+It's tempting to try a json decode, and overwrite the comment if that fails.
+But we might miss an actual decode error, which would be bad.
+So let's say, if there is no comment on the node, create default data and bind.
+We can actually do this in the base class!
+Awesome.
+Let's write the tests first.
+
+This has thrown up another subtletly about the data classes.
+The from_json method should be capable of filling in missing values with defaults if
+they are not supplied.
+
+~~~~~~~~~~~~~~~~
+2022-10-17 22:28
+
+Perhaps it makes sense to factor the json conversion out of our classes, and have the
+data class deal only with dicts.
+The fact that they handle json input is really a convenience that they provide
+knowing that they are employed by the GameNodeWrapper.
+
+But since the wrapper takes care of the binding, and also the braces replacement,
+it makes sense that it should also take care of the json dumping and generation.
+
+In fact, all of that can go into bind and __init__
+I think that's a good call, so let's go for it.
+
+Okay, I've reached a good stopping point.
+We'll need to test the new tools classes - but that should be easy.
+
+A ton of other unit tests are failing, so we'll need to address those.
+Probably there a couple of easy and obvious changes needed in the tests and/or
+source code for the derived classes.
+
+But I'm happy with the implementation of the base classes at the moment.
+
+~~~~~~~~~~~~~~~~
+2022-10-19 10:00
+
+Having an hour to neaten things up.
+Just had a very annoying bug - I accidentally deleted the return value of a json
+tools function.
+Now, that would have been easily spotted had I unit tested those tools.
+
+So the very next thing we should do is to unit test those tools.
+
+~~~~~~~~~~~~~~~~
+2022-10-19 11:00
+
+Writing the tools unit tests.
+Done.
+Okay, now let's go back to the game base classes.
+Do their tests run as expected? Yes.
+The derived data classes? Yes.
+The derived wrapper classes?
+
+ZugRoot has one failure.
+
+The wrapper's data is not being set properly via the node's comment.
+So let's investigate that.
+
+It was an interesting bug, once again pytest allowing you to use names that aren't
+defined.
+That is such an annoyance.
+
+Anyway, all the tests are passing now.
+The next task is to write methods in the data base class:
+
+    to_string(), to go straight to the game comment,
+    		 let's call this the Zug serialisation format
+
+    from_string() and from_dict() make the data class from dicts and ZugStrings
+
+Then we can write these into the unit testing to make it clearer.
+And then use them in the wrapper code too.
+
+We should unit test those methods first.
+This shouldn't take more than a couple of hours.
+
+~~~~~~~~~~~~~~~~
+2022-10-19 21:43
+
+So let's get these methods tested now.
+We have these methods and they are unit tested.
+So the next thing is to look at the existing unit tests and see whehter we
+can simplify them.
+Then to look at the existing logic with the same motive.
+
+~~~~~~~~~~~~~~~~
+2022-10-20 18:01
+
+The unit tests are all accounted for.
+The next things are:
+
+1. what's going on with having essentially one root per file?
+2. the secondary roots will be empty, so we should make that explicit.
+
+There is no harm in having this comment on the non-primary roots unless the
+first game is somehow deleted, then we'll use the stats on the second game - but they
+won't be valid.
+
+Let's leave this for the moment.
+What we want to work towards is having PGNs modifiable elsewhere, and automatically
+populated.
+
+We should introduce an exception for when the comment is not recognised.
+This could be handled by either the ZugData or the ZugGameNodeWrapper classes.
+
+It should probably be handled by both.
+The ZugData class can reject the comment.
+It could inform the caller of various error cases:
+
+1. It is not a valid ZugString
+2. It contains bad arguments
+
+Error handling has been added to the ZugJsonTools class
+
+Consider adding some to the ZugStringTools class.
+These check that the to_square_braces and to_curly_braces receive correctly delineated
+strings.
+
+Good, the we've got some error handling in the tools classes.
+The next thing to do is to add that error handling into the GameNodeWrapperClass.
+
+That has been done.
+So now let's have a think about what to do with Chapter.
+The end goal with Chapter is this:
+
+- if you modify the PGN, without ediing comments, it will just work.
+- it will also be backwards compatible.
+
+What we don't want:
+
+- overwriting badly formed comments (could lead to hard to trace bugs)
+- support for automatically erasing deprecated fields - but we could do that later
+
+So we want chapter to raise an exception if it encounters ZugGameNodeWrapper errors.
+
+So we have absolutely nothing on chapter test - so let's think about how to test
+this, and come back to it.
+
+~~~~~~~~~~~~~~~~
+2022-10-21 08:41
+
+It looks like stats is not a property.
+Let's sort that out.
+
+In terms of unit testing chapter -  maybe the only way forward is to hit it with
+a bunch of chapters, and then check its member variables: solutions, lines, stats, etc.
+
+Hmmm.. the set of solutions, that comes via ZugChessTools where all of that is tested.
+We don't want to redo those tests here.
+So what is the real functionality that Chapter implements, rather than delegates?
+
+Here's a nice idea - we test the Chapter class, we're allowed, or even encouraged,
+to use the tools of the other classes.
+
+So we can create some chapters as raw files.
+Use chess and ZugChessTools to get their roots and solution sets with minimal fuss.
+And then calculte their stats, etc. and just check that the constructor does its job
+correctly.
+
+So which cases do we want to check?
+
+1) A completely empty Chapter - if we can even create one?
+2) A chapter with only one (non-trivial) game
+3) A chapter with multiple (non-trivial) games 
+
+I'm not sure we need to do anything beyond that.
+Do we need to check that a naked PGN is really turned into a chapter?
+Or that a bad Chapter (i.e. incorrectly commented) returns a sensible error?
+
+Yes, I think that Chapter should really handle those errors well, because they
+are bound to occur.
+
+One question is about the design of stats updates.
+The stats are usually displayed on the Chapter's display.
+If we ever intend to make that display visible alongside the training display,
+we would want the changes in those stats to be accessible from the training session
+And then presumably from the queue, etc.
+
+Perhaps the training session needs to keep hold of its own stats.
+
+Or perhaps a chapters stats are a dedicated object, with methods, or is that
+overly engineered?
+It would allow the chapter stats to be synced in real time to a training session.
+Could this present problems with forgotten positions?
+
+What stats would we like to present during a training session?
+Total number of positions remaining, breakdown into new, learning, recall?
+
+With line based training it's easy, total number of lines remaining.
+Perhaps we can count the number of positions in each training status.
+Then decide what to present in the presentor.
+
+~~~~~~~~~~~~~~~~
+2022-10-21 08:41
+
+Presently then, we need to create our mock .chp files.
+Can we use those that we have already?
+
+It appears that we have chapters and naked PGNs in two folders.
+Test_game appears to have the location - but it shouldn't need them.
+Let's fix that.
+
+Done.
+So it looks like we already have enough to get what we need easily.
+We just want empty, naked, partially-naked and naked multi-game.
+The question is where to put them.
+
+I'm going to put them into dedicated categories - I think that makes the most sense.
+
+Actually, there's an issue with automatically stuffing up a naked PGN: it's not
+clear which perspective to work from.
+
+So - rather than try to do this automatically, we should expect chapter to get perfectly
+formed chapters.
+Then we can factor the checking logic into a method.
+Essentially what we want here is error handling.
+
+So let's have a rethink on this.
+
+Perhaps all we really want to insist is that the PGN root has a perspective.
+We can do literally everything else after that.
+
+So then the script with which we prime a naked PGN to be ZugZwang ready literally
+just has to assign that perspective.
+
+In fact, maybe it is just easier to not do anything at all here - have no special
+requirement that the root has a perspective.
+
+It's a tricky one.
+
+Let's go with no assertions at the moment - we can always introduce them.
+Then we'll have the PGN -> CHP script just insert the perspective.
+That serves as an integration test that everything is working.
+
+Okay, so we've got a template for the chapter tests.
+We want then to add one where the solution nodes have incomplete non-default data.
+Becuase the current tests would pass if we just overwrote everything with the defaults.
+
+***********************
+I've just noticed that an empty PGN breaks the training.
+So we need to unit tests empty queues, or something similar.
 
 
+How do we split up an existing chapter into constituent parts?
+My current chapters in, for example, the English are too large, and should be split up.
+I think that the optimal size for a chapter is around 50-60 positions.
 
+We could strip it down but not get rid of the inevitable repeated stork.
+That might be annoying - but maybe it isn't.
+It will just be a feature of my repertoire.
 
+It would be excellent to have the computer play your repertoire against you.
+We can bring the whole repertoire together by cataloguing the root positions.
 
+~~~~~~~~~~~~~~~~
+2022-10-22 17:01
 
+Now I'm going to try to break up my existing repertoires into pieces.
+Then try to structure the opening repertoire into collections, categories, and chapters.
+And then try to fill some of them in.
 
+And also, get going with the endgames.
+I think if I dedicated two hours to the endgames I could get most of the rook endings
+and pawn endings that I've worked on into chapters.
 
-
-
-
-
-
-
+But first, let's try to break up the Grunfeld.
+Starting with the Reti and the English.
 
 
 

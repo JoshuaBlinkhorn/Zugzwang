@@ -14,8 +14,8 @@ from zugzwang.tools import (
 from zugzwang.constants import ZugColours
 
 # define the path to the example category, which holds the example chapters
-EXAMPLE_CATEGORY_PATH = os.path.join(
-    os.getcwd(), 'TestCollections/ExampleCollection/ExampleCategory'
+TEST_CATEGORY_PATH = os.path.join(
+    os.getcwd(), 'TestCollections/ExampleCollection/ToolsTestCHPs'
 )
 
 class TestZugJsonTools():
@@ -201,7 +201,7 @@ class TestGetSolutionNodes():
     def test_linear(self, chp_filename):
         # tests a chapter with no branching and five solutions, ending with or without
         # a 'hanging problem'; i.e. a problem that is not followed by a solution
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, chp_filename)
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, chp_filename)
         with open(chp_filepath) as chapter_file:
             game = chess.pgn.read_game(chapter_file)
         
@@ -221,7 +221,7 @@ class TestGetSolutionNodes():
     )
     def test_branching(self, chp_filename ):
         # tests a PGN with branching, three moves deep and no unreachable solutions
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, chp_filename)
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, chp_filename)
         with open(chp_filepath) as chapter_file:
             game = chess.pgn.read_game(chapter_file)
 
@@ -242,7 +242,7 @@ class TestGetSolutionNodes():
     def test_unreachable(self):
         # tests a PGN with unreachable solutions
         # for throroughness, the PGN also has branching and hanging problems
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'unreachable.chp')
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'unreachable.chp')
         with open(chp_filepath) as chapter_file:
             game = chess.pgn.read_game(chapter_file)
 
@@ -263,7 +263,7 @@ class TestGetSolutionNodes():
 
     def test_basic_blunder(self):
         # tests a PGN with single blunder
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'blunder.chp')
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'blunder.chp')
         with open(chp_filepath) as chapter_file:
             game = chess.pgn.read_game(chapter_file)
 
@@ -281,7 +281,7 @@ class TestGetSolutionNodes():
     def test_blunders_and_branching(self):
         # tests a PGN with branching and single blunders, i.e. the opponent does not
         # blunder back in the refutation
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'blunders-and-branching.chp')
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'blunders-and-branching.chp')
         with open(chp_filepath) as chapter_file:
             game = chess.pgn.read_game(chapter_file)
     
@@ -311,7 +311,7 @@ class TestGetSolutionNodes():
         # we also test blunders which aren't qualified by a proper solution
         # the distinction is important; a blunder is a problem, but it is also
         # an error; solutions to both exist, but their perspectives are different
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'hanging-blunders.chp')
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'hanging-blunders.chp')
         with open(chp_filepath) as chapter_file:
             game = chess.pgn.read_game(chapter_file)
     
@@ -330,7 +330,7 @@ class TestGetSolutionNodes():
     def test_blunder_and_unreachable(self):
         # tests a PGN with a node that has a solution, a blunder and an unreachable
         # candidate
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'blunder-and-unreachable.chp')
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'blunder-and-unreachable.chp')
         with open(chp_filepath) as chapter_file:
             game = chess.pgn.read_game(chapter_file)
         
@@ -347,7 +347,7 @@ class TestGetSolutionNodes():
     def test_double_blunders(self):
         # tests a PGN in which the opponent blunders back in the refutation
         # hence the perspective will reverse twice in one line
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'double-blunders.chp')
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'double-blunders.chp')
         with open(chp_filepath) as chapter_file:
             game = chess.pgn.read_game(chapter_file)
         
@@ -371,7 +371,7 @@ class TestGetSolutionNodes():
         # tests a PGN in which the training player has the move in the root position.
         # the other case is tested implicitly in several tests above
         chp_filepath = os.path.join(
-            EXAMPLE_CATEGORY_PATH,
+            TEST_CATEGORY_PATH,
             'white-from-starting-position.chp'
         )
         with open(chp_filepath) as chapter_file:
@@ -397,7 +397,7 @@ class TestZugToolsGetLines():
     def test_linear(self, chp_filename):
         # tests a PGN with no branching and five solutions, ending with or without
         # a 'hanging problem'; i.e. a problem that is not followed by a solution
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, chp_filename)
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, chp_filename)
         with open(chp_filepath) as chp_file:
             game = chess.pgn.read_game(chp_file)
 
@@ -413,7 +413,7 @@ class TestZugToolsGetLines():
     )
     def test_branching(self, chp_filename):
         # tests a PGN with branching, three moves deep and no unreachable solutions
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, chp_filename)
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, chp_filename)
         with open(chp_filepath) as chp_file:
             game = chess.pgn.read_game(chp_file)
         
@@ -434,7 +434,7 @@ class TestZugToolsGetLines():
     def test_unreachable(self):
         # tests a PGN with unreachable solutions
         # for throroughness, the PGN also has branching and hanging problems
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'unreachable.chp')
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'unreachable.chp')
         with open(chp_filepath) as chp_file:
             game = chess.pgn.read_game(chp_file)
 
@@ -446,7 +446,7 @@ class TestZugToolsGetLines():
 
     def test_basic_blunder(self):
         # tests a PGN with single blunder
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'blunder.chp')
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'blunder.chp')
         with open(chp_filepath) as chp_file:
             game = chess.pgn.read_game(chp_file)
 
@@ -462,7 +462,7 @@ class TestZugToolsGetLines():
     def test_blunders_and_branching(self):
         # tests a PGN with branching and single blunders, i.e. the opponent does not
         # blunder back in the refutation
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'blunders-and-branching.chp')
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'blunders-and-branching.chp')
         with open(chp_filepath) as chp_file:
             game = chess.pgn.read_game(chp_file)
 
@@ -486,7 +486,7 @@ class TestZugToolsGetLines():
         # we also test blunders which aren't qualified by a proper solution
         # the distinction is important; a blunder is a problem, but it is also
         # an error; solutions to both exist, but their perspectives are different
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'hanging-blunders.chp')
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'hanging-blunders.chp')
         with open(chp_filepath) as chp_file:
             game = chess.pgn.read_game(chp_file)
 
@@ -502,7 +502,7 @@ class TestZugToolsGetLines():
     def test_blunder_and_unreachable(self):
         # tests a PGN with a node that has a solution, a blunder and an unreachable
         # candidate
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'blunder-and-unreachable.chp')
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'blunder-and-unreachable.chp')
         with open(chp_filepath) as chp_file:
             game = chess.pgn.read_game(chp_file)
 
@@ -518,7 +518,7 @@ class TestZugToolsGetLines():
     def test_double_blunders(self):
         # tests a PGN in which the opponent blunders back in the refutation
         # hence the perspective will reverse twice in one line
-        chp_filepath = os.path.join(EXAMPLE_CATEGORY_PATH, 'double-blunders.chp')
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'double-blunders.chp')
         with open(chp_filepath) as chp_file:
             game = chess.pgn.read_game(chp_file)
 
@@ -539,7 +539,7 @@ class TestZugToolsGetLines():
         # tests a PGN in which the training player has the move in the root position.
         # the other case is tested implicitly in several tests above
         chp_filepath = os.path.join(
-            EXAMPLE_CATEGORY_PATH,
+            TEST_CATEGORY_PATH,
             'white-from-starting-position.chp')
         with open(chp_filepath) as chp_file:
             game = chess.pgn.read_game(chp_file)

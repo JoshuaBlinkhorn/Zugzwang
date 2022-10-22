@@ -1,0 +1,10 @@
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[ECO "C55"]
+
+{ ["perspective": false] } 1. e4 e5 { ["status": "LEARNED"] } 2. Nf3 Nc6 { ["status": "LEARNED"] } 3. d4 exd4 { ["status": "LEARNED"] } 4. Bc4 Nf6 { ["status": "LEARNED"] } 5. e5 d5 { ["status": "LEARNED"] } *

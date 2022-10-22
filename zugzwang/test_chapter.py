@@ -1,7 +1,23 @@
 import pytest
 import os
+import chess
 
-from zugzwang.chapter import ZugChapter
+from zugzwang.chapter import (
+    ZugChapter,
+    ZugStats,
+)
+from zugzwang.game import (
+    ZugRootData,
+    ZugSolutionData,
+)
+from zugzwang.constants import (
+    ZugSolutionStatuses,
+    ZugColours
+)
+
+TEST_CATEGORY_PATH = os.path.join(
+    os.getcwd(), 'TestCollections/ExampleCollection/ChapterTestCHPs'
+)
 
 # TODO
 # Figure out how to unit test this class.
@@ -12,6 +28,50 @@ from zugzwang.chapter import ZugChapter
 
 class TestZugChapter:
 
+    def test_constructor_empty_chp(self):
+        """Sanity checks for opening an empty chapter."""
+        
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'empty.chp')
+        chapter = ZugChapter(chp_filepath)
+
+        expected_solutions = []
+        expected_root_data = ZugRootData()
+        expected_stats = ZugStats()
+        
+        assert chapter.solutions == expected_solutions
+        assert chapter.root.data == expected_root_data
+        assert chapter.stats == expected_stats
+    
+    def test_constructor_naked_chp(self):
+        
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'naked.chp')
+        chapter = ZugChapter(chp_filepath)
+
+        expected_solution_data = ZugSolutionData()
+        expected_root_data = ZugRootData()
+        expected_stats = ZugStats(new=5, due=0, learned=0, total=5)
+
+        assert len(chapter.solutions) == 5
+        for solution in chapter.solutions:
+            assert solution.data == expected_solution_data
+        assert chapter.root.data == expected_root_data
+        assert chapter.stats == expected_stats
+    
+    def test_constructor_incomplete_fields(self):
+
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'incomplete-fields.chp')
+        chapter = ZugChapter(chp_filepath)
+
+        expected_solution_data = ZugSolutionData(status=ZugSolutionStatuses.LEARNED)
+        expected_root_data = ZugRootData(perspective=ZugColours.BLACK)
+        expected_stats = ZugStats(new=0, due=5, learned=5, total=5)
+
+        assert len(chapter.solutions) == 5
+        for solution in chapter.solutions:
+            assert solution.data == expected_solution_data
+        assert chapter.root.data == expected_root_data
+        assert chapter.stats == expected_stats
+    
     def test_init(self):
         # The constructor is sufficiently complex that it requires a unit test.
         pass
