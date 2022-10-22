@@ -1276,6 +1276,36 @@ and pawn endings that I've worked on into chapters.
 But first, let's try to break up the Grunfeld.
 Starting with the Reti and the English.
 
+I've broken up the Reti and English into smaller chunks.
+Now we have to set them all with perspective black, and see whether we can open them,
+and check that the opening of them adds default training data to the file.
+
+~~~~~~~~~~~~~~~~
+2022-10-22 20:22
+
+Everything appears to be working.
+One question this has thrown up is the saving policy.
+The PGN is only written when a training session ends.
+So if you launch with a naked PGN, you'll get the right stats shown, but the default
+comments won't be written to the PGN.
+That's fine actually.
+Maybe it's best just to leave it that way.
+
+It might seem better to write the defaults comments when it's first encountered.
+Then we'd have to detect which ones needed saving - or save every one as its opened.
+
+That might become significant if we have a lot of chapters.
+So let's not do that.
+
+So we're all set to start continue breaking down the Grunfeld repertiore.
+As for now - let's start building the other areas up.
+
+I also added filtering to the list of chapters.
+Only files ending .chp will show up.
+
+
+
+
 
 
 
