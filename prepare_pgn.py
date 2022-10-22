@@ -35,9 +35,8 @@ for filename in pgn_files:
     with open(filename) as pgn_file:
         game = chess.pgn.read_game(pgn_file)
         while game is not None:
-            root_data = ZugRootData(perspective=perpspective)
-            game.comment = ZugRoot._to_square_braces(root_data.make_json())
-            root = ZugRoot(game)
+            root_data = ZugRootData(perspective=perspective)
+            game.comment = root_data.as_string()
             #for sol_node in ZugChessTools.get_solution_nodes(game, perspective):
             #    sol_node.comment = ZugRoot._to_square_braces(ZugSolutionData().make_json())
             output_filename = filename.replace('.pgn','.chp')
