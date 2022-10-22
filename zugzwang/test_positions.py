@@ -14,7 +14,6 @@ from zugzwang.queue import ZugQueue, ZugQueueItem
 @pytest.fixture
 def game():
     game = chess.pgn.Game()
-    game.comment = ZugRootData().make_json()
     return game
 
 @pytest.fixture
@@ -27,7 +26,6 @@ def solution_node(game):
     problem_node = chess.pgn.ChildNode(game, move)
     move = chess.Move.from_uci('e7e5')
     solution_node = chess.pgn.ChildNode(problem_node, move)
-    solution_node.comment = ZugSolutionData().make_json()    
     return solution_node
 
 @pytest.fixture
@@ -41,6 +39,8 @@ def solution(solution_node, root):
 
 
 class TestZugTrainingPosition:
+    """Unit tests for ZugTrainingPosition."""
+    
     @pytest.mark.parametrize(
         (
             'training_status, presentation_result, '
@@ -108,7 +108,7 @@ class TestZugTrainingPosition:
         # side effect takes place by assessing directly the state of the solution.
         # But the called methods are already unit tested. So we should think of this
         # test as *defining*, as well as asserting, the desired side effect.
-        method_names = ('learned', 'recalled', 'forgotten')
+        method_names = ('learned', 'recalled', 'forgotten', 'remembered')
         training_position = ZugTrainingPosition(solution, training_status)
         training_position._present = mock.MagicMock(return_value=presentation_result)
 
@@ -132,6 +132,7 @@ class TestZugTrainingPosition:
 
 
 class TestZugTrainingPositionPresenter:
+    """Unit tests for ZugTrainingPositionPresenter."""
 
     @pytest.mark.parametrize(
         'user_input, expected_return_value',

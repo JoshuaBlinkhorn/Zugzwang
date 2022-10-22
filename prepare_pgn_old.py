@@ -30,17 +30,15 @@ for filename in pgn_files:
             perspective = ZugColours.WHITE
         else:
             perspective = ZugColours.BLACK
-
-    
+        
     with open(filename) as pgn_file:
         game = chess.pgn.read_game(pgn_file)
-        while game is not None:
-            root_data = ZugRootData(perspective=perpspective)
-            game.comment = ZugRoot._to_square_braces(root_data.make_json())
-            root = ZugRoot(game)
-            #for sol_node in ZugChessTools.get_solution_nodes(game, perspective):
-            #    sol_node.comment = ZugRoot._to_square_braces(ZugSolutionData().make_json())
-            output_filename = filename.replace('.pgn','.chp')
-            print(game, file=open(output_filename, 'w'))
-            game = chess.pgn.read_game(pgn_file)
+    root_data = ZugRootData(perspective)
+    game.comment = ZugRoot._to_square_braces(root_data.make_json())
+    root = ZugRoot(game)
+    for sol_node in ZugChessTools.get_solution_nodes(game, perspective):
+        sol_node.comment = ZugRoot._to_square_braces(ZugSolutionData().make_json())
+
+    output_filename = filename.replace('.pgn','.chp')
+    print(game, file=open(output_filename, 'w'))        
     
