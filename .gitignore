@@ -2,8 +2,12 @@
 __pycache__
 *.pyc
 
+# MAC finder files
+.DS_Store
+
 # Zugzwang data directories
 Collections
+Collections-backups
 NakedPGNs
 Archive
 
