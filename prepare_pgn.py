@@ -14,7 +14,8 @@ from zugzwang.tools import ZugChessTools
 # range over the filenames in the current directory
 pgn_files = sorted(os.listdir())
 for filename in pgn_files:
-    
+
+    # Try to determine perspective based on filename
     if not filename.endswith('pgn'):
         print(f"Skipping '{filename}'")
         continue
@@ -22,6 +23,8 @@ for filename in pgn_files:
         perspective = ZugColours.WHITE
     elif filename[-5] in 'bB':
         perspective = ZugColours.BLACK
+
+    # Otherwise, ask user for perspective
     else:
         colour = None
         while colour != 'w' and colour != 'b':
@@ -31,15 +34,24 @@ for filename in pgn_files:
         else:
             perspective = ZugColours.BLACK
 
-    
-    with open(filename) as pgn_file:
+    output_filename = filename.replace('.pgn','.chp')            
+    with open(filename) as pgn_file, open(output_filename, 'w') as output_file:
+
         game = chess.pgn.read_game(pgn_file)
-        while game is not None:
+        while game is not None:            
+            # look to set the perspective from the game header
+            # override perspective if found
+            if game.headers['White'] == 'p':
+                perspective = ZugColours.WHITE
+                print('Set perspective = WHITE based on game header')
+            if game.headers['Black'] == 'p':
+                perspective = ZugColours.BLACK
+                print('Set perspective = BLACK based on game header')
+
+            # set the root data on the root comment
             root_data = ZugRootData(perspective=perspective)
             game.comment = root_data.as_string()
-            #for sol_node in ZugChessTools.get_solution_nodes(game, perspective):
-            #    sol_node.comment = ZugRoot._to_square_braces(ZugSolutionData().make_json())
-            output_filename = filename.replace('.pgn','.chp')
-            print(game, file=open(output_filename, 'w'))
+            
+            print(game, '\n', file=output_file)
             game = chess.pgn.read_game(pgn_file)
     
