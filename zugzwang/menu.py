@@ -93,7 +93,7 @@ class ZugGroupMenu(ZugMenu):
             'item_id': ('ID', 3),
             'coverage': ('COV.', 5),
             'training_available': ('', 2),
-            'item_name': (cls._child_name, 20),
+            'item_name': (cls._child_name, 30),
             'new': ('NEW', 4),
             'due': ('DUE', 4),
             'learned': ('LRN', 4),
@@ -131,7 +131,7 @@ class ZugGroupMenu(ZugMenu):
         for field, string in row.items():
             _, spacing = cls._header()[field]
             if field == 'coverage':
-                print(string.rjust(spacing), end='')
+                print(string[:spacing].rjust(spacing), end='')
                 continue
             print(string.ljust(spacing), end='')
         print('')
