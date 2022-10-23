@@ -9,7 +9,8 @@ from zugzwang.tools import (
     ZugJsonDecodeError,
     ZugJsonEncodeError,    
     ZugJsonTools,
-    ZugChessTools,    
+    ZugChessTools,
+    ZugChessToolsParseError,    
 )
 from zugzwang.constants import ZugColours
 
@@ -388,6 +389,54 @@ class TestGetSolutionNodes():
         assert solution_nodes == expected_solution_nodes
 
 
+    def test_alternative(self):
+        # tests a PGN containing an alternative
+        # such a move is not a solution, but it spawns a variation with no change
+        # in perspective
+        chp_filepath = os.path.join(
+            TEST_CATEGORY_PATH,
+            'alternative.chp'
+        )
+        with open(chp_filepath) as chapter_file:
+            game = chess.pgn.read_game(chapter_file)
+
+        expected_solution_nodes = []
+        solution = game.variations[0]
+        expected_solution_nodes.append(solution)
+        interesting = game.variations[1]
+        problem = interesting.variations[0]
+        solution = problem.variations[0]
+        expected_solution_nodes.append(solution)
+
+        perspective = ZugColours.WHITE
+        solution_nodes = ZugChessTools.get_solution_nodes(game, perspective)
+        assert solution_nodes == expected_solution_nodes
+
+    def test_blunder_and_alternative(self):
+        # tests a PGN containing a blunder and an alternative
+        chp_filepath = os.path.join(
+            TEST_CATEGORY_PATH,
+            'blunder-and-alternative.chp'
+        )
+        with open(chp_filepath) as chapter_file:
+            game = chess.pgn.read_game(chapter_file)
+
+        expected_solution_nodes = []
+        solution = game.variations[0]
+        expected_solution_nodes.append(solution)
+        blunder = game.variations[1]
+        refutation = blunder.variations[0]
+        expected_solution_nodes.append(refutation)
+        alternative = blunder.variations[1]
+        problem = alternative.variations[0]
+        solution = problem.variations[0]
+        expected_solution_nodes.append(solution)
+
+        perspective = ZugColours.WHITE
+        solution_nodes = ZugChessTools.get_solution_nodes(game, perspective)
+        assert solution_nodes == expected_solution_nodes
+
+
 class TestZugToolsGetLines():
 
     @pytest.mark.parametrize(
@@ -551,6 +600,45 @@ class TestZugToolsGetLines():
         junction = mainline[1]
         for variation in junction.variations[1:]:
             expected_lines.append(mainline[:2] + [variation, variation.variations[0]])
+
+        perspective = ZugColours.WHITE
+        assert ZugChessTools.get_lines(game, perspective) == expected_lines
+
+    def test_alternative(self):
+        # tests a PGN containing an alternative
+        chp_filepath = os.path.join(
+            TEST_CATEGORY_PATH,
+            'alternative.chp')
+        with open(chp_filepath) as chp_file:
+            game = chess.pgn.read_game(chp_file)
+
+        # here there are two lines
+        # with a for loop
+        mainline = [game, game.variations[0]]
+        alternative = game.variations[1]
+        alternate_line = list(alternative.mainline())
+        expected_lines = [mainline, alternate_line]
+
+        perspective = ZugColours.WHITE
+        assert ZugChessTools.get_lines(game, perspective) == expected_lines
+
+    def test_blunder_and_alternative(self):
+        # tests a PGN containing an alternative
+        chp_filepath = os.path.join(
+            TEST_CATEGORY_PATH,
+            'blunder-and-alternative.chp')
+        with open(chp_filepath) as chp_file:
+            game = chess.pgn.read_game(chp_file)
+
+        mainline = [game, game.variations[0]]
+        
+        blunder = game.variations[1]
+        blunder_line = [blunder, blunder.variations[0]]
+
+        alternative = blunder.variations[1]
+        alternate_line = list(alternative.mainline())
+        
+        expected_lines = [mainline, blunder_line, alternate_line]
 
         perspective = ZugColours.WHITE
         assert ZugChessTools.get_lines(game, perspective) == expected_lines
