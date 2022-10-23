@@ -1303,8 +1303,85 @@ As for now - let's start building the other areas up.
 I also added filtering to the list of chapters.
 Only files ending .chp will show up.
 
+Okay, we've started the process.
+There's a lot of work to do here.
+But we should start building this up.
 
+We'll end up with a cracking repertoire.
+The excellent news is, HIARCS will open a .chp file!
+Awesome, so we can use that to add moves.
+Best keep some regular backups.
+I think that should be the next development feature: dailly backups of the collections;
+keep for the last week.
 
+Now for some endgame PGNs.
+
+~~~~~~~~~~~~~~~~
+2022-10-22 20:22
+
+Now I'm going to write all of the pawn on the sixth rank positions into one pgn.
+Then we can think about splitting them.
+And also have the prepare PGN script (and perhaps the chapter constructor?)
+replace double blank lines with a single one.
+
+The issue is that I want to use HIARCS to edit these files.
+It sticks in these extra blank lines, so I won't be able to open them in Zugzwang.
+
+Anyway, for now let's build these PGNs so that they are usable.
+
+Perhaps an ad-hoc script to format the chp/pgn files is better than hitting the
+chapter constructor with some hacky logic.
+
+There comes the possibility of using ?! as dubious move - that is one that makes
+the position harder to win or to draw, but doesn't change the evaluation.
+
+In such a position, the trainer should teach the correct moves in a separate line.
+Let's encode them this way.
+It will be a lot easier to keep the material togehter.
+Otherwise we would need to start a new game for every such subtlety.
+
+Interestingly, HIARCS doesn't seem to be putting the extra newlines in atm.
+
+And I'm using !? for a move that is essentially of equal stature to the main move.
+So perhaps when there are two conitunuation of equal merit.
+
+It can also be used to mark a swindle attempt.
+So that when the position is drawn, and the training is for black to draw, you can
+also ask the student to find the best tries for a win.
+
+We still have quite a lot to put into PGN here.
+There is another question - do we want to use exclams to denote unique moves?
+It would be interesting to see wheher Dvorestsky uses this convention.
+
+~~~~~~~~~~~~~~~~
+2022-10-23 15:26
+
+Let's finish off the current endgame chapter, sixth-rank, and then try to implement
+the interesting move feature.
+This only affects an interesting move for the training side, not the opposition.
+
+We've got the sixth rank PGN up to but not including the exercises.
+We need to first unit test this idea of putting in iteresting and dubious moves
+into the players candidates.
+
+Rather than switch the perspective, these should create a new lines starting from
+any following problems.
+So these moves are not themselves solutions, but they lead to problems.
+
+Having !? on a non primary candidate is a bit bizarre.
+If you're winning, then why learn a sub standard move?
+Well because the resulting position might be of practical relevance.
+
+So we should just have these moves contibute the recursio, but not added as solutions.
+It should be fairly easy to get the lines and solutions sorted.
+
+Unit tests for solution and line sets with alternatives are in place.
+
+We should write down exactly what the specification is for our chapters.
+So far we have problems, solutions, blunders and alternatives, which is enough
+to specify quite a large range of behaviours.
+
+There are likely some edge cases that we haven't covered with the unit tests.
 
 
 

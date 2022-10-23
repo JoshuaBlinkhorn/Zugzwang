@@ -89,6 +89,14 @@ class ZugStringTools:
         return string.replace("[", "{").replace("]", "}")
 
     
+class ZugChessToolsError(Exception):
+    pass
+
+
+class ZugChessToolsParseError(ZugChessToolsError):
+    pass
+
+
 class ZugChessTools:
 
     @classmethod
@@ -105,10 +113,11 @@ class ZugChessTools:
         ):
             player_to_move = node.board().turn
             if player_to_move != solution_perspective:
-                # the node is a solution
-                # add it to the set and work recursively on all children
-                if node != game:
+                # the node is a solution or an alternative
+                # if it's solution, add it to the solution set
+                if node != game and node.nags == set():
                     solutions.append(node)
+                # work recursively on all children
                 for problem in node.variations:
                     search_node(problem, solution_perspective)                
             else:
@@ -116,11 +125,16 @@ class ZugChessTools:
                 # if it has no variations, it's a hanging problem
                 # otherwise, any variation is either a blunder or a candidate
                 # find the first candidate if it exists, and work recursively
-                candidates = [node for node in node.variations if 2 not in node.nags]
-                if candidates:                    
-                    search_node(candidates[0], solution_perspective)
+                replies = node.variations
+                candidates = [node for node in replies if node.nags == set()]
+                if candidates:
+                    solution = candidates[0]
+                    search_node(solution, solution_perspective)
+                alternatives = [node for node in replies if node.nags == {5}]
+                for alternative in alternatives:
+                    search_node(alternative, solution_perspective)
                 # work recursively on blunders with reversed perspective
-                blunders = [node for node in node.variations if 2 in node.nags]
+                blunders = [node for node in replies if node.nags == {2}]
                 for blunder in blunders:
                     search_node(blunder, not solution_perspective)                    
 
@@ -182,13 +196,18 @@ class ZugChessTools:
                 # if it has no variations, it's a hanging problem, ignore it
                 # otherwise, any variation is either a candidate or a blunder
                 # find the first candidate if it exists, and work recursively
-                candidates = [node for node in node.variations if 2 not in node.nags]
+                replies = node.variations
+                candidates = [node for node in replies if node.nags == set()]
                 if candidates:
-                    candidate = candidates[0]
-                    search_node(candidate, solution_perspective, prefix)
+                    solution = candidates[0]
+                    search_node(solution, solution_perspective, prefix)
+                alternatives = [node for node in replies if node.nags == {5}]
+                for alternative in alternatives:
+                    for node in alternative.variations:
+                        search_node(node, solution_perspective, [])
                 # work recursively on blunders with reversed perspective
                 # and a new prefix starting at the blunder
-                blunders = [node for node in node.variations if 2 in node.nags]
+                blunders = [node for node in node.variations if node.nags == {2}]
                 for blunder in blunders:
                     search_node(blunder, not solution_perspective, [])
         
