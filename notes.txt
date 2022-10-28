@@ -1383,6 +1383,37 @@ to specify quite a large range of behaviours.
 
 There are likely some edge cases that we haven't covered with the unit tests.
 
+~~~~~~~~~~~~~~~~
+2022-10-28 19:10
+
+I'd like to implement a couple of easy features.
+The first - some idea of how many training items (lines or positions) are remaining
+in the session.
+Second, keep track of the number of complete line-based training sessions per
+chapter.
+Then display that in the category menu.
+
+These should be fairly easy to implement.
+I think the queue should just print how many items it has in it.
+Or rather, it passes that to the queue item which passes it to its presenter.
+Not sure.
+
+Probably the former actually.
+Later on, if we have a UI, we'd have the queue item present inside the queue window.
+So probably it's better design-wise for the queue to own it.
+
+~~~~~~~~~~~~~~~~
+2022-10-28 21:35
+
+We could also use a standalone clean-chp script, which essentially resets the
+stats.
+This would eventually be an option in the UI.
+So let's put that together now.
+
+
+
+
+
 
 
 
