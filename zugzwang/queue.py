@@ -82,7 +82,7 @@ class ZugQueue():
             if item_directive == self.QUIT:
                 break
             if item_directive == self.REINSERT:
-                self.insert(item, self._REINSERTION_INDEX)                
+                self.insert(item, self._insertion_index)                
             if item_directive == self.DISCARD:
                 pass
 
