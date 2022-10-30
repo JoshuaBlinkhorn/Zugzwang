@@ -1410,6 +1410,17 @@ stats.
 This would eventually be an option in the UI.
 So let's put that together now.
 
+~~~~~~~~~~~~~~~~
+2022-10-30 14:52
+
+Now I'm going to implement three things:
+
+1) training remaining printed in the queue
+2) number of complete line training sessions
+3) radius of randomness in queue reinsertion
+
+For the first, let's see what the unit tests assert
+
 
 
 

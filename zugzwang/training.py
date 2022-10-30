@@ -21,6 +21,10 @@ class ZugTrainer():
 
 class ZugPositionTrainer(ZugTrainer):
     
+    def __init__(self, chapter):
+        self._chapter = chapter
+        self._queue = ZugQueue(insertion_index=3, insertion_radius=1)
+
     def _fill_queue(self):
         learning_capacity = self._chapter.root.data.learning_remaining
         for solution in self._chapter.solutions:
@@ -38,6 +42,10 @@ class ZugPositionTrainer(ZugTrainer):
 
 
 class ZugLineTrainer(ZugTrainer):
+
+    def __init__(self, chapter):
+        self._chapter = chapter
+        self._queue = ZugQueue(insertion_index=3)
 
     def _fill_queue(self):
         for line in self._get_lines():
