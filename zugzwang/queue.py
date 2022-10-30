@@ -44,9 +44,6 @@ class ZugQueue():
     DISCARD = 'DISCARD'
     QUIT = 'QUIT'
 
-    _REINSERTION_INDEX = 3
-    _REINSERTION_RADIUS = 3    
-    
     def __init__(
             self,
             insertion_index: int=0,
@@ -74,6 +71,9 @@ class ZugQueue():
         random_offset = random.randint(-radius, radius)        
         index = max(0, absolute_index+random_offset)
         self._queue.insert(index, item)
+
+    def append(self, item: ZugQueueItem):
+        self._queue.append(item)
 
     def play(self) -> None:
         while self._queue:
