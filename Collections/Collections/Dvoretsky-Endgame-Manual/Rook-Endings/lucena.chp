@@ -1,0 +1,36 @@
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "1-0"]
+[FEN "4K3/4P1k1/8/8/8/8/r7/5R2 w - - 0 1"]
+[SetUp "1"]
+
+{ ["perspective": true, "last_access": "2022-11-05", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1. Rg1+ { ["status": "LEARNED", "last_study_date": "2022-10-28", "due_date": "2022-11-17", "successes": 4, "failures": 0] } ( 1. Rf3 $2 Ra8+ { ["status": "LEARNED", "last_study_date": "2022-10-21", "due_date": "2022-11-06", "successes": 3, "failures": 0] } 2. Kd7 Ra7+ { ["status": "LEARNED", "last_study_date": "2022-10-28", "due_date": "2022-11-17", "successes": 4, "failures": 0] } 3. Kd6 Ra6+ { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-16", "successes": 6, "failures": 1] } 4. Kc5 ( 4. Kc7 Ra7+ { ["status": "LEARNED", "last_study_date": "2022-10-28", "due_date": "2022-11-17", "successes": 4, "failures": 0] } ) 4... Re6 { ["status": "LEARNED", "last_study_date": "2022-10-21", "due_date": "2022-11-06", "successes": 3, "failures": 0] } ) 1... Kh7 2. Rg4 { ["status": "LEARNED", "last_study_date": "2022-10-31", "due_date": "2022-11-30", "successes": 4, "failures": 0] } 2... Rd2 ( 2... Ra8+ 3. Kf7 { ["status": "LEARNED", "last_study_date": "2022-10-31", "due_date": "2022-11-11", "successes": 5, "failures": 0] } ) 3. Kf7 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-12-17", "successes": 4, "failures": 0] } 3... Rf2+ 4. Ke6 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-12-07", "successes": 4, "failures": 0] } 4... Re2+ 5. Kf6 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-12-08", "successes": 4, "failures": 0] } 5... Rf2+ ( 5... Re1 6. Rg5 { ["status": "LEARNED", "last_study_date": "2022-10-30", "due_date": "2022-11-28", "successes": 5, "failures": 0] } 6... Rf1+ 7. Ke6 { ["status": "LEARNED", "last_study_date": "2022-10-30", "due_date": "2022-11-25", "successes": 4, "failures": 0] } 7... Re1+ 8. Re5 { ["status": "LEARNED", "last_study_date": "2022-10-21", "due_date": "2022-11-07", "successes": 3, "failures": 0] } ) 6. Ke5 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-12-17", "successes": 4, "failures": 0] } 6... Re2+ 7. Re4 { ["status": "LEARNED", "last_study_date": "2022-10-21", "due_date": "2022-11-06", "successes": 3, "failures": 0] } 1-0
+
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "1-0"]
+[FEN "8/7k/4KP2/8/8/3R4/8/2r5 w - - 0 1"]
+[SetUp "1"]
+
+{ ["perspective": true, "last_access": "2022-10-02", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1. f7 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-12-14", "successes": 4, "failures": 0] } ( 1. Rh3+ $2 Kg6 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-07", "successes": 6, "failures": 0] } 2. Rg3+ Kh7 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-27", "successes": 4, "failures": 0] } 3. f7 Rc8 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-20", "successes": 4, "failures": 0] } ( 3... Rc6+ $2 4. Kd7 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-17", "successes": 3, "failures": 0] } ) 4. Ke7 ( 4. Rd3 Kg7 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-11", "successes": 3, "failures": 0] } ) 4... Rc7+ { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-27", "successes": 4, "failures": 0] } 5. Ke8 Rc8+ { ["status": "LEARNED", "last_study_date": "2022-10-31", "due_date": "2022-11-10", "successes": 4, "failures": 0] } 6. Kd7 Ra8 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-12", "successes": 3, "failures": 0] } ) 1... Rc8 ( 1... Kg7 2. Rg3+ { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-12-19", "successes": 4, "failures": 0] } ) ( 1... Re1+ 2. Kf6 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-06", "successes": 4, "failures": 1] } 2... Rf1+ 3. Ke7 { ["status": "LEARNED", "last_study_date": "2022-10-28", "due_date": "2022-11-11", "successes": 3, "failures": 0] } 3... Re1+ 4. Kf8 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-06", "successes": 5, "failures": 1] } 4... Ra1 5. Rh3+ { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-19", "successes": 4, "failures": 0] } 5... Kg6 6. Kg8 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-18", "successes": 5, "failures": 0] } ) 2. Ke7 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-19", "successes": 6, "failures": 0] } 2... Rc7+ 3. Rd7 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-12-19", "successes": 4, "failures": 0] } 1-0
+
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "1-0"]
+[FEN "7k/2r1KP2/8/8/8/8/8/6R1 w - - 0 1"]
+[SetUp "1"]
+
+{ ["perspective": true, "last_access": "2022-10-02", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1. Kf6 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-14", "successes": 3, "failures": 0] } 1... Rc6+ 2. Ke5 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-08", "successes": 4, "failures": 0] } 2... Rc8 ( 2... Rc5+ 3. Kd6 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-11", "successes": 3, "failures": 0] } 3... Rc8 4. Re1 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-13", "successes": 3, "failures": 0] } 4... Kg7 5. Re8 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-16", "successes": 3, "failures": 0] } ) 3. Rg6 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-13", "successes": 4, "failures": 0] } 3... Kh7 4. Rc6 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-11", "successes": 3, "failures": 0] } 4... Ra8 5. Kf6 { ["status": "LEARNED", "last_study_date": "2022-11-05", "due_date": "2022-11-11", "successes": 3, "failures": 0] } 1-0
+
