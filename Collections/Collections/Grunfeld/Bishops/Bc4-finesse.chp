@@ -1,0 +1,10 @@
+[Event "?"]
+[Site "Earth"]
+[Date "2020.09.04"]
+[Round "1"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[FEN "rnbqk2r/ppp1ppbp/6p1/8/3PP3/2P5/P4PPP/R1BQKBNR w KQkq -"]
+
+{ ["perspective": false, "last_access": "2022-07-29", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 3, "recall_radius": 2, "recall_max": 365] } 1. Bc4 c5 { ["status": "UNLEARNED", "last_study_date": "2022-07-28", "due_date": "2022-07-28", "successes": 0, "failures": 0] } 2. Ne2 Nc6 { ["status": "UNLEARNED", "last_study_date": "2022-07-28", "due_date": "2022-07-28", "successes": 0, "failures": 0] } 3. Be3 O-O { ["status": "UNLEARNED", "last_study_date": "2022-07-28", "due_date": "2022-07-28", "successes": 0, "failures": 0] } 4. O-O Bg4 { ["status": "UNLEARNED", "last_study_date": "2022-07-28", "due_date": "2022-07-28", "successes": 0, "failures": 0] } 5. f3 Bd7 { ["status": "UNLEARNED", "last_study_date": "2022-07-28", "due_date": "2022-07-28", "successes": 0, "failures": 0] } 6. Rb1 Qc7 { ["status": "UNLEARNED", "last_study_date": "2022-07-28", "due_date": "2022-07-28", "successes": 0, "failures": 0] } 7. Bd3 Rad8 { ["status": "UNLEARNED", "last_study_date": "2022-07-28", "due_date": "2022-07-28", "successes": 0, "failures": 0] } 8. Qc1 cxd4 { ["status": "UNLEARNED", "last_study_date": "2022-07-28", "due_date": "2022-07-28", "successes": 0, "failures": 0] } 9. cxd4 Qd6 { ["status": "UNLEARNED", "last_study_date": "2022-07-28", "due_date": "2022-07-28", "successes": 0, "failures": 0] } 10. Rd1 Nxd4 { ["status": "UNLEARNED", "last_study_date": "2022-07-28", "due_date": "2022-07-28", "successes": 0, "failures": 0] } *

@@ -1,0 +1,120 @@
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "p"]
+[Result "1/2-1/2"]
+[FEN "2r5/8/4k3/8/2P5/2K5/8/3R4 w - - 0 1"]
+[SetUp "1"]
+
+{ ["perspective": false, "last_access": "2022-11-05", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1. Kb4 Rb8+ { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 2. Ka5 Rc8 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ( 2... Ra8+ $2 3. Kb6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 3. Kb5 Rb8+ { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4. Ka6 Rc8 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 5. Rd4 Ke5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 6. Rh4 Kd6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 1/2-1/2
+
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "p"]
+[Result "1/2-1/2"]
+[FEN "7r/8/4k3/8/2P5/2K5/8/3R4 w - - 0 1"]
+[SetUp "1"]
+
+{ ["perspective": false, "last_access": "2022-11-05", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1. c5 Ke7 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ( 1... Rh4 $5 2. c6 Ke7 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 3. c7 Rh8 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 2. Kc4 Rd8 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 1/2-1/2
+
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "p"]
+[Black "?"]
+[Result "1/2-1/2"]
+[FEN "8/3r4/2k5/2p5/8/4K3/8/2R5 w - - 0 1"]
+[SetUp "1"]
+
+{ ["perspective": true, "last_access": "2022-11-05", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1. Ke4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ( 1. Ke2 $2 Kb5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 2. Rb1+ Ka4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 3. Rc1 Kb4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4. Rb1+ Ka3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 5. Rc1 Rd5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 6. Ke3 Kb2 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 7. Rc4 ( 7. Ke4 Rd4+ { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 7... Kb3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 1/2-1/2
+
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "p"]
+[Result "1/2-1/2"]
+[FEN "1r6/8/8/8/1P1k4/1K6/8/2R5 b - - 0 1"]
+[SetUp "1"]
+
+{ ["perspective": false, "last_access": "2022-11-05", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1... Kd5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 2. Rc4 Kd6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 3. Ka4 Kd5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 1/2-1/2
+
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "p"]
+[Black "?"]
+[Result "1-0"]
+[FEN "1r6/8/8/8/1P1k4/1K6/8/2R5 w - - 0 1"]
+[SetUp "1"]
+
+{ ["perspective": true, "last_access": "2022-11-05", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1. Rc6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 1... Kd5 2. Ra6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 2... Rb7 ( 2... Kd4 3. Ka4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 3... Kc4 4. Rc6+ { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4... Kd5 5. b5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 3. Ka4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 3... Kc4 4. Rc6+ { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4... Kd5 5. b5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 1-0
+
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "p"]
+[Black "?"]
+[Result "1-0"]
+[FEN "3r4/8/8/6k1/3P4/3K4/8/5R2 w - - 0 1"]
+[SetUp "1"]
+
+{ ["perspective": true, "last_access": "2022-11-05", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1. Kc4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 1... Rc8+ 2. Kb5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 2... Rd8 3. Kc5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 3... Rc8+ 4. Kb6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4... Rd8 5. Rd1 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 5... Kf6 6. Kc7 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 6... Rd5 7. Kc6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 7... Ra5 ( 7... Rd8 8. d5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 8. Re1 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 8... Ra6+ 9. Kb5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 9... Rd6 10. Kc5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 10... Rd8 11. d5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 1-0
+
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "p"]
+[Black "?"]
+[Result "1-0"]
+[FEN "4r3/8/8/7k/4P3/4K3/8/6R1 w - - 0 1"]
+[SetUp "1"]
+
+{ ["perspective": true, "last_access": "2022-11-05", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1. Rg2 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 1... Kh4 2. Rg7 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ( 2. e5 $2 Rxe5+ { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 3. Kf4 Kh3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) ( 2. Rg6 $2 Kh5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 3. Rd6 Kg5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4. Kd4 Ra8 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 2... Kh5 3. Rg1 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 3... Kh6 ( 3... Kh4 4. e5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4... Rxe5+ 5. Kf4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) ( 3... Ra8 4. e5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4... Ra4 5. e6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 5... Kh6 ( 5... Ra6 6. Kf4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 6... Rxe6 7. Kf5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 6. e7 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 6... Ra8 7. Kf4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 7... Re8 8. Kf5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 8... Rxe7 9. Kf6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 1-0
+
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "p"]
+[Black "?"]
+[Result "1-0"]
+[FEN "4r3/8/2K5/7k/4P3/8/8/6R1 w - - 0 1"]
+[SetUp "1"]
+
+{ ["perspective": true, "last_access": "2022-11-05", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1. Kd5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ( 1. Re1 $2 Kg6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 2. Kd7 Ra8 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ( 2... Re5 $5 3. Kd6 Ra5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) ) 1... Rd8+ 2. Ke5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 2... Re8+ 3. Kd4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 3... Rd8+ 4. Ke3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4... Re8 5. Rg2 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 1-0
+
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "p"]
+[Result "1/2-1/2"]
+[FEN "1r6/8/4k3/8/1P6/1K6/8/3R4 w - - 0 1"]
+[SetUp "1"]
+
+{ ["perspective": false, "last_access": "2022-11-05", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1. Rd4 ( 1. Ka4 Ra8+ { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 2. Kb5 Rb8+ { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 3. Ka5 Ra8+ { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4. Kb6 Rb8+ { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 1... Ke5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 2. Kc3 ( 2. Rd7 Ke6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 3. Ra7 Kd6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4. Ra4 Kc6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 2... Rh8 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ( 2... Rc8+ $5 3. Rc4 ( 3. Kd3 Rb8 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 3... Rb8 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4. Rc6 Kd5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 5. Ra6 Rc8+ { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 6. Kb3 Rc6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 7. Ra7 Rb6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 8. Ka4 Kc6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 3. Rd7 ( 3. b5 Rb8 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4. Rh4 Kd6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 5. Kb4 Kc7 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 3... Ke6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ( 3... Rb8 $2 4. Kc4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4... Ke6 5. Ra7 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 5... Kd6 6. b5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 6... Rc8+ 7. Kb4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 7... Rc7 8. b6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) ( 3... Rc8+ $2 4. Kb3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4... Ke6 5. Rd4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 5... Ke5 6. Rc4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 6... Rb8 7. Rc6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 7... Kd5 8. Ra6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 1/2-1/2
+
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "p"]
+[Black "?"]
+[Result "1/2-1/2"]
+[FEN "8/8/6pk/1R6/4r3/2K5/8/8 w - - 0 1"]
+[SetUp "1"]
+
+{ ["perspective": true, "last_access": "2022-11-05", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1. Rb1 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ( 1. Kd3 $2 Re1 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 2. Kd2 Re6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 3. Rb1 g5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4. Rg1 ( 4. Kd3 g4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 5. Rb5 g3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 6. Kd2 g2 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 7. Rb1 Rg6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 8. Rg1 Kh5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 9. Ke3 Kh4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 4... Kh5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ( 4... Re5 $2 5. Kd3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 5... Kh5 6. Kd4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 6... Re2 7. Kd3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 7... Rh2 8. Ke3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 5. Rh1+ Kg6 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 6. Rg1 ( 6. Re1 Rxe1 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 7. Kxe1 Kh5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 8. Kf2 ( 8. Kf1 Kh4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 8... Kh4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 6... Re5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 7. Kd3 Kf5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 8. Kd4 ( 8. Rf1+ Kg4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 9. Kd4 ( 9. Rg1+ Kf3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 10. Kd4 Ra5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 9... Ra5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ( 9... Re2 $5 10. Kd3 Rh2 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 10. Ke3 Ra3+ { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 11. Ke2 Ra2+ { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 12. Ke3 Kh3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 8... Re4+ { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 9. Kd3 g4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 10. Rf1+ ( 10. Rg2 Rf4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 11. Ke2 Kg5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 12. Rf2 ( 12. Rg1 Kh4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 12... g3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 10... Rf4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 11. Ke2 ( 11. Rg1 Kg5 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 12. Ke2 Kh4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 11... g3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 12. Rxf4+ Kxf4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 13. Ke1 Ke3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 14. Kf1 Kf3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } ) 1... g5 2. Kd3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 2... Re5 3. Kd4 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 3... Re8 4. Rg1 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 4... Kg6 5. Kd3 { ["status": "UNLEARNED", "last_study_date": "2022-11-04", "due_date": "2022-11-04", "successes": 0, "failures": 0] } 1/2-1/2
+

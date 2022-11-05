@@ -1,0 +1,10 @@
+[Event "?"]
+[Site "Earth"]
+[Date "2020.09.05"]
+[Round "1"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[ECO "A10"]
+
+{ ["perspective": false, "last_access": "2022-10-22", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1. c4 g6 2. e4 e5 3. d4 Nf6 4. Nf3 ( 4. Nc3 exd4 5. Qxd4 Nc6 6. Qd1 Bg7 ) ( 4. dxe5 Nxe4 5. Bd3 ( 5. Nf3 Bc5 6. Qd5 f5 7. exf6 Bxf2+ 8. Ke2 Nxf6 9. Qe5+ Kf7 ) ( 5. Qd5 f5 6. Nc3 c6 7. Qd3 Na6 8. Nxe4 ( 8. Nf3 Nac5 9. Qc2 Nxc3 10. Qxc3 ( 10. bxc3 d6 11. Bg5 Be7 12. Bh6 Be6 13. Rd1 Qc7 ) 10... Ne4 ) 8... fxe4 9. Qxe4 Bb4+ 10. Kd1 ( 10. Bd2 Bxd2+ 11. Kxd2 O-O 12. Nf3 d6 ) 10... Nc5 11. Qe2 d5 12. exd6+ Be6 ) 5... Bb4+ 6. Kf1 d5 7. exd6 Nf6 8. dxc7 Qxc7 ) 4... exd4 5. e5 Ne4 6. Qxd4 Bb4+ 7. Nc3 Nxc3 8. bxc3 Nc6 9. Qe3 Be7 10. Be2 d6 11. exd6 Qxd6 *

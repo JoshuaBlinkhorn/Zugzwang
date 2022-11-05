@@ -1,0 +1,10 @@
+[Event "?"]
+[Site "Earth"]
+[Date "2020.09.05"]
+[Round "1"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[ECO "A10"]
+
+{ ["perspective": false, "last_access": "2022-10-22", "learning_remaining": 10, "learning_limit": 10, "recall_factor": 2.0, "recall_radius": 3, "recall_max": 365] } 1. c4 g6 2. e4 e5 3. Nf3 Bg7 4. d4 exd4 5. Nxd4 Nf6 6. Bd3 ( 6. Nc3 O-O 7. g3 ( 7. Bg5 Re8 8. Qf3 h6 9. Be3 d6 ) ( 7. Bd3 d5 ) ( 7. Be2 Re8 8. f3 c6 9. O-O ( 9. c5 b6 10. Nb3 bxc5 11. Nxc5 d6 12. Nd3 d5 ) ( 9. Bg5 Qb6 10. Nb3 d5 11. cxd5 cxd5 12. Bxf6 ( 12. exd5 Na6 13. Bh4 Ng4 14. fxg4 Bxg4 15. Kf1 Rxe2 16. Nxe2 Re8 ) 12... Qxf6 13. Qxd5 ( 13. Nxd5 Qxb2 ) 13... Nc6 ) ( 9. Nb3 a5 10. a4 ( 10. O-O a4 11. Nc5 a3 ) 10... d5 11. cxd5 ( 11. exd5 cxd5 12. cxd5 ( 12. O-O Be6 13. c5 Nc6 ) 12... Qb6 ) 11... cxd5 12. Bg5 ( 12. Nxd5 Nxd5 13. Qxd5 Qxd5 14. exd5 Na6 ) 12... h6 13. Bxf6 Qxf6 14. Nxd5 Qxb2 ) ( 9. Nc2 d5 10. cxd5 cxd5 11. Nxd5 ( 11. Bg5 h6 12. Bxf6 Qxf6 13. Qxd5 Be6 14. Qb5 Nc6 15. O-O ( 15. Rd1 a6 16. Qb6 Red8 ) 15... Nd4 ) ( 11. exd5 Qb6 12. Qd4 Nbd7 13. Qxb6 Nxb6 ) 11... Nxd5 12. Qxd5 Qc7 13. Qc4 Nc6 14. O-O Be6 15. Qa4 a6 ) 9... d5 ) ( 7. Be3 c6 8. e5 ( 8. Bd3 d5 ) ( 8. c5 Re8 9. f3 b6 10. Nb3 bxc5 11. Nxc5 d5 ) 8... Ne8 9. Nf3 d6 10. Be2 Qa5 11. exd6 Nxd6 12. Qxd6 ( 12. O-O Nf5 ) 12... Bxc3+ ) 7... Nc6 ) ( 6. e5 Ne4 7. Qe2 Nc5 ) 6... O-O 7. O-O d5 8. exd5 ( 8. cxd5 c6 9. Nc3 cxd5 10. e5 Ng4 11. f4 Nc6 12. Nxc6 bxc6 13. Na4 f6 14. h3 Nh6 15. exf6 Qxf6 16. Be3 Bf5 ) 8... c6 9. Nc3 cxd5 10. Bg5 h6 11. Bh4 ( 11. Be3 dxc4 12. Bxc4 Ng4 13. Ndb5 Qxd1 14. Raxd1 Nxe3 15. fxe3 Nc6 16. Nd6 Ne5 17. Bd5 Rb8 ) 11... Nc6 12. Nxc6 bxc6 13. cxd5 cxd5 *
