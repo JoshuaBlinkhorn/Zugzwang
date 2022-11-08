@@ -22,8 +22,13 @@ class ZugGroup:
         return children
 
     def _filter_children(self, children: List[str]) -> List[str]:
-        """Override in derived class for specific sorting of children."""
-        return children
+        """
+        The base implementation here ignores filenames that start with a dot.
+
+        Override in derived class for different or additional specific filtering
+        of children.
+        """
+        return [child for child in children if not child.startswith('.')]
 
     def _get_stats(self):
         stats = ZugStats()
@@ -50,4 +55,5 @@ class ZugCategory(ZugGroup):
         super().__init__(path, ZugChapter)
 
     def _filter_children(self, children: List[str]) -> List[str]:
+        children = super()._filter_children(children)
         return [child for child in children if child.endswith('.chp')]
