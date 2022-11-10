@@ -167,6 +167,33 @@ class ZugCategoryMenu(ZugGroupMenu):
     _child_name = 'CHAPTER'
     _child_menu_type = ZugChapterMenu
 
+    def _prompt(self):
+        print('id - select item')
+        print('p - position-based training')
+        print('l - line-based training')
+        print('b  - go back\n')
+        return input(':')
+
+    def _handle_input(self, user_input):
+        num_items = len(self._group.children)
+        if self._represents_int(user_input) and int(user_input) in range(1, num_items+1):
+            item_index = int(user_input) - 1
+            next_item = self._group.children[item_index]
+            self._load_next_menu(next_item)
+            return None
+        if user_input == 'p':
+            for chapter in self._group.children:
+                chapter.train_positions()
+            return None
+        if user_input == 'l':
+            for chapter in self._group.children:            
+                chapter.train_lines()            
+            return None
+        if user_input == 'b':
+            return True
+        return None
+
+
 
 class ZugCollectionMenu(ZugGroupMenu):
     _child_name = 'CATEGORY'
