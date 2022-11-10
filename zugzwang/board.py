@@ -60,6 +60,10 @@ class ZugBoard():
     def _render_newline(cls):
         return Style.RESET_ALL + '\n'
     
+    def _render_button(self):
+        back = self._square_colour_to_back(self._board.turn)
+        return Style.RESET_ALL + '  ' + back + '  '
+    
     @classmethod
     def _square_colour(cls, square):
         if (chess.square_rank(square) + chess.square_file(square)) % 2:
@@ -87,6 +91,9 @@ class ZugBoard():
                 piece_colour = piece.color if piece else ZugColours.WHITE
                 string += self._render_square(piece_type, piece_colour, square_colour)
                 string += ' '
+            on_move = perspective == self._board.turn 
+            if (on_move and row == 7) or (not on_move and row == 0):
+                string += self._render_button()
             string += self._render_newline()
         return string
 
