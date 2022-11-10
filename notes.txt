@@ -1427,6 +1427,27 @@ For the first, let's see what the unit tests assert
 We need to sort out the insertion at queue filling - that should be one-by-one.
 That should be easily sorted in the _fill_queue method.
 
+~~~~~~~~~~~~~~~~
+2022-11-01 07:14
+
+The stats are not updating overnight if the program is still running.
+How do we handle that?
+Perhaps when a training session finishes, or when a new menu is loaded, we call this
+an update event. Then we check the date, and if it has changed, update all stats?
+
+There caveman way of doing this is a bit ugly - is there anything better?
+
+~~~~~~~~~~~~~~~~
+2022-11-10 18:54
+
+Taking the Collections out of Zugzwang, so that I can back them up separately with
+git.
+This should be easy.
+
+
+
+
+
 
 
 
