@@ -1444,16 +1444,23 @@ Taking the Collections out of Zugzwang, so that I can back them up separately wi
 git.
 This should be easy.
 
+~~~~~~~~~~~~~~~~
+2022-11-26 11:30
 
+Now I have an hour and a half to add new content in endgames.
+Let's see how much can be added.
 
+~~~~~~~~~~~~~~~~
+2023-0619 17:16
 
+Let's try to slip a pygame session into the position-based training.
+So we'll have the trainer drive pygame.
+This is going to be awkward because inevitably we'll have to maintain a copy of the UI.
+But on the other hand, maybe it's the right time to get it into git.
 
-
-
-
-
-
-
+The first step was to have the callback actually make the move.
+So now we just need to understand which class should own pygame.
+It's probably in Queue.
 
 
 
