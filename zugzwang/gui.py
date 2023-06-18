@@ -168,7 +168,7 @@ class ZugGUI:
             return
         
         move = chess.Move(self._source, self._target, promotion)
-        self._make_move(move)
+        self._move_registered(move)
 
     def _move_registered(self, move):
         self._STATUS = self._SLEEPING
