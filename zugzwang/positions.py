@@ -1,9 +1,10 @@
 import chess
+import time
 
 from zugzwang.queue import ZugQueue, ZugQueueItem
 from zugzwang.game import ZugSolution
 from zugzwang.board import ZugBoard
-
+from zugzwang.gui import ZugGUI
 
 class ZugTrainingStatuses():
     """A training position has exactly one of these statuses at any point in time."""    
@@ -17,9 +18,11 @@ class ZugTrainingStatuses():
 
 class ZugTrainingPosition(ZugQueueItem):
 
-    def __init__(self, solution: ZugSolution, status: str):
+    def __init__(self, solution: ZugSolution, status: str, gui: ZugGUI):
         self._solution = solution
         self._status = status
+        self._gui = gui
+        self._perspective = solution.node.parent.board().turn        
 
     @property
     def solution(self):
@@ -30,9 +33,23 @@ class ZugTrainingPosition(ZugQueueItem):
         return self._status
         
     def _present(self) -> int:
-        presenter = ZugTrainingPositionPresenter(self._solution.node, self._status)
-        return presenter.present()
-
+        board = self._solution.node.parent.board()
+        self._gui.set_perspective(self._perspective)        
+        self._gui.setup_position(board)
+        move = self._gui.get_move()
+        
+        if move == self._solution.node.move:
+            self._gui.setup_position(self._solution.node.board())
+            time.sleep(1)            
+            return ZugQueueItem.SUCCESS
+        else:
+            self._gui.setup_position(board)
+            while self._gui.get_move() != self._solution.node.move:
+                self._gui.setup_position(board)
+            self._gui.setup_position(self._solution.node.board())
+            time.sleep(1)                
+            return ZugQueueItem.FAILURE
+            
     def _on_success(self):
         ZTS = ZugTrainingStatuses
         statuses = {

@@ -1462,5 +1462,40 @@ The first step was to have the callback actually make the move.
 So now we just need to understand which class should own pygame.
 It's probably in Queue.
 
+I think the gui has to be initialised in queue.play().
+So I've started too low.
+I think the trainer should own the gui.
+But the issue is that queue only supplies one method, play().
+And hence all the GUI stuff will have to be handled in the depths of the queue.
+All the GUI stuff - just the GUI callback.
+The GUI wants the callback to be define when it's initialised.
+But the Trainer has no access to the Queue items..
+
+The obvious hack is to pass the gui down, and set the private callback in queue, when
+the position is created.
+It's a disgusting breach of the design.
+But I think that the point is that to drive it in this way requires a major refactor.
+
+Right - but I think allowing the callback to be set should do it.
+Let's see whether it works.
+On second thoughts - I think it makes more sense to all the event loop
+to be started and stopped once a move is given.
+So realistically, the GUI should provide a method get_move(), that gets input
+from the user, and then returns.
+So it's not driving the process - it's being driven.
+This is the way it should be.
+And therefore we don't need a callback at all.
+
+So this should work perfectly now.
+All the presenter has to do is draw the position and ask for a move.
+Then compare the move to the solution and act accordingly.
+
+So quite soon we should be able to have beta mode working.
+For now, let's have the GUI spawned inside the trainer.
+Later we can create one at the top and pass it down.
+
+
+
+
 
 
