@@ -4,6 +4,7 @@ from typing import Optional, List
 
 from zugzwang.game import ZugSolution, ZugSolutionData
 from zugzwang.board import ZugBoard
+from zugzwang.gui import ZugGUI
 
 # TODO (non-critical)
 # 1. Decide whether to factor the _present_front() and _present_back() methods into

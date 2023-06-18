@@ -3,40 +3,6 @@ import chess
 
 from typing import List, Tuple, Dict, Callable
 
-pygame.init()
-
-SQUARE_SIZE = 60
-WHITE_SQUARE = (220, 220, 220)
-BLACK_SQUARE = (180, 180, 180)
-
-screen = pygame.display.set_mode([480, 480])
-
-running = True
-
-down = None
-up = None
-source = None
-target = None
-drag = False
-
-board = chess.Board()
-
-piece_images = {
-    chess.Piece(chess.PAWN, chess.WHITE): pygame.image.load('images/white_pawn.png'),
-    chess.Piece(chess.KNIGHT, chess.WHITE): pygame.image.load('images/white_knight.png'),
-    chess.Piece(chess.BISHOP, chess.WHITE): pygame.image.load('images/white_bishop.png'),
-    chess.Piece(chess.ROOK, chess.WHITE): pygame.image.load('images/white_rook.png'),
-    chess.Piece(chess.QUEEN, chess.WHITE): pygame.image.load('images/white_queen.png'),
-    chess.Piece(chess.KING, chess.WHITE): pygame.image.load('images/white_king.png'),    
-    chess.Piece(chess.PAWN, chess.BLACK): pygame.image.load('images/black_pawn.png'),
-    chess.Piece(chess.KNIGHT, chess.BLACK): pygame.image.load('images/black_knight.png'),
-    chess.Piece(chess.BISHOP, chess.BLACK): pygame.image.load('images/black_bishop.png'),
-    chess.Piece(chess.ROOK, chess.BLACK): pygame.image.load('images/black_rook.png'),
-    chess.Piece(chess.QUEEN, chess.BLACK): pygame.image.load('images/black_queen.png'),
-    chess.Piece(chess.KING, chess.BLACK): pygame.image.load('images/black_king.png'),
-}
-
-
 class ColourScheme:
     def __init__(
             self,
@@ -72,53 +38,92 @@ ROUGE_THEME = ColourScheme(
     black_move_highlight = (158, 156, 40),       
 )
 
-class GUIBoard:
+class ZugGUI:
     """Draws the chess board."""
 
     _AWAITING_SOURCE = "AWAITING SOURCE"
     _AWAITING_TARGET = "AWAITING TARGET"
     _AWAITING_PROMOTION = "AWAITING PROMOTION"
-    _AWAITING_CALLBACK = "AWAITING CALLBACK"
+    _SLEEPING = "SLEEPING"
     
     _SQUARE_SIZE = 60
-    
-    def __init__(self, screen: pygame.Surface, callback: Callable = None):
-        self._screen = screen
+
+    _PIECE_IMAGES = {
+        chess.Piece(chess.PAWN, chess.WHITE): pygame.image.load('img/white_pawn.png'),
+        chess.Piece(chess.KNIGHT, chess.WHITE): pygame.image.load('img/white_knight.png'),
+        chess.Piece(chess.BISHOP, chess.WHITE): pygame.image.load('img/white_bishop.png'),
+        chess.Piece(chess.ROOK, chess.WHITE): pygame.image.load('img/white_rook.png'),
+        chess.Piece(chess.QUEEN, chess.WHITE): pygame.image.load('img/white_queen.png'),
+        chess.Piece(chess.KING, chess.WHITE): pygame.image.load('img/white_king.png'),    
+        chess.Piece(chess.PAWN, chess.BLACK): pygame.image.load('img/black_pawn.png'),
+        chess.Piece(chess.KNIGHT, chess.BLACK): pygame.image.load('img/black_knight.png'),
+        chess.Piece(chess.BISHOP, chess.BLACK): pygame.image.load('img/black_bishop.png'),
+        chess.Piece(chess.ROOK, chess.BLACK): pygame.image.load('img/black_rook.png'),
+        chess.Piece(chess.QUEEN, chess.BLACK): pygame.image.load('img/black_queen.png'),
+        chess.Piece(chess.KING, chess.BLACK): pygame.image.load('img/black_king.png'),
+    }
+
+    def __init__(self):
+        pygame.init()
+        self._screen = pygame.display.set_mode([480, 480])
         self._board = None
+        self._move = None
         self._up = None
         self._down = None
         self._source = None
         self._target = None
+        self._running = False
         self._status = self._AWAITING_SOURCE
         self._perspective = chess.WHITE
         self._colour_scheme = ROUGE_THEME
-        self._callback = callback if callback else lambda gui, move: None
+
+    def set_perspective(self, perspective: chess.Color):
+        self._perspective = perspective
 
     def setup_position(self, board: chess.Board = None):
         self._board = board if board else chess.Board()
         self._draw_squares()
         self._highlight_move()
         self._draw_pieces()
+        pygame.display.flip()        
 
-    def mouse_down(self, coordinates: Tuple[int, int]):
+    def get_move(self):
+        self._flush_events()
+        self._event_loop()
+        return self._move
+
+    def kill(self):
+        pygame.quit()        
+
+    def _flush_events(self):
+        for event in pygame.event.get():
+            continue
+
+    def _event_loop(self):
+        self._running = True        
+        while self._running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    continue
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = pygame.mouse.get_pos()
+                    self._mouse_down(pos)
+                if event.type == pygame.MOUSEBUTTONUP:
+                    pos = pygame.mouse.get_pos()
+                    self._mouse_up(pos)
+            pygame.display.flip()
+        
+    def _mouse_down(self, coordinates: Tuple[int, int]):
         square = self._get_square(coordinates)
         self._down = square
-        print("down:", square)
 
-    def mouse_up(self, coordinates: Tuple[int, int]):
+    def _mouse_up(self, coordinates: Tuple[int, int]):
         square = self._get_square(coordinates)
-        print("up:", square)                
         if self._down == square:
             self._down = None            
             self._clicked(square)
 
-
-    def set_move_callback(self, callback: Callable):
-        self._callback = callback
-        
     def _clicked(self, square: chess.Square):
-        print("clicked:", square)                
-        print(self._source, self._target)
         if self._status == self._AWAITING_SOURCE:
             self._source_selected(square)
         elif self._status == self._AWAITING_TARGET:
@@ -166,12 +171,12 @@ class GUIBoard:
         self._make_move(move)
 
     def _move_registered(self, move):
-        self._STATUS = self._AWAITING_CALLBACK        
-        self._callback(self, move)        
+        self._STATUS = self._SLEEPING
+        self._move = move
+        self._running = False
         
     def make_move(self, move):
         self._board.push(move)
-        print(self._board.move_stack)
         self._reset()
         self._STATUS = self._AWAITING_SOURCE
 
@@ -230,7 +235,7 @@ class GUIBoard:
         pygame.draw.rect(self._screen, colour, rect)
 
     def _draw_piece(self, piece: chess.Piece, square: chess.Square):
-        image = piece_images.get(piece)
+        image = self._PIECE_IMAGES.get(piece)
         self._screen.blit(image, self._get_coordinates(square))
 
     def _get_square(self, coordinates: Tuple[int, int]) -> chess.Square:
@@ -292,43 +297,17 @@ class GUIBoard:
 
     def _draw_pieces(self):
         for square in chess.SQUARES:
-            image = piece_images.get(self._board.piece_at(square))
+            image = self._PIECE_IMAGES.get(self._board.piece_at(square))
             if image:
                 self._screen.blit(image, self._get_coordinates(square))
 
-def get_square(pos):
-    x = pos[0] // SQUARE_SIZE
-    y = ((SQUARE_SIZE * 8) - pos[1]) // SQUARE_SIZE
 
-    file = chr(ord('a') + x)        
-    rank = chr(ord('1') + y)
+if __name__ == '__main__':
+    gui = ZugGUI()
+    gui.setup_position(chess.Board())
+    move = gui.get_move()
+    print(move)    
+    gui.quit()
 
-    return file + rank
-
-def callback(gui, move):
-    print("move:", move)    
-    gui.make_move(move)
-
-gui = GUIBoard(screen, callback)
-gui.setup_position(chess.Board())
-
-while running:
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            pos = pygame.mouse.get_pos()
-            gui.mouse_down(pos)
-            
-        if event.type == pygame.MOUSEBUTTONUP:
-            pos = pygame.mouse.get_pos()
-            gui.mouse_up(pos)
-
-      
-    pygame.display.flip()
-
-pygame.quit()
         
     
