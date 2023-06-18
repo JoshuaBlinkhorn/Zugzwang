@@ -41,6 +41,8 @@ ROUGE_THEME = ColourScheme(
 class ZugGUI:
     """Draws the chess board."""
 
+    QUIT = "QUIT"
+
     _AWAITING_SOURCE = "AWAITING SOURCE"
     _AWAITING_TARGET = "AWAITING TARGET"
     _AWAITING_PROMOTION = "AWAITING PROMOTION"
@@ -87,10 +89,10 @@ class ZugGUI:
         self._draw_pieces()
         pygame.display.flip()        
 
-    def get_move(self):
+    def get_input(self):
         self._flush_events()
         self._event_loop()
-        return self._move
+        return self._input
 
     def kill(self):
         pygame.quit()        
@@ -104,7 +106,8 @@ class ZugGUI:
         while self._running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    continue
+                    self._input = self.QUIT
+                    self._running = False
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
                     self._mouse_down(pos)
@@ -172,7 +175,7 @@ class ZugGUI:
 
     def _move_registered(self, move):
         self._STATUS = self._SLEEPING
-        self._move = move
+        self._input = move
         self._running = False
         
     def make_move(self, move):

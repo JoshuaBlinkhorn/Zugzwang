@@ -36,7 +36,14 @@ class ZugTrainingPosition(ZugQueueItem):
         board = self._solution.node.parent.board()
         self._gui.set_perspective(self._perspective)        
         self._gui.setup_position(board)
-        move = self._gui.get_move()
+        gui_input = self._gui.get_input()
+        
+        if gui_input == ZugGUI.QUIT:
+            return ZugQueueItem.QUIT
+        elif type(gui_input) == chess.Move:
+            move = gui_input
+        else:
+            raise ValueError('Input from ZugGUI not recognised.')
         
         if move == self._solution.node.move:
             self._gui.setup_position(self._solution.node.board())

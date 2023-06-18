@@ -1528,7 +1528,19 @@ a property, and that gui has the screen as a property.. or something like that.
 I'm not sure we really need to pass the gui into the TrainingItem constructor.
 But anyway, let's not agonize over this atm.
 
+For 1, we just need to generalise get_move() to get_input()
+And allow that to recieve a quit signal of some kind.
 
+Again, let's not agonize.
+We just abuse the dynamic typing a bit.
+And return a constant ZugGUI.QUIT
+It's a bit slow, but it works.
+What we need here is a design, probably MVC.
+
+Done.
+So the next step is a full on GUI design with a repertoire editor.
+Keeping the same data back end, just allowing the repertoires to be travsersed and
+edited.
 
 
 
