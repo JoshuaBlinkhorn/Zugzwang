@@ -51,7 +51,7 @@ class ZugTrainingPosition(ZugQueueItem):
             return ZugQueueItem.SUCCESS
         else:
             self._gui.setup_position(board)
-            while self._gui.get_move() != self._solution.node.move:
+            while self._gui.get_input() != self._solution.node.move:
                 self._gui.setup_position(board)
             self._gui.setup_position(self._solution.node.board())
             time.sleep(1)                
