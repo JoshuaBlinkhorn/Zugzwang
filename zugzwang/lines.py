@@ -34,7 +34,14 @@ class ZugTrainingLinePresenter():
     def _present_pair(self, problem, solution):
         board = problem.board()        
         self._gui.setup_position(board)
-        move = self._gui.get_move()
+        gui_input = self._gui.get_input()
+        
+        if gui_input == ZugGUI.QUIT:
+            return ZugQueueItem.QUIT
+        elif type(gui_input) == chess.Move:
+            move = gui_input
+        else:
+            raise ValueError('Input from ZugGUI not recognised.')        
 
         if move == solution.move:
             self._gui.setup_position(solution.board())
