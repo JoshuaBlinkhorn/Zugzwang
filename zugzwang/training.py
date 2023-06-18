@@ -50,12 +50,13 @@ class ZugLineTrainer(ZugTrainer):
     def __init__(self, chapter):
         self._chapter = chapter
         self._queue = ZugQueue(insertion_index=3)
+        self._gui = ZugGUI()        
 
     def _fill_queue(self):
         for line in self._get_lines():
             self._queue.append(line)
 
     def _get_lines(self):
-        return [ZugTrainingLine(line) for line in self._chapter.lines]
+        return [ZugTrainingLine(line, self._gui) for line in self._chapter.lines]
     
 
