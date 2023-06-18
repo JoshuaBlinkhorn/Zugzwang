@@ -1494,6 +1494,18 @@ So quite soon we should be able to have beta mode working.
 For now, let's have the GUI spawned inside the trainer.
 Later we can create one at the top and pass it down.
 
+~~~~~~~~~~~~~~~~
+2023-06-18 10:30
+
+So it seems that the UI is a huge improvement to usability.
+What I should do now is really work to get the repertoires for the sicilian, and
+karo-cann in, and to process what's already in there.
+And to get say, all of the pawn endings in, to really consolidate them.
+
+
+The main next things from the development point of view are:
+1. get line-based training available in the GUI
+2. allow editing of the repertoires
 
 
 
