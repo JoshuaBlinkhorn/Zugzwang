@@ -1,26 +1,30 @@
 import chess
+import time
 from typing import List
 
 from zugzwang.queue import ZugQueueItem
 from zugzwang.board import ZugBoard
-
+from zugzwang.gui import ZugGUI
 
 class ZugTrainingLine(ZugQueueItem):
 
-    def __init__(self, line: List[chess.pgn.GameNode]):
+    def __init__(self, line: List[chess.pgn.GameNode], gui: ZugGUI):
         self._line = line
+        self._gui = gui
 
     def _present(self):        
-        return ZugTrainingLinePresenter(self._line).present()
+        return ZugTrainingLinePresenter(self._line, self._gui).present()
 
         
 class ZugTrainingLinePresenter():
 
-    def __init__(self, line: List[chess.pgn.GameNode]):
+    def __init__(self, line: List[chess.pgn.GameNode], gui: ZugGUI):
         self._line = line
+        self._gui = gui
         self._perspective = line[0].board().turn
-    
+
     def present(self):
+        self._gui.set_perspective(self._perspective)
         for problem, solution in zip(self._line[::2], self._line[1::2]):
             result = self._present_pair(problem, solution)
             if result != ZugQueueItem.SUCCESS:
@@ -28,54 +32,18 @@ class ZugTrainingLinePresenter():
         return result
 
     def _present_pair(self, problem, solution):
-        self._present_front(problem)        
-        while not self._pause():
-            self._present_front(problem)
-        result = self._present_back(solution)
-        while result is None:
-            result = self._present_back(solution)
-        return result
-        
-    def _present_front(self, node):
-        board = ZugBoard(node.board()).make_string(self._perspective)
-        self._clear_screen()
-        self._print_synopsis()
-        print(board)
-        self._prompt_front()
+        board = problem.board()        
+        self._gui.setup_position(board)
+        move = self._gui.get_move()
 
-    def _present_back(self, node):
-        board = ZugBoard(node.board()).make_string(self._perspective)
-        self._clear_screen()
-        print(board)
-        self._prompt_back()
-        return self._interpret_user_input()
-
-    def _print_synopsis(self):
-        print("Your turn\n")
-
-    def _prompt_front(self):
-        print("Look at the position, then hit enter to see the solution\n")
-
-    def _prompt_back(self):
-        print("Hit enter for success, 'f' for failure\n")
-
-    @classmethod
-    def _clear_screen(cls):
-        print('\n' * 100)
-    
-    @classmethod
-    def _get_user_input(cls):
-        return input(':')
-
-    @classmethod
-    def _pause(cls):
-        return cls._get_user_input() == ''
-
-    @classmethod
-    def _interpret_user_input(cls):
-        accepted_input = {
-            '': ZugQueueItem.SUCCESS,
-            'f': ZugQueueItem.FAILURE,
-            'q': ZugQueueItem.QUIT,
-        }
-        return accepted_input.get(cls._get_user_input(), None)
+        if move == solution.move:
+            self._gui.setup_position(solution.board())
+            time.sleep(1)
+            return ZugQueueItem.SUCCESS
+        else:
+            self._gui.setup_position(board)
+            while self._gui.get_move() != solution.move:
+                self._gui.setup_position(board)
+            self._gui.setup_position(solution.board())
+            time.sleep(1)                
+            return ZugQueueItem.FAILURE

@@ -1507,6 +1507,27 @@ The main next things from the development point of view are:
 1. get line-based training available in the GUI
 2. allow editing of the repertoires
 
+There is some bug whereby pygame doesn't quit properly afer a session.
+
+~~~~~~~~~~~~~~~~
+2023-06-18 15:13
+
+So now I have about three and a half hours development time.
+So let's try to:
+1. implement a way of quitting the session.
+2. implement line-based training.
+
+Probably 2 first.
+
+Then we can scope out writing the editor.
+My thinking on the 'pygame not quitting' thing is that perhaps something is
+keeping a reference to pygame alive. Somehow, even though we issued pygame.kill(),
+there may still be an object with a non-zero reference count that has a the gui as
+a property, and that gui has the screen as a property.. or something like that.
+
+I'm not sure we really need to pass the gui into the TrainingItem constructor.
+But anyway, let's not agonize over this atm.
+
 
 
 
