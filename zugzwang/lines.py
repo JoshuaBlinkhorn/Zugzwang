@@ -49,7 +49,7 @@ class ZugTrainingLinePresenter():
             return ZugQueueItem.SUCCESS
         else:
             self._gui.setup_position(board)
-            while self._gui.get_move() != solution.move:
+            while self._gui.get_input() != solution.move:
                 self._gui.setup_position(board)
             self._gui.setup_position(solution.board())
             time.sleep(1)                

@@ -1542,5 +1542,35 @@ So the next step is a full on GUI design with a repertoire editor.
 Keeping the same data back end, just allowing the repertoires to be travsersed and
 edited.
 
+To do this GUI in pygame, I think we're going to need to code it from the bottom up.
+
+So we'll need to have a mechanism that registers all the rectangles of our screen
+and in the game loop, use that to route all the events to the various elements.
+
+I think that once we have the GUI handling and routing all user input, the design
+is going to make a lot more sense.
+
+I don't think this will be difficult to build, in all honesty.
+Can we build it up completely separately with placeholders, and then just stuff
+then up with the code here?
+The difficult bit will be handling lists of chapters etc.
+That's going to be quite difficult in pygame..
+
+So if we need to load files, perhaps we'll have to do one of two things:
+Drive the editor from the CLI.
+A bit annoying.
+Or just have a limit on the size of containers.
+That could be an issue - but surely we also get the same issue in the CLI?
+
+Or try to use PyQt5..
+On balance, probably the best solution is just to add an option 'e - edit', and have
+that launch the GUI.
+I think that's the best call.
+
+So then we'll need two GUIs - one as is. Second for the editing.
+To some extent they could inherit from some core base class.
+
+So let's think on and decide what we want from the editor.
+Is it really worth it?
 
 
