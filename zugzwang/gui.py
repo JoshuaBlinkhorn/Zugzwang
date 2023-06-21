@@ -91,6 +91,9 @@ class ZugGUI:
 
     def get_input(self):
         self._flush_events()
+        self._status = self._AWAITING_SOURCE
+        self._source = None
+        self._target = None
         self._event_loop()
         return self._input
 
