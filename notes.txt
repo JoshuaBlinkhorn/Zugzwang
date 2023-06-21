@@ -1574,3 +1574,40 @@ So let's think on and decide what we want from the editor.
 Is it really worth it?
 
 
+~~~~~~~~~~~~~~~~
+2023-06-21 21:30
+
+I think it's absolutely worth it.
+We should build an MVC architecture.
+Or just something that works.
+We want to have board and some buttons.
+
+It seems there are two ways to handle the event distribution.
+Either have all elements handle all events, and know their own poosition as
+self.rect = pg.Rect.
+Or have the main screen handle all events and have the elements provide specific methods.
+The main screen translates the events into element method calls.
+
+I personally prefer the second method, but I have seen others use the first.
+I guess elements might be better placed to handle the events themselves if
+their implementation is complex.
+
+Once again, it's easy to let this get away from me and seem like a huge task.
+But to create an editor that is capable of creating a move tree and assigning
+a SAN, that is actually not too difficult.
+
+Probably the position should display an array of buttons with the moves in the
+position on them.
+Then there should be all the SAN buttons, which we can use to mean things.
+And then there needs to be a delete from here button.
+
+So what have we learned out of tonight?
+1. we really do need an editor. Quite a simple one would be fine.
+2. we have everything we need for scheduling already - we don't need to touch
+the back end.
+3. We need to be able to set up a position, navigate to a position, flip the board
+etc.
+
+So the first thing to do would be to build the position editor.
+There's a bit of a bug - you can't quit when you're in the process of correcting
+a bad move.
