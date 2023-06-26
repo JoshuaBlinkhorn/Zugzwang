@@ -1611,3 +1611,178 @@ etc.
 So the first thing to do would be to build the position editor.
 There's a bit of a bug - you can't quit when you're in the process of correcting
 a bad move.
+
+~~~~~~~~~~~~~~~~
+2023-06-22 20:35
+
+Now for simplicity, let's have the main display handle mouse events, and have our
+elements handle the click events.
+
+Later we'll let some class dispatch events to scenes.
+Okay, so we should start a fresh.
+We just need to create a scene that allows registration of elements and tells
+them that they have been clicked.
+
+~~~~~~~~~~~~~~~~
+2023-06-23 17:27
+
+I think the thing to do now is to just plough on with the position creator.
+It should return a board - or put one somewhere.
+
+How far should we agonize over the design?
+Probably not at all.
+But let's make it full screen if possible.
+
+Done, good.
+So now let's create the board setup scene.
+Can pychess boards hold illegal positions?
+It would be great if they can, or we can do a drop, or something like this.
+Otherwise, we're going to have to have the scene store the current position.
+
+Actually, we're going to need that anyway.
+I guess the real question is, can pychess render an illegal fen?
+Okay, let's just get the board drawn, and the buttons.
+
+I think here, let's not worry too much at the moment about how the design relates
+to the that of the GUI board in use at the moment.
+
+Okay great, we've rendered the screen.
+I think the thing to do now is to get the piece selection going.
+
+So, it's basically square highlighting, and a variable keeping track of which
+one is selected.
+
+And now this requires a design choice.
+Should the element be responsible for setting the scenes selected piece?
+
+Yes, and this means that the scene needs to be a class instance.
+
+Okay great, we have that working.
+Now let's try to allow us to place pieces.
+At random and anywhere, with no stipulation that the position be legal.
+
+Or, we could design it such that the position is always legal.
+And such that the rules for the king drop maintain the legality of the position.
+
+Okay, let's go for this.
+The class of square needs to be upped to own a piece.
+
+Oh my word, that was just too easy.
+
+~~~~~~~~~~~~~~~~
+2023-06-23 21:14
+
+The next step then is to have the user able to select the following:
+
+1. perspective of the board (but I don't think that should flip what's there..)
+2. determine the side to move
+3. determine castling rights
+4. determine whether en passent is possible
+
+The latter could be done by allowing the user to specify the previous move.
+But I'm not sure about that.
+
+I think that we should have the program automatically declare a move that leads to
+the position unless it's the starting position.
+
+Perhaps the user could be prompted for castling rights and en passent after the position is determined, based on their possibilities.
+
+I like that idea best.
+Because it takes away the need to keep track of what's possible.
+
+Right, the next thing to do: create two buttons, 'flip' and 'done'.
+
+This to some extent encompasses the creation of a generic button class.
+
+Okay good.
+Right, we,ve got the two buttons there.
+
+We should think about how to design this with icons.
+Can I find a 'done' icon, and a 'flip' icon?
+That would be awesome.
+
+How do we prompt the user for the castling rights?
+Big question.
+Can we grey out the board, and ask which rooks can castle?
+Then grey out the board, and select which pawn can be captured en passent?
+
+It should go:
+create position,
+select side to move,
+choose castleable rooks,
+choose capturable en passent pawn.
+
+So let's try to make the dialogue move to extract these from the user.
+
+Okay, let's do a nav just via highlighting.
+We might need to refactor later.
+Let's just try to get something that does it.
+
+
+Hang on, hand on.
+It's a lot easier to just make castle rights highlighting and en passent highlighting
+part of the selector.
+But I guess then you'd need to unhighligh when
+
+I think in the interests of getting this done, we should just not handle castling
+rights and en passent captures at all at the moment.
+Just check that it's a legal position.
+On balance, I think that having the en passent and castling selectors as piece
+selectors is the best option.
+
+So we decided that we should have it as a selection type - castling rights and
+en passent capture.
+Let's just implement this in the dirtiest way possible so that it works and
+we can move on, and later refactor and try to understand how this would look in
+MVC.
+
+Forgetting about the icons for the moment.
+So we want three buttons, flip, clear, and done.
+
+Two things:
+
+1. by far the best solution for indicating castling rights and en passent captures
+   is the right click.
+
+   en passent captures can only be indicated if the side to move is selected
+   and the best way to do this is have a square that toggles white king/black king
+
+
+There might be some clever ways to use the fen to determine whether castling is
+possible in the position for either player.
+Oh no - castling rights are not the same as castling being a legal move.
+
+Okay, so perhaps the thing to do is to build the fen with the current castling rights
+and en passent. And then create a chess board, and use piece at etc.
+
+The en passent business is going to be fairly complex.
+So let's leave it until last.
+
+For now, let's focus on getting the FEN written into the FEN box.
+
+Alright, we've made loads of progress.
+All we need to do now is to get in the castling rights and the en passent square,
+using right clicks.
+
+Now, if squares should be a dictionary from chess squares to elements..
+Then when we flip, we need to rework that dictionary.
+
+What's the best way to do it?
+Probably to be able to get the index given a square and a perspective.
+
+AFter some thought:
+
+I think that all we really need to do is represent the squares as a mapping from
+elements to chess squares.
+And when flip is called, have that mapping updated.
+We can think about model-view-controller afterwards.
+
+Thinking about it now, it would have been far easier to have
+only allowed these highlights when the position was legal, and then
+to have basically created the fen with the highight and asked is this legal?
+Built the fen, and then displayed it.
+
+So we need to move towards a better implementation here.
+It's gotten awfully messy.
+
+
