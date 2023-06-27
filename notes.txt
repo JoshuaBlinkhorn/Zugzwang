@@ -1795,3 +1795,5 @@ Then it updates the model accordingly.
 Then the binding and drawing takes place every time the same.
 
 Ok great, it looks like all i have left to do is to update the views based on the model.
+
+Let's try to get it running without that.
