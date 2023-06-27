@@ -93,6 +93,7 @@ class ZugTrainingPosition(ZugQueueItem):
     def _on_failure(self):
         ZTS = ZugTrainingStatuses        
         statuses = {
+            ZTS.NEW: ZTS.LEARNING_STAGE_1,                        
             ZTS.LEARNING_STAGE_1: ZTS.LEARNING_STAGE_1,
             ZTS.LEARNING_STAGE_2: ZTS.LEARNING_STAGE_1,
             ZTS.REMEMBERING_STAGE_1: ZTS.REMEMBERING_STAGE_1,
@@ -100,6 +101,7 @@ class ZugTrainingPosition(ZugQueueItem):
             ZTS.REVIEW: ZTS.REMEMBERING_STAGE_1,
         }
         directives = {
+            ZTS.NEW: ZugQueue.REINSERT,            
             ZTS.LEARNING_STAGE_1: ZugQueue.REINSERT,
             ZTS.LEARNING_STAGE_2: ZugQueue.REINSERT,
             ZTS.REMEMBERING_STAGE_1: ZugQueue.REINSERT,
@@ -107,6 +109,7 @@ class ZugTrainingPosition(ZugQueueItem):
             ZTS.REVIEW: ZugQueue.REINSERT,
         }
         actions = {
+            ZTS.NEW: lambda: None,            
             ZTS.LEARNING_STAGE_1: lambda: None,
             ZTS.LEARNING_STAGE_2: lambda: None,
             ZTS.REMEMBERING_STAGE_1: lambda: None,
