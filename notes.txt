@@ -1788,3 +1788,10 @@ It's gotten awfully messy.
 Started a full re-write and it's looking better - but for the moment,
 completely unfunctional.
 
+I think the views should be given ids.
+Then when a view is clicked, the controller at least knows the id of the clicked
+view.
+Then it updates the model accordingly.
+Then the binding and drawing takes place every time the same.
+
+Ok great, it looks like all i have left to do is to update the views based on the model.

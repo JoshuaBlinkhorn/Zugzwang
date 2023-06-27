@@ -599,16 +599,24 @@ class ZugDisplay:
         self._scene = None
         info = pygame.display.Info()
         width, height = info.current_w, info.current_h
-        self._screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
+        self.screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
 
     def get_screen(self):
         return self._screen
         
-    def add_scene(self, scene: ZugScene):
+    def push_scene(self, scene: ZugScene):
         self._scenes.append(scene)
+        self._set_scene(scene)        
 
     def set_scene(self, scene: ZugScene):
         self._scene = scene
+
+    def pop_scene(self, scene: ZugScene):
+        self._scenes.pop()
+        if self._scenes:
+            self._set_scene(self._scenes[-1])
+        else:
+            pygame.QUIT
 
     def main(self):
         clock = pygame.time.Clock()
@@ -625,6 +633,8 @@ class ZugDisplay:
             clock.tick(30)                
             pygame.display.flip()
 
+
+            
 class ZugFenCreatorModel:
     def __init__(self):
         self._board = {square: None for square in chess.SQUARES}
@@ -707,7 +717,8 @@ class ZugFenCreatorView:
                 y = t + (row * _SQ_SIZE)
                 rect = pygame.Rect(x, y, _SQ_SIZE, _SQ_SIZE)
                 colour = chess.WHITE if (i + j) % 2 == 0 else chess.BLACK
-                self.board[(row, column)] = ZugSquareView(self, rect, colour)
+                view_id = f"board.{row}.{column}"
+                self.board[view_id] = ZugSquareView(self, view_id, rect, colour)
 
         # piece selector
         l = 720
@@ -723,33 +734,37 @@ class ZugFenCreatorView:
                 rect = pygame.Rect(x, y, _SQ_SIZE, _SQ_SIZE)
                 colour = chess.WHITE if (row + column) % 2 == 0 else chess.BLACK
                 piece = chess.Piece(piece_type, piece_colour)
-                self.selector[piece] = ZugSquareView(self, rect, colour, piece)
+                view_id = f"piece.{piece.symbol()}"
+                self.selector[view_id] = ZugSquareView(self, view_id, rect, colour, piece)
 
         # thumbs
         l = 60
         t = 80
         rect = pygame.Rect(l, t, _SQ_SIZE, _SQ_SIZE)
-        self.turn = ZugTurnView(self, rect)
+        self.turn = ZugTurnView(self, "turn", rect)
         rect = pygame.Rect(l, t + (_SQ_SIZE), _SQ_SIZE, _SQ_SIZE)
-        self.flip = ZugFlipView(self, rect)
+        self.flip = ZugFlipView(self, "flip", rect)
         rect = pygame.Rect(l, t + (2 * _SQ_SIZE), _SQ_SIZE, _SQ_SIZE)
-        self.clear = ZugClearView(self, rect)
+        self.clear = ZugClearView(self, "clear", rect)
 
         # fen
         l = 180
         t = 800
         rect = pygame.Rect(l, t, _SQ_SIZE * 7, _SQ_SIZE)
-        self.fen = ZugTextView(self, rect)
+        self.fen = ZugTextView(self, "fen", rect)
         rect = pygame.Rect(l + (7 * _SQ_SIZE), t, _SQ_SIZE, _SQ_SIZE)
+        self.tick = ZugTickView(self, "tick", rect)        
 
 
 class ZugSquareView:
     def __init__(
             self,
+            view_id: str,
             rect: pygame.Rect,
             colour: chess.Color,
             piece: Optional[chess.Piece]=None
     ):
+        self._view_id = view_id
         self._colour = colour
         self._piece = piece
         self._highlighted = False
@@ -775,7 +790,8 @@ class ZugSquareView:
 
 
 class ZugTurnView:
-    def __init__(self, rect: pygame.Rect):
+    def __init__(self, view_id: str, rect: pygame.Rect):
+        self._view_id = view_id,        
         self._rect = rect
         self._turn = chess.WHITE
 
@@ -789,7 +805,8 @@ class ZugTurnView:
 
 
 class ZugFlipView:
-    def __init__(self, rect: pygame.Rect):
+    def __init__(self, view_id: str, rect: pygame.Rect):
+        self._view_id = view_id        
         self._rect = rect
 
     def draw(self, screen: pygame.Surface):
@@ -798,7 +815,8 @@ class ZugFlipView:
 
 
 class ZugClearView:
-    def __init__(self, rect: pygame.Rect):
+    def __init__(self, view_id: str, rect: pygame.Rect):
+        self._view_id = view_id,        
         self._rect = rect
 
     def draw(self, screen: pygame.Surface):
@@ -814,7 +832,8 @@ class ZugClearView:
                 
 
 class ZugTextView:
-    def __init__(self, rect: pygame.Rect, caption: str=None):
+    def __init__(self, view_id: str, rect: pygame.Rect, caption: str=None):
+        self._view_id = view_id
         self.rect = rect
         self._caption = caption
         self._font = pygame.font.SysFont(None, 24)
@@ -831,7 +850,8 @@ class ZugTextView:
 
 class ZugTickView:
 
-    def __init__(self, rect: pygame.Rect):    
+    def __init__(self, view_id: str, rect: pygame.Rect):
+        self._view_id = view_id
         self._rect = rect
         self._active = False
     
@@ -848,11 +868,100 @@ class ZugTickView:
             screen.blit(_TICK_IMAGE, (self.rect.x + 5, self.rect.y + 5))
 
 
+class ZugFenCreator:
+    def __init__(self, display: ZugDisplay):
+        self._display = display
+        self._model = ZugFenCreatorModel()
+        self._view = ZugFenCreatorView()
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            for element in self._elements:
+                if element.rect.collidepoint(event.pos):
+                    self._down = element
+                    break
+        if event.type == pygame.MOUSEBUTTONUP:
+            for element in self._elements:
+                if element.rect.collidepoint(event.pos) and element == self._down:
+                    self._down = None
+                    if event.button == 1:
+                        self._left_click_registered(element)
+                        break                        
+                    if event.button == 3:
+                        self._right_click_registered(element)                        
+                        break
+
+    def _left_click_registered(self, element):
+
+        if element.view_id.startswith('board'):
+            _, row, column = tuple(element.view_id.split('.'))
+            square = self._chess_square(row, column)
+            if self._model.piece == self._model.piece_at(square):
+                self._model.set_piece_at(square, None)
+            else:
+                self._model.set_piece_at(square, self._model.piece)
+
+        elif element.view_id.startswith('piece'):
+            _, piece = tuple(element.view_id.split('.'))
+            new_piece = None if self._model.piece == piece else piece
+            self._model.set_piece(new_piece)
+
+        elif element.view_id == 'turn':
+            self._model.toggle_turn()
+
+        elif element.view_id == 'flip':
+            self._model.toggle_perspective()
+
+        elif element.view_id == 'clear':
+            for square in chess.SQUARES:
+                self._model.set_piece_at(square, None)
+        
+        elif element.view_id == 'tick':
+            self._display.pop_scene()
+            
+            
+    def _right_click_registered(self, element):
+
+        if not self._model.is_valid():
+            return
+
+        if element.view_id.startswith('board'):
+            _, row, column = tuple(element.view_id.split('.'))
+            square = self._chess_square(row, column)
+            
+            if square in self._CASTLING:
+                castling = self._CASTLING[square]
+                self._model.toggle_castling(castling)
+                if not self._model.is_valid():
+                    self._model.toggle_castling(castling)
+                    
+            elif square in self._EP:
+                ep = self._EP[square]
+                old_ep = self._model.ep
+                self._model.ep = ep
+                if not self._model.is_valid():
+                    self._model.ep = old_ep
+
+
+    def update(self):
+        # now just set all of the view attributes based on the model
+        pass
+
+    def draw(self):
+        for view in self._view.board.values():
+            view.draw(self._display.screen)
+
+        for view in self._view.selector.values():
+            view.draw(self._display.screen)
+
+        for view in (self.turn, self.flip, self.clear, self.fen, self.tick):
+            view.draw(self._display.screen)            
+    
                 
 if __name__ == '__main__':
     pygame.init()    
     display = ZugDisplay()
-    setup_scene = ZugSetupPositionScene(display.get_screen())
-    display.add_scene(setup_scene)
-    display.set_scene(setup_scene)
+    fen = ZugFenCreator(display)
+    display.add_scene(fen)
+    display.set_scene(fen)
     display.main()
