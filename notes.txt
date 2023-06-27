@@ -1785,4 +1785,6 @@ Built the fen, and then displayed it.
 So we need to move towards a better implementation here.
 It's gotten awfully messy.
 
+Started a full re-write and it's looking better - but for the moment,
+completely unfunctional.
 
