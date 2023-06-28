@@ -1797,3 +1797,26 @@ Then the binding and drawing takes place every time the same.
 Ok great, it looks like all i have left to do is to update the views based on the model.
 
 Let's try to get it running without that.
+Where is the FEN view, and why is the castling square not highlighting?
+
+There's an issue where the castling rights are stll being recorded in the model when the
+position is not valid.
+
+Alright, so the final thing to implement here is the perspective.
+I think the right way to do this is to basically reset the position of the views.
+So the view should have a perspective option, because we dont want the controller
+to start assigning rects.
+
+So let's stub that out, and then implement it.
+We also want to name some of the squares - so the square view needs a caption option.
+
+So what's to do now?
+I think there are some obvious optimizations on the speed of updating - for example
+don't recalculate all the square rects every tick - have the view know when it
+needs to update.
+That feels odd because it means that the view is basically caching the model.
+
+Now we should design the overall flow.
+Like the first screen has two buttons: train or create.
+
+The very first thing to do is delete all of the old code and push.
