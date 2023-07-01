@@ -1820,3 +1820,39 @@ Now we should design the overall flow.
 Like the first screen has two buttons: train or create.
 
 The very first thing to do is delete all of the old code and push.
+
+It's actually quite exciting.
+Probably the thing to do is just have a list of elements, each with stats, and then
+three buttons for each: positions - lines - edit
+
+I kind of feel like this merits sub-views. But perhaps lets try to follow the
+design pattern that has worked for the FEN generator.
+
+So, we need to build a list thingy.
+Why not just try to keep it simple and have it like have a max number?
+It should be fairly easy
+
+Let's then have a go at creating the GUI top level.
+It displays the logo and the scene id.
+Does the scene navigation but doesn't display anything
+
+Is it possible to separate the styling/positioning of the views from the  flow of
+the program? I guess it must be. MVC should do exactly that. So let's just try
+to display a list in text.
+
+Now, this is going to involve importing things from the working trainer, like collection
+classes, etc. Let's see how it goes.
+
+Now, the views here should not change while the scene is on top of the stack.
+So the views can be initialised by what's in the user data. Does the model really
+want to store that? Well I guess it should.
+
+We didn't do it that way for the position editor, but maybe we should have done.
+The model loads with a default, and that default is used in the initial creation
+of the view.
+That makes sense - it means the controller does not own the defaults, like it
+does in the editor.
+
+Okay, let's do with it this way.
+
+
