@@ -1,6 +1,11 @@
-# ad hoc script to prepare a naked .pgn as a .chp with default comments
-# run it from within a dir containing your naked pgns
-# it will output a default chapter with the same filename, modulo the extension
+# ad hoc script to prepare a stub .pgn as a zugzwang pgn
+# this means adding the default comment to the root node
+# run it from Zugzwang root dir, passing the target dir absolute path as a parameter.
+# the script will find any PGN with -STUB in its name
+# and generate and save a zugzwang PGN with -STUB removed from the name
+
+# a stub PGN should indicate the perspective with a 'p' as one of the player names
+# if no perspective is indicate, I believe it defaults to white
 
 import sys
 import os
@@ -11,31 +16,18 @@ from zugzwang.chapter import ZugChapter
 from zugzwang.game import ZugRoot, ZugRootData, ZugSolutionData
 from zugzwang.tools import ZugChessTools
 
+target_dir = sys.argv[1]
+
 # range over the filenames in the current directory
-pgn_files = sorted(os.listdir())
+pgn_files = sorted(os.listdir(target_dir))
 for filename in pgn_files:
 
-    # Try to determine perspective based on filename
-    if not filename.endswith('pgn'):
-        print(f"Skipping '{filename}'")
+    if '-STUB' not in filename:
         continue
-    if filename[-5] in 'wW':
-        perspective = ZugColours.WHITE
-    elif filename[-5] in 'bB':
-        perspective = ZugColours.BLACK
 
-    # Otherwise, ask user for perspective
-    else:
-        colour = None
-        while colour != 'w' and colour != 'b':
-            colour = input(f"Select perspective for '{filename}' [w/b]:'")
-        if colour == 'w':
-            perspective = ZugColours.WHITE
-        else:
-            perspective = ZugColours.BLACK
-
-    output_filename = filename.replace('.pgn','.chp')            
-    with open(filename) as pgn_file, open(output_filename, 'w') as output_file:
+    input_filename = os.path.join(target_dir, filename)
+    output_filename = os.path.join(target_dir, filename.replace('-STUB',''))
+    with open(input_filename) as pgn_file, open(output_filename, 'w') as output_file:
 
         game = chess.pgn.read_game(pgn_file)
         while game is not None:            

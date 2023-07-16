@@ -1947,3 +1947,5 @@ So there's a script that will take a stub file and output a zug PGN.
 As part of this I'll need to change the file extension to pgn everywhere.
 So let's get this implemented in the Zugzwang-dev folder.
 I'll need a new branch there.
+
+No need for a new branch.
