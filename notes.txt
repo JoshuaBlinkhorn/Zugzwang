@@ -1855,4 +1855,95 @@ does in the editor.
 
 Okay, let's do with it this way.
 
+~~~~~~~~~~~~~~~~
+2023-07-01 17:00
 
+Making a fair bit of progress.
+Now we have groups and views.
+What we need is for the views to specify their size, and the group to
+specify the relative position.
+Then the group draw() method returns a surface of its size, on which is blitted
+all of the groups and views.
+
+With the introduction of subviews etc, it feels like we also need submodels.
+But let's not go there yet.
+Let's have the controller resolve the ids its given by the main view in order to
+understand how to update the model.
+
+~~~~~~~~~~~~~~~~
+2023-07-01 17:00
+
+Okay, so we have the main menu.
+Let's put the main menu in it's own file, separate from the Scene and display
+subclasses.
+
+With the constant updating from the model - there's no real need for our menus
+to do that.
+So perhaps they just need a refresh.
+But that might be more work..
+
+Let's put this into a separate file, and then try to understand how to build the next
+menus from it.
+
+Okay, I think it's bad that the display makes the scene update every frame.
+Because most of the time, the model doesn't change.
+But then, how do you decect changes in the model?
+
+Let's just leave it this way for now, and observe whether it really does hammer the CPU.
+
+Later on we can fix it so that it updates when something has changed.
+
+Or we give the scene the ability to update itself.
+Make the update public, and force the display to always call update on the new
+scene when the old one is popped.
+That makes so much more sense.
+
+Let's do that.
+So , when the display get a push, it should update the scene.
+And when it gets a pop, it should update the new scene.
+That sounds right
+
+Okay, I think we got that working.
+So now the scene controls it's own event handling, which makes sense.
+The ZugSceneView is a ZugViewGroup - but it needs to be one whose dimensions are
+set dynamically.
+We achieved this by having the SceneView constructor take a width and height, which are
+assigned as instance variables, and those instance variables are used in get_width()
+and get_height() which are overridden. Then the base class had to be modified
+to use those methods rather than take the class variable.
+
+There must be a better way to do that.
+Generate them at runtime? It has to be a meta class thing.
+
+Alright, let's just get something working.
+Now the thing to do is get the next menu on top of the main menu.
+So I guess it's the collection menu, then the category menu.
+That's all.
+
+So really all we need to do here is abstract the notion of a collection.
+
+Okay, we have something.
+Let's go through the debugging labyrinth and see what comes out.
+
+Right, we made progress.
+What we need now is a stub tree editor scene, and a back button.
+Then we have a look at it.
+
+The good thing is that we've been able to reuse all of the groups code.
+The bad thing is that the design is a bit clunky.
+Oh well - it works.
+
+Let's get the back button in as part of the scene.
+Or maybe just use the logo as a back button.
+That would be much, much easier.
+
+~~~~~~~~~~~~~~~~
+2023-07-16 18:00
+
+Since the GUI development is going slow, I've decided to just implement a workaround
+so that I can easily edit the PGNs in HIARCS.
+
+So there's a script that will take a stub file and output a zug PGN.
+As part of this I'll need to change the file extension to pgn everywhere.
+So let's get this implemented in the Zugzwang-dev folder.
+I'll need a new branch there.

@@ -7,7 +7,7 @@ import os
 from typing import Dict, List, Any
 
 from zugzwang.group import ZugUserData
-
+from zugzwang.palette import THEME as THEME
 pygame.init()    
 
 _SQ_SIZE = 60
@@ -29,7 +29,7 @@ class ColourScheme:
         self.white_move_highlight = white_move_highlight
         self.black_move_highlight = black_move_highlight    
 
-_THEME = ColourScheme(
+THEME = ColourScheme(
     white = (237, 220, 180),
     black = (180, 134, 100),
     white_highlight = (113, 143, 101),
@@ -391,13 +391,13 @@ class ZugSquareView:
             
     def _background_colour(self):
         if self._highlighted:
-            return _THEME.white_highlight if self._colour == chess.WHITE \
-                else _THEME.black_highlight
+            return THEME.white_highlight if self._colour == chess.WHITE \
+                else THEME.black_highlight
         else:
-            return _THEME.white if self._colour == chess.WHITE else _THEME.black
+            return THEME.white if self._colour == chess.WHITE else THEME.black
 
     def _label_colour(self):
-        return _THEME.black if self._colour == chess.WHITE else _THEME.white
+        return THEME.black if self._colour == chess.WHITE else THEME.white
         
 
 class ZugTurnView:
@@ -410,7 +410,7 @@ class ZugTurnView:
         self._turn = turn
 
     def draw(self, screen: pygame.Surface):
-        pygame.draw.rect(screen, _THEME.white, self.rect)
+        pygame.draw.rect(screen, THEME.white, self.rect)
         piece = chess.Piece(chess.KING, self._turn)
         screen.blit(_PIECE_IMAGES.get(piece), (self.rect.x, self.rect.y))
 
@@ -421,7 +421,7 @@ class ZugFlipView:
         self.rect = rect
 
     def draw(self, screen: pygame.Surface):
-        pygame.draw.rect(screen, _THEME.black, self.rect)
+        pygame.draw.rect(screen, THEME.black, self.rect)
         screen.blit(_FLIP_IMAGE, (self.rect.x + 5, self.rect.y + 5))
 
 
@@ -433,7 +433,7 @@ class ZugClearView:
     def draw(self, screen: pygame.Surface):
         for i in range(8):
             for j in range(8):
-                colour = _THEME.white if (i + j) % 2 == 0 else _THEME.black
+                colour = THEME.white if (i + j) % 2 == 0 else THEME.black
                 x = self.rect.x + (i * _SQ_SIZE) // 8
                 y = self.rect.y + (j * _SQ_SIZE) // 8
                 x1 = self.rect.x + ((i + 1) * _SQ_SIZE) // 8
@@ -450,7 +450,7 @@ class ZugTextView:
         self._font = pygame.font.SysFont(None, 24)
     
     def draw(self, screen: pygame.Surface):
-        pygame.draw.rect(screen, _THEME.white, self.rect)
+        pygame.draw.rect(screen, THEME.white, self.rect)
         if self._caption:
             image = self._font.render(self._caption, True, (0, 0, 0))
             screen.blit(image, (self.rect.x + 5, self.rect.y + 5))
@@ -473,7 +473,7 @@ class ZugTickView:
         self._active = False
         
     def draw(self, screen: pygame.Surface):
-        colour = _THEME.black
+        colour = THEME.black
         pygame.draw.rect(screen, colour, self.rect)
         if self._active is True:
             screen.blit(_TICK_IMAGE, (self.rect.x + 5, self.rect.y + 5))
@@ -617,192 +617,3 @@ class ZugFenCreator:
         for view in self._view.views.values():
             view.draw(self._display.screen)
 
-class ZugScene:
-    def __init__(self, display: ZugDisplay):
-        self._display = display
-        self._model = ZugSceneModel()
-        self._view = ZugSceneView(self._display.get_rect())
-
-    def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            self._down = self._view.get_collision(event.pos)
-        if event.type == pygame.MOUSEBUTTONUP:
-            vid = self._view.get_collision(event.pos)
-            if vid and self._down == vid:
-                if event.button == 1:
-                    self._left_click_registered(vid)
-                if event.button == 3:
-                    self._right_click_registered(vid)                        
-
-    def _left_click_registered(self, view: ZugView):
-        pass
-
-    def _right_click_registered(self, view: ZugView):
-        pass
-
-    def update(self):
-        pass
-                    
-    def draw(self, screen: pygame.Surface):
-        self._view.draw(screen)
-
-
-class ZugView:
-    def __init__(self, view_id: int, rect: pygame.Rect):
-        self.view_id = view_id
-        self.rect = rect
-
-    def update(self, model: Any):
-        pass
-
-    def draw(self, sceen: pygame.Surface):
-        pass    
-
-
-class ZugLogoView(ZugView):
-    _WIDTH = _LOGO.get_width()
-    _HEIGHT = _LOGO.get_height()
-
-    def __init__(self):
-        super().__init__(view_id="logo", rect=_LOGO.get_rect)
-
-    def draw(self, screen: pygame.Surface):
-        screen.blit(_LOGO, (10, 10))
-    
-
-class ZugViewGroup:
-    def __init__(self, group_id: str, rect: pygame.Rect):
-        self.group_id = group_id
-        self.rect = rect
-        self._views = {}
-        self._groups = {}
-
-    def _add_view(self, view: ZugView):
-        vid = view.view_id
-        if vid in self._views:
-            raise DuplicateViewIdError(vid)
-        self._views[vid] = view
-
-    def _add_group(self, group: ZugViewGroup):
-        gid = group.group_id
-        if gid in self._groups:
-            raise DuplicateGroupIdError(gid)
-        self._groups[gid] = group
-
-    def draw(self, screen: pygame.Surface):
-        for group in self._groups.values():
-            group.draw(screen)
-        for view in self._views.values():
-            view.draw(screen)
-
-    def get_collision(self, position: Tuple[int, int]) -> Optional[str]:
-        for view_id, view in self._views.items():
-            if view.rect.collidepoint(position):
-                return '.'.join([self._group_id, view_id])
-        for group_id, group in self._groups.items():
-            collision = group.get_collision(position)
-            if collision:
-                return '.'.join([self._group_id, collision])
-        return None
-
-
-class ZugSceneView(ZugViewGroup):
-    def __init__(self, rect: pygame.Rect):
-        group_id = "scene"
-        super().__init__(group_id, rect)
-        self._add_view(ZugLogoView())
-
-
-class DuplicateViewIdError(ValueError):
-    pass
-    
-
-class DuplicateGroupIdError(ValueError):
-    pass
-    
-
-class ZugMainMenu(ZugScene):
-    def __init__(self, display: ZugDisplay):
-        super().__init__(display)
-        self._view = ZugMainMenuView(display.get_rect())
-        self._model = ZugMainMenuModel()
-
-
-class ZugMainMenuView(ZugSceneView):
-    def __init__(self, rect: pygame.Rect):
-        super().__init__(rect)
-        l = 50        
-        t = 50
-        h = 40
-        for row in range(10):
-            rect = pygame.Rect(l, t + (row * h), 700, h)
-            vid = f'collection.{row}'
-            self._add_group(ZugCollectionRowView(vid, rect))
-
-    def update(self, model: ZugMainMenuModel):
-        for row, data in enumerate(model.collection_data()):
-            vid = f'collection.{row}'
-            self._views[vid].update(data)
-
-
-class ZugCollectionRowView(ZugViewGroup):
-    _HEIGHT = 40
-    _WIDTH = 600
-    
-    def __init__(self, view_id: str, position: Tuple[int, int]):
-        rect = pygame.Rect(position[0], position[1], self._WIDTH, self._HEIGHT)
-        super().__init__(view_id, rect)
-
-        # coverage
-        vid = "cov"
-        rect = pygame.Rect(self.rect.left, self.rect.top, 100, self._HEIGHT)
-        self._add_view(ZugTextView(vid, rect, 'DUMMY'))
-
-    def update(self, collection_data: Dict[str: Any]):
-        pass
-        
-        
-    
-
-            
-class DuplicateViewIdError(ValueError):
-    pass
-
-        
-class ZugSceneModel:
-    pass
-
-
-class ZugMainMenuModel(ZugSceneModel):
-    def __init__(self):
-        collections_dir_path = os.path.join(os.getcwd(),'../Collections')        
-        self._user_data = ZugUserData(collections_dir_path)
-
-    def collections_data(self, collection: ZugGroup):
-        data = []        
-        for collection in self._user_data.children:
-            stats = collection.stats
-            coverage = (stats.learned * 100) // stats.total if stats.total > 0 else 0
-            training_available = True if stats.new + stats.due > 0 else False            
-            data.append(
-                {
-                    'name': collection.name,
-                    'coverage': coverage,
-                    'training_available': training_available,
-                    'new': stats.new,
-                    'due': stats.due,
-                    'learned': stats.learned,
-                    'total': stats.total,
-                }
-            )
-        return data
-
-        
-if __name__ == '__main__':
-    collections_dir_path = os.path.join(os.getcwd(),'../Collections')
-    display = ZugDisplay()
-    #fen = ZugFenCreator(display)
-    #display.push_scene(fen)
-    scene = ZugMainMenu(display)
-    display.push_scene(scene)
-    display.main()
