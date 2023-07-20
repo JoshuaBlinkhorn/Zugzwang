@@ -56,4 +56,7 @@ class ZugCategory(ZugGroup):
 
     def _filter_children(self, children: List[str]) -> List[str]:
         children = super()._filter_children(children)
-        return [child for child in children if child.endswith('.pgn')]
+        return [
+            child for child in children
+            if child.endswith('.pgn') and 'STUB' not in child
+        ]

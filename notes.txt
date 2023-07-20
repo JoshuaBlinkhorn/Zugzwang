@@ -1949,3 +1949,7 @@ So let's get this implemented in the Zugzwang-dev folder.
 I'll need a new branch there.
 
 No need for a new branch.
+
+So the question now is, can an initialised PGN be modified in HIARCS and the changes
+just work?
+If the answer is yes, we're pretty much good to start loading on new content.
