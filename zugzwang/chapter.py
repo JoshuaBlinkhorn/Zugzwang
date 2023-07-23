@@ -6,6 +6,7 @@ from zugzwang.training import ZugPositionTrainer, ZugLineTrainer
 from zugzwang.stats import ZugStats
 from zugzwang.tools import ZugChessTools
 
+
 class ZugChapter():
 
     def __init__(self, chp_filepath: str):
@@ -97,3 +98,4 @@ class ZugChapter():
         stats.new = min(stats.new, self._roots[0].data.learning_remaining)
         self._stats = stats
 
+        

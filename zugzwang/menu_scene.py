@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Dict, Any
 import os
 
-from zugzwang.group import ZugUserData
+from zugzwang.group import UserData
 from zugzwang.display import ZugDisplay
 from zugzwang.scene import (
     ZugScene,
@@ -45,8 +45,8 @@ class ZugTableScene(ZugScene):
         scene = self._CHILD_SCENE_TYPE(self._display, group)
         self._display.push_scene(scene)
 
-    def _load_position_training_scene(self, group: ZugGroup):
-        scene = ZugTrainingScene(self._display, group.get_chapters())
+    def _load_position_training_scene(self, group: Group):
+        scene = ZugTrainingScene(self._display, group.chapters)
         self._display.push_scene(scene)
 
 
@@ -212,20 +212,18 @@ class ZugEditButton(ZugTextView):
 class DuplicateViewIdError(ValueError):
     pass
 
+
+class ZugTreeEditor:
+    pass
         
-class ZugTreeEditor(ZugScene):
-    def __init__(self, display: ZugDisplay, chapter: ZugChapter):
-        pass
-
-
 class ZugCategoryScene(ZugTableScene):
     _CHILD_SCENE_TYPE = ZugTreeEditor
 
-    def _load_next_scene(self, chapter: ZugChapter):
+    def _load_next_scene(self, chapter: Chapter):
         scene = self._CHILD_SCENE_TYPE(self._display, chapter)
         #self._display.push_scene(scene)
 
-    def _load_position_training_scene(self, chapter: ZugChapter):
+    def _load_position_training_scene(self, chapter: Chapter):
         scene = ZugTrainingScene(self._display, [chapter])
         self._display.push_scene(scene)
 
