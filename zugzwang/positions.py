@@ -15,6 +15,119 @@ class ZugTrainingStatuses():
     REMEMBERING_STAGE_2 = 'REMEMBERING_STAGE_2'
     REVIEW = 'REVIEW'
 
+class TrainingPosition(ZugQueueItem):
+
+    def __init__(self, solution: ZugSolution, status: str):
+        self._solution = solution
+        self._status = status
+        self._problem_board = solution.node.parent.board()
+        self._solution_board = solution.node.board()        
+        self._perspective = self._problem_board.turn
+
+    @property
+    def solution(self):
+        return self._solution
+
+    @property
+    def status(self):
+        return self._status
+
+    @property
+    def legal_moves(self):
+        return self._problem_board.legal_moves
+
+    @property
+    def from_squares(self):
+        return {move.from_square for move in self.legal_moves}
+
+    @property
+    def move(self):
+        return self._solution.node.move
+
+    @property
+    def problem_board(self):
+        return self._problem_board
+
+    @property
+    def solution_board(self):
+        return self._solution_board
+
+    @property
+    def perspective(self):
+        return self._perspective    
+
+    def success(self):
+        return self._on_success()
+
+    def failure(self):
+        return self._on_failure()
+            
+    def _on_success(self):
+        ZTS = ZugTrainingStatuses
+        statuses = {
+            ZTS.NEW: ZTS.LEARNING_STAGE_1,
+            ZTS.LEARNING_STAGE_1: ZTS.LEARNING_STAGE_2,
+            ZTS.LEARNING_STAGE_2: ZTS.REVIEW,
+            ZTS.REMEMBERING_STAGE_1: ZTS.REMEMBERING_STAGE_2,
+            ZTS.REMEMBERING_STAGE_2: ZTS.REVIEW,
+            ZTS.REVIEW: ZTS.REVIEW,             
+        }
+        actions = {
+            ZTS.NEW: lambda: None,
+            ZTS.LEARNING_STAGE_1: lambda: None,
+            ZTS.LEARNING_STAGE_2: self._solution.learned,
+            ZTS.REMEMBERING_STAGE_1: lambda: None,
+            ZTS.REMEMBERING_STAGE_2: self._solution.remembered,
+            ZTS.REVIEW: self._solution.recalled,  
+        }
+        directives = {
+            ZTS.NEW: ZugQueue.REINSERT,
+            ZTS.LEARNING_STAGE_1: ZugQueue.REINSERT,
+            ZTS.LEARNING_STAGE_2: ZugQueue.DISCARD, 
+            ZTS.REMEMBERING_STAGE_1: ZugQueue.REINSERT,
+            ZTS.REMEMBERING_STAGE_2: ZugQueue.DISCARD,
+            ZTS.REVIEW: ZugQueue.DISCARD, 
+        }
+        # The action and directive depend on the current status.
+        # So perform the action and set the directive *before* updating the status.
+        actions.get(self._status).__call__()
+        directive = directives.get(self._status)
+        self._status = statuses.get(self._status)
+        return directive
+
+    def _on_failure(self):
+        ZTS = ZugTrainingStatuses        
+        statuses = {
+            ZTS.NEW: ZTS.LEARNING_STAGE_1,                        
+            ZTS.LEARNING_STAGE_1: ZTS.LEARNING_STAGE_1,
+            ZTS.LEARNING_STAGE_2: ZTS.LEARNING_STAGE_1,
+            ZTS.REMEMBERING_STAGE_1: ZTS.REMEMBERING_STAGE_1,
+            ZTS.REMEMBERING_STAGE_2: ZTS.REMEMBERING_STAGE_1,
+            ZTS.REVIEW: ZTS.REMEMBERING_STAGE_1,
+        }
+        directives = {
+            ZTS.NEW: ZugQueue.REINSERT,            
+            ZTS.LEARNING_STAGE_1: ZugQueue.REINSERT,
+            ZTS.LEARNING_STAGE_2: ZugQueue.REINSERT,
+            ZTS.REMEMBERING_STAGE_1: ZugQueue.REINSERT,
+            ZTS.REMEMBERING_STAGE_2: ZugQueue.REINSERT,
+            ZTS.REVIEW: ZugQueue.REINSERT,
+        }
+        actions = {
+            ZTS.NEW: lambda: None,            
+            ZTS.LEARNING_STAGE_1: lambda: None,
+            ZTS.LEARNING_STAGE_2: lambda: None,
+            ZTS.REMEMBERING_STAGE_1: lambda: None,
+            ZTS.REMEMBERING_STAGE_2: lambda: None,
+            ZTS.REVIEW: self._solution.forgotten,
+        }
+        # The action and directive depend on the current status.
+        # So perform the action and set the directive *before* updating the status.
+        actions.get(self._status).__call__()
+        directive = directives.get(self._status)
+        self._status = statuses.get(self._status)
+        return directive
+
 
 class ZugTrainingPosition(ZugQueueItem):
 
@@ -22,41 +135,41 @@ class ZugTrainingPosition(ZugQueueItem):
         self._solution = solution
         self._status = status
         self._gui = gui
-        self._perspective = solution.node.parent.board().turn        
+        self._perspective = solution.node.parent.board().turn
 
     @property
     def solution(self):
         return self._solution
-        
+
     @property
     def status(self):
         return self._status
-        
+
     def _present(self) -> int:
         board = self._solution.node.parent.board()
-        self._gui.set_perspective(self._perspective)        
+        self._gui.set_perspective(self._perspective)
         self._gui.setup_position(board)
         gui_input = self._gui.get_input()
-        
+
         if gui_input == ZugGUI.QUIT:
             return ZugQueueItem.QUIT
         elif type(gui_input) == chess.Move:
             move = gui_input
         else:
             raise ValueError('Input from ZugGUI not recognised.')
-        
+
         if move == self._solution.node.move:
             self._gui.setup_position(self._solution.node.board())
-            time.sleep(1)            
+            time.sleep(1)
             return ZugQueueItem.SUCCESS
         else:
             self._gui.setup_position(board)
             while self._gui.get_input() != self._solution.node.move:
                 self._gui.setup_position(board)
             self._gui.setup_position(self._solution.node.board())
-            time.sleep(1)                
+            time.sleep(1)
             return ZugQueueItem.FAILURE
-            
+
     def _on_success(self):
         ZTS = ZugTrainingStatuses
         statuses = {

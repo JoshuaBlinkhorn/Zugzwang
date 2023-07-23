@@ -9,6 +9,7 @@ from zugzwang.scene import (
     ZugSceneView,
     ZugSceneModel,    
 )
+from zugzwang.training_scene import ZugTrainingScene
 from zugzwang.view import (
     ZugTextView,
     ZugViewGroup,
@@ -34,9 +35,18 @@ class ZugTableScene(ZugScene):
             if field == 'edit':
                 group = self._model.get_children()[index]
                 self._load_next_scene(group)
+            elif field == 'position_training':
+                group = self._model.get_children()[index]
+                self._load_position_training_scene(group)
+        elif view_id == 'logo':
+            self._display.pop_scene()        
 
     def _load_next_scene(self, group: ZugGroup):
         scene = self._CHILD_SCENE_TYPE(self._display, group)
+        self._display.push_scene(scene)
+
+    def _load_position_training_scene(self, group: ZugGroup):
+        scene = ZugTrainingScene(self._display, group.get_chapters())
         self._display.push_scene(scene)
 
 
@@ -48,6 +58,16 @@ class ZugTableView(ZugSceneView):
     def update(self, model: ZugTableModel):
         # Updating here actually has to build the collection row views, because
         # their number is dynamic
+
+        self._items = {
+            k: v for k, v in self._items.items()
+            if not k.startswith('table-item-')
+        }
+        self._rects = {
+            k: v for k, v in self._rects.items()
+            if not k.startswith('table-item-')
+        }
+        
         left = 10
         top = 120
         height = ZugRowView.get_height()
@@ -201,29 +221,17 @@ class ZugTreeEditor(ZugScene):
 class ZugCategoryScene(ZugTableScene):
     _CHILD_SCENE_TYPE = ZugTreeEditor
 
-    # these functions don't really need overriding
-    # the only issue is that a category is not a group
-    # so the type hints and nomenclature are wrong
-    # but we'd get the same behaviour if we didn't override
-    def _left_click_registered(self, view_id: str):
-        if view_id.startswith('table-item-'):
-            path = view_id.split('.')
-            index = int(path[0].split('-')[-1])
-            field = path[1]
-            if field == 'edit':
-                chapter = self._model.get_children()[index]
-                self._load_next_scene(chapter)
-
     def _load_next_scene(self, chapter: ZugChapter):
         scene = self._CHILD_SCENE_TYPE(self._display, chapter)
-        self._display.push_scene(scene)
+        #self._display.push_scene(scene)
 
+    def _load_position_training_scene(self, chapter: ZugChapter):
+        scene = ZugTrainingScene(self._display, [chapter])
+        self._display.push_scene(scene)
 
 class ZugCollectionScene(ZugTableScene):
     _CHILD_SCENE_TYPE = ZugCategoryScene
 
 
 class ZugInitialScene(ZugTableScene):
-    _CHILD_SCENE_TYPE = ZugCategoryScene
-
-
+    _CHILD_SCENE_TYPE = ZugCollectionScene

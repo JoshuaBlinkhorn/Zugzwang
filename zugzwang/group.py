@@ -1,5 +1,7 @@
 import os
+import itertools
 from typing import List
+
 
 from zugzwang.chapter import ZugChapter
 from zugzwang.stats import ZugStats
@@ -20,6 +22,12 @@ class ZugGroup:
             child_path = os.path.join(self._path, child_name)
             children.append(self._child_type(child_path))
         return children
+
+    def get_chapters(self):
+        if self._child_type == ZugChapter:
+            return self.children
+        else:
+            return itertools.chain(*[child.get_chapters() for child in self.children])
 
     def _filter_children(self, children: List[str]) -> List[str]:
         """
