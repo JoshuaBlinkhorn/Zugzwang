@@ -1953,3 +1953,159 @@ No need for a new branch.
 So the question now is, can an initialised PGN be modified in HIARCS and the changes
 just work?
 If the answer is yes, we're pretty much good to start loading on new content.
+The answer is no.
+It doesn't like the colons in the json.
+
+So what's to do?
+Probably just write the editor.
+Or try stockfish.
+
+It appears to overwrite the stats of existing positions when a new position is added.
+Is this true?
+We'll need to fix that.
+
+Right, now we want to get the position-based training working in the full GUI version.
+This will be a big step, it's not immediately clear how it will work.
+We kind of need to join up aspects of the FEN editor and the halfway-house editor.
+
+First things first, have the training session data structures created.
+Then we try to sew the gui bit in.
+So let's try to replicate what happens when we start a session in the old trainer.
+
+So we create a ZugTrainingScene
+
+Later specialise with position and line training.
+
+Looks like I just need to replace the ZugGUI with which the training positions
+communicate, with a ZugViewGroup.
+
+So let's do this in two parts.
+1. Draw the board from the FEN generator onto the scene.
+2. Get the training session to communicate with it.
+
+So I've been working on porting the fen creators board into the new View/ViewGroup
+classes. Bit of a task - but partway through.
+
+Got the board displayed.
+Next up, get the board displayed, this probably entails getting the models involved.
+
+So let's have a look at the model for the table.
+Does the gui.py have a model - how does it work?
+
+I think we have to approach this by first creating a board that -
+1. allows a position to be set up
+2. registers valid moves played on the board
+
+Then we can sew this in.
+I feel like setup position should be a method in the controller.
+
+I guess that we need to reimplement the play() methods. We'll need the scene
+to take control of that flow.
+So let's try to bring the logic of position_training() into the scene.
+
+Let's just work on the one chapter here.
+We can bring in the complete category/collection queues later.
+
+Okay, so what's happening here is the GUI stuff was embedded in the positions.
+The position had it's own presenter.
+That was probably just bad design, the chapter should really have handled the
+presentation.
+Anyway, here we need to move all logic of that type into the scene.
+So in principle this isn't too difficult.
+We can have the scene communicate with the solutions and call on_failure/on_success.
+It is the scene's responsibility to display the solution and get the user input.
+
+For a start, let's try to get the first position displayed on the screen.
+I think we'll have to unwind the trainer's ownership of the queue.
+We put too much responsibility on the objects.
+
+I think that the while loop in play must be pushed back onto the event loop.
+Or rather, the *click_registerd methods have to drive that loop.
+We're now ready to ask and answer the question - how does the current trainer check
+the inputted move?
+
+Now I believe all that is left is to have the scene register moves.
+This probably entails copying logic from gui.py
+
+We have the training scene loading.
+Now debug and get the training session working.
+
+Getting the perspective of the board right now.
+The positions of the squares have be set during the update.
+This makes sense to some degree. But probably the squares should keep the same
+position and when clicked, return the square they represent.
+
+Right, we've got a queue running.
+The next step is to check that the queue actually runs and the stats update.
+Then make position-based training available for all group types.
+
+Then we implement line based training.
+And then we have a think about general refactoring.
+
+~~~~~~~~~~~~~~~~
+2023-07-23 08:45
+
+What are we aiming for from today's session?
+Have the position-based training work seamlessly for a group;
+Implement line-based training.
+
+Where is the right place to run a for loop over the chapters in a group?
+And when should we save the progress?
+My feeling is that items which remain in the queue at the end of a session should
+be reset.
+So any position that is completed gets saved.
+Whereas anything in the learning phase goes back to it's previous state.
+That might be harder to implement.
+So let's just get the chapters one after the other.
+Do we have one scene with multiple training sessions?
+Or mutliple scenes?
+
+We want it to appear as one scene to the user.
+So that going back takes you to the menu you left.
+So we can't stack the scene.
+I also don't like the idea of one training scene being responsible for creating another.
+
+We could introduce the concept of a scene group, to encompass the above.
+It takes a list of scenes.
+As long as one finshes it pushes the next.
+As long as one quites, it pops itself.
+And when it exhausts its list, it also pops itself.
+It would require information from the child scene about how it was aborted.
+
+Okay, lets try a TrainingSceneGroup or:
+
+Really just build a massive queue and have the status of positions recorded properly.
+
+Training group will get this implemented quicker.
+Is there any need for the class?
+I think the best way is to build a huge queue.
+Now when I use it I'll understand that if I do that, I probably have to complete the
+session to record the results.
+And then later, I'll modify the trainer to write to disk whenever a training session
+finishes, whether by completion or abortion.
+
+Okay, so it's easy then.
+Build a huge queue in the training session.
+Have Group support a method get_chapter_list()
+
+Okay, I think I've chained the training queues.
+Next thing is to fix a few of bugs:
+
+1. When the perspective is black the training is all wrong - probably something
+   is defaulting a perspective to white
+
+2. The label doesn't draw when there's a piece on a square
+
+3. We don't quit properly - need to check when the scene stack is empty
+
+4. The highlighting doesn't work properly
+
+Number 1 looks a bit rough.
+Can we at least figure out the issue?
+Let's set a breakpoint and inspect the Position.
+
+Okay, the perpsective thing was due to using PGNs.
+Now the issue seems to be that the positions aren't going into the learning phase.
+Not being reintroduced into the queue.
+Time to stop now though.
+

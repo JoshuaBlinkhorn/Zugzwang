@@ -78,3 +78,8 @@ class ZugSceneView(ZugViewGroup):
 
     def update(self, model: ZugSceneModel):
         pass
+
+
+class ZugBoardView(ZugViewGroup):
+    def __init__(self):
+        super().__init__()

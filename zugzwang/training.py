@@ -1,10 +1,15 @@
-from zugzwang.queue import ZugQueue
-from zugzwang.positions import ZugTrainingPosition, ZugTrainingStatuses
+from typing import List
+
+from zugzwang.queue import ZugQueue, Queue
+from zugzwang.positions import ZugTrainingPosition, TrainingPosition, ZugTrainingStatuses
 from zugzwang.lines import ZugTrainingLine
 from zugzwang.gui import ZugGUI
 
 # TODO fix this: we need this for typing but it creates a circular import
 #from zugzwang.chapter import ZugChapter
+
+class Trainer():
+    pass
 
 class ZugTrainer():
     
@@ -44,6 +49,40 @@ class ZugPositionTrainer(ZugTrainer):
                 )
                 continue
 
+    def fill_queue(self):
+        self._fill_queue()
+
+
+class PositionTrainer(Trainer):
+    
+    def __init__(self, chapters: List):
+        self._chapters = chapters
+        self._queue = Queue(insertion_index=3, insertion_radius=1)
+        self._fill_queue()
+
+    def _fill_queue(self):
+        for chapter in self._chapters:
+            learning_capacity = chapter.root.data.learning_remaining
+            for solution in chapter.solutions:
+                if (not solution.is_learned()) and learning_capacity > 0:
+                    self._queue.append(
+                        TrainingPosition(solution, ZugTrainingStatuses.NEW)
+                    )
+                    learning_capacity -= 1
+                    continue
+                if solution.is_learned() and solution.is_due():
+                    self._queue.append(
+                        TrainingPosition(solution, ZugTrainingStatuses.REVIEW)
+                    )
+                    continue
+
+    def pop(self):
+        return self._queue.pop()
+
+    @property
+    def is_complete(self):
+        return self._queue.length == 0
+    
 
 class ZugLineTrainer(ZugTrainer):
 
