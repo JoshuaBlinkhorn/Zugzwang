@@ -55,26 +55,25 @@ class ZugPositionTrainer(ZugTrainer):
 
 class PositionTrainer(Trainer):
     
-    def __init__(self, chapters: List):
-        self._chapters = chapters
+    def __init__(self, chapter):
+        self._chapter = chapter
         self._queue = Queue(insertion_index=3, insertion_radius=1)
         self._fill_queue()
 
     def _fill_queue(self):
-        for chapter in self._chapters:
-            learning_capacity = chapter.root.data.learning_remaining
-            for solution in chapter.solutions:
-                if (not solution.is_learned()) and learning_capacity > 0:
-                    self._queue.append(
-                        TrainingPosition(solution, ZugTrainingStatuses.NEW)
-                    )
-                    learning_capacity -= 1
-                    continue
-                if solution.is_learned() and solution.is_due():
-                    self._queue.append(
-                        TrainingPosition(solution, ZugTrainingStatuses.REVIEW)
-                    )
-                    continue
+        learning_capacity = self._chapter.root.data.learning_remaining
+        for solution in self._chapter.solutions:
+            if (not solution.is_learned()) and learning_capacity > 0:
+                self._queue.append(
+                    TrainingPosition(solution, ZugTrainingStatuses.NEW)
+                )
+                learning_capacity -= 1
+                continue
+            if solution.is_learned() and solution.is_due():
+                self._queue.append(
+                    TrainingPosition(solution, ZugTrainingStatuses.REVIEW)
+                )
+                continue
 
     def pop(self):
         return self._queue.pop()

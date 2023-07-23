@@ -6,13 +6,12 @@ import chess
 import pygame
 import time
 
-from zugzwang.group import ZugGroup
-from zugzwang.chapter import ZugChapter
+from zugzwang.group import Chapter
 from zugzwang.display import ZugDisplay
 from zugzwang.scene import (
     ZugScene,
     ZugSceneView,
-    ZugSceneModel,    
+    ZugSceneModel,
 )
 from zugzwang.view import (
     ZugView,
@@ -24,7 +23,12 @@ from zugzwang.palette import DEFAULT_THEME as THEME
 from zugzwang.training import PositionTrainer
 
 class ZugTrainingScene(ZugScene):
-    def __init__(self, display: ZugDisplay, chapters: List[ZugChapter]):
+
+    _AWAITING_SOURCE = "AWAITING SOURCE"
+    _AWAITING_TARGET = "AWAITING TARGET"
+    _AWAITING_PROMOTION = "AWAITING PROMOTION"
+
+    def __init__(self, display: ZugDisplay, chapters: List[Chapter]):
         # Scene MVC setup
         model = ZugTrainingModel()
         width = display.get_screen().get_width()
@@ -36,10 +40,12 @@ class ZugTrainingScene(ZugScene):
         self._failure = False
         self._source = None
         self._target = None
+        self._status = self._AWAITING_SOURCE
         self._chapters = chapters
+        self._chapter = self._chapters.pop(0)
 
-        # setup the training session
-        self._trainer = PositionTrainer(self._chapters)
+        # setup the training session for the first chapter
+        self._trainer = PositionTrainer(self._chapter)
         self._position = self._trainer.pop()
         self._present_problem()
 
@@ -52,25 +58,33 @@ class ZugTrainingScene(ZugScene):
         if view_id.startswith('board.'):
             square_name = view_id.split('.')[-1]
             square = chess.parse_square(square_name)
-            if self._source is None:
+            if self._status == self._AWAITING_SOURCE:
                 self._source_selected(square)
-            else:
+            elif self._status == self._AWAITING_TARGET:
                 self._target_selected(square)
+            elif self._status == self._AWAITING_PROMOTION:
+                self._promotion_selected(square)
+
+        # not strictly necessary to draw and update every click
+        # but it's an easy way to ensure necessary updates are always made
+        self._update()
+        self._draw()
+        
 
     def _source_selected(self, square: chess.Square):
         if not square in self._position.from_squares:
             return
         self._source = square
         self._model.highlight = square
-        self._update()
-        self._draw()
+        self._status = self._AWAITING_TARGET 
         
     def _target_selected(self, square: chess.Square):
         self._target = square
         if self._source == self._target:
+            self._source = None
+            self._target = None
             self._model.highlight = None
-            self._update()
-            self._draw()
+            self._status = self._AWAITING_SOURCE            
         # we'lll handle promotion later
         # if self._is_promotion():
         #    self._draw_promotion_choices()
@@ -81,27 +95,59 @@ class ZugTrainingScene(ZugScene):
                 self._move_registered(move)
             else:
                 self._model.highlight = None
+                self._source = None
                 self._target = None
                 self._source_selected(square)
 
     def _move_registered(self, move: chess.Move):
+        # TODO: parts of this should be factored out into methods
+        # Moreover, the flow is perhaps backwards in places - as in, dealing
+        # with the else branch before the if branch might make more sense.
         if move == self._position.move:
+            # the move was correct
             self._present_solution()
+
+            # I'm not keen on this - it feels like the scene shouldn't be flipping
+            # the display - it should only be handling events and drawing views.
+            #
+            # Is this actually that wrong? And is there anyway around this?            
             pygame.display.flip()
-            time.sleep(1)
+            time.sleep(1)            
+
+            # handle the position scheduling
             if self._failure == False:
                 self._position.success()
             else:
                 self._position.failure()
+
+            # find out what to present next
             if self._trainer.is_complete:
-                self._display.pop_scene()
+                # update and save the completed chapter
+                self._chapter.update_stats()
+                self._chapter.write_to_disk()
+
+                if self._chapters:
+                    # start that next chapter                    
+                    self._chapter = self._chapters.pop(0)
+                    self._trainer = PositionTrainer(self._chapter)
+                    self._position = self._trainer.pop()
+                    self._present_problem()                    
+                else:
+                    # there are no chpaters left - the scene is done
+                    self._display.pop_scene()
+                    
             else:
+                # the chapter isn't complete - so present the next problem
                 self._position = self._trainer.pop()
                 self._failure = False
+                self._status = self._AWAITING_SOURCE
                 self._present_problem()
+                
         else:
+            # the move was incorrect
             self._failure = True
             self._model.highlight = None
+            self._status = self._AWAITING_SOURCE            
             self._update()
             self._draw()
 
@@ -249,8 +295,8 @@ class ZugSquareView(ZugView):
         self._piece = piece
         self._label = label
         self._highlighted = False
-        self._move_highlighted = False        
-        self._font = pygame.font.SysFont(None, 20)        
+        self._move_highlighted = False
+        self._font = pygame.font.SysFont(None, 20)
 
     def set_highlight(self, highlighted: bool):
         self._highlighted = higlighted

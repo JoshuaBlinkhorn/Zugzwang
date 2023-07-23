@@ -2100,6 +2100,9 @@ Next thing is to fix a few of bugs:
 
 4. The highlighting doesn't work properly
 
+5. We're not saving the training progress.
+
+
 Number 1 looks a bit rough.
 Can we at least figure out the issue?
 Let's set a breakpoint and inspect the Position.
@@ -2109,3 +2112,46 @@ Now the issue seems to be that the positions aren't going into the learning phas
 Not being reintroduced into the queue.
 Time to stop now though.
 
+Alright, let's go on the basis that there's no issues with the perspective.
+So onto the next bug.
+Highlighting.
+What's going wrong? Probably that we didn't implement statuses.
+
+Bugs fixed on the highlighting front.
+All that logic wants a bit of a tidy up.
+I'm not sure whether the logic should be put into the model.
+Probably not.
+But anyway, it can perhaps be made clearer in the controller.
+For now: let's have a look at the saving.
+
+What we really want is for the chapter to save itself - and then kick the stats update
+for the upstream groups.
+If all chapters have a cached stats object, we should be fine.
+The chapter is in charge of it's own cached stats.
+When it needs to, it updates that cache, and kicks its parent.
+Groups, when kicked, recalculate their stats and kick their parent, if they have one.
+
+We should try to pave the way here for arbitrary groups.
+So that we're not bound by depth and nomenclature.
+But that can wait.
+Perhaps we can get the new stats/parent/updating working while dropping the Zug
+prefix.
+
+Okay, so we have some new Chapters and Groups etc.
+Let's see where we should be calling the update_stats and write_to_disk methods
+now that we have the position-based training scene written.
+
+The issue is that these are all methods for a chapter, but I stick them all in one
+queue, so I don't know when a chapter is finished.
+
+What we need to do is maintain a list of chatpers, and use that to create a new session
+when the old one is finished.
+Then when the session is finished, we can update and write to disk, etc.
+
+Okay, the refactoring is starting to look good.
+Can we now introduce the new Chapter, Group and UserData?
+
+
+Made some good progress but got some bug somewhere on training the pawn ending category
+
+One to  look into tomorrow.
