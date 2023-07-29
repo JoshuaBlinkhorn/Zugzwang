@@ -2155,3 +2155,170 @@ Can we now introduce the new Chapter, Group and UserData?
 Made some good progress but got some bug somewhere on training the pawn ending category
 
 One to  look into tomorrow.
+
+I think the thing is that the underscene is not updated after the top scene is popped.
+So basically, it doesn't get drawn.
+We should make the display updatea and draw the new scene when the previous scene
+is popped.
+
+Hmmm, okay a scene has a refresh method.
+Maybe that just needs to be implemented.
+
+Seems t me that there's a good argument for not having a scene stack, and instead
+just having a single scene in memory at any one time.
+For one we'd not have to handle updating the menu scenes after a training session,
+they'd just be rebuilt.
+But then, we still need to update them durig e.g. chapter creation
+
+The issue is simply that we aren't reinserting the positions in to the queue.
+What an oversight.
+So who actions that directive?
+
+Got things moving, but we still have an issue with moves getting a None source (or
+target, but probably source).
+
+Right, I've got the logic for the flow all in the controller.
+I'm not so happy that it sits there, and it has to do logic on its own paramters that
+aren't part of the model.
+But it sort of makes sense. The parameters on which we do logic are in the controller.
+The views never need know about source and target; they only care about highlights.
+So we keep the model as a parameter store, and we stick with a universal and complete
+bind decided by the controller.
+This may get clunky later, but I think it's okay for now.
+One thing I'd like to eliminate is the use of these view ids. If we could have the
+views update the controllers paramters, we could get rid of those.
+Which begs the question, why not have them in the model, have the views update the
+model, and have the controller perform logic on the model?
+
+That would have to be thought through, but it might work a bit better.
+I'm actually not averse to having the model implement it's own logic.
+Anyway - maybe we could also have the scene do that.
+
+The thing is there are view parameters that the user sees, and those that are hidden.
+For example the pieces and highlights, versus the variable that keeps track of whether you're selecting a source or a target.
+
+Perhaps they all belong in the model - but it's not clear.
+There are clear differences between the two.
+
+Okay, looks like we have seamless position-based training.
+How hard is it to implement line-based training now?
+
+For line-based training, I may well just get away with overriding move_registered()
+That would be awesome.
+
+In fact, couldn't I just interpret it as list of problems and I'm done?
+Got a very basic line based training going on there; to debug tomorrow.
+
+
+2023-07-26 13:24
+
+Timt to debug the line-based training.
+I guess we need to get the scene integrated too.
+Then have it load automatically
+
+Okay, so it seems that we can have the chapter build the lines as a list of lists
+of problems.
+Or perhaps a list of training lines.
+Perhaps we can make a training line somehow, maintaining its own list of solutions.
+Anyway, it's clear how to do this, if not where.
+
+It might be good to have training line support a method as_list(), that returns
+a shallow copy of the list. Then the scene can try to exhaust that list, while
+the training line is unaffected.
+
+So what now?
+
+Get it working for position-based training and line-based training.
+Then try to make it defensive against empty trainers.
+A trainer is empty if start() returns None.
+So we'll need some way of skipping over such trainers.
+We'll need to do something like while
+
+self._get_trainer().start() is not None
+
+or whatever.
+
+It's looking fairly decent.
+Had a good run there with position training.
+The bug now is that when the position is failed once, it gets stuck in a loop
+presenting that position.
+Let's see why.
+
+That's working fine, except it's not saving at the end of the session.
+
+Let's see whether line based training will work.
+Right, I think the line-bsed training is functional.
+
+So, just two bugs to fix:
+
+1. the position training data isn't being saved
+2. the labels come out as white rectangles when there's a piece on the board.
+
+Let's have a look at the labels thing.
+
+All done.
+So the next thing to do is try to use this version for real.
+If it seems to work fine, crack on with getting the editor in.
+
+The MVC could use a tweak.
+We really should have those views triggering the controller's methods.
+Like a view should have a method on_click(), and a reference to the controller so
+it can call the controller's methods.
+That way, the controller won't need to know which view was clicked.
+
+Actually, I think that should come before the editor is built.
+
+~~~~~~~~~~~~~~~~
+2023-07-29 13:20
+
+Today I want to do three things:
+1. get the view id out of the controller
+2. prep for the editor scene
+3. go for a bike ride
+
+Probably the first one will take all day.
+
+Let's try to achieve it with just one scene first.
+
+Let's just skip 1.
+Then we can read up on how it's done, and attempt a different design later.
+What we have at the moment works.
+So let's stick with it.
+
+So what should we do first - the ability to create a new chapter, or the ability
+to edit an existing one?
+
+I think create a new chapter.
+So let's do the creation bit.
+This encompasses keyboard input, which is a bit annoying.
+
+So let's not do that.
+Let's save it with the FEN as filename or something.
+That would be a big step forward - chapter creation.
+
+So the drill seems to be - build the views first.
+Then try to implement the logic.
+This scene should save a chapter named by the fen and timestamp into the category.
+
+I think this scene was a little different in that we didn't need to know the
+square names..
+Or maybe we did to check out the castling etc.
+
+But I think this one was already a scene?
+So there's some work to do in the views bit, and with the perspective.
+Let's see how it goes.
+
+I think that the only thing missing is that we use view groups and positions.
+So I think we just need to do that.
+
+let's try to get the view rendered.
+It looks like there's lot's of logic in the training scene that we can use.
+But it's complicated.
+
+But maybe all we need to is insert the Board as a group view.
+So let's just try to present the other views first.
+
+No, the piece selector needs to be a group view too.
+Okay good, we got the easy views showing.
+Next thing is to port the piece selector and board as ViewGroups.
+

@@ -35,25 +35,27 @@ class ZugDisplay:
         self._scenes.pop()
         if self._scenes:
             scene = self._scenes[-1]
-            scene.refresh()
             self._set_scene(scene)
+            scene.refresh()            
         else:
-            pygame.QUIT
+            self._running = False
 
     def main(self):
+        self._running = True
         clock = pygame.time.Clock()
-        running = True
-        while running:
+        while self._running:
 
             # delegate event handling to the scene
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    running = False
+                    self._running = False
                     break
                 self._scene.handle_event(event)
 
             # limit redraw rate to 30 fps
             clock.tick(30)
             pygame.display.flip()
+
+        pygame.quit()
 
 

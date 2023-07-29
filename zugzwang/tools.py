@@ -97,6 +97,11 @@ class ZugChessToolsParseError(ZugChessToolsError):
     pass
 
 
+
+# TODO the logic below is complex and is hard to grasp.
+# perhaps some class methods like is_solution(), is_blunder(), has_alternativates()
+# etc. would be very helpful here
+
 class ZugChessTools:
 
     @classmethod
@@ -105,6 +110,19 @@ class ZugChessTools:
             game: chess.pgn.Game,
             perspective: bool
     ) -> List[chess.pgn.ChildNode]:
+        """
+        Given a pgn and a perspective, returns all nodes that are a solution
+        to a problem.
+
+        A node is a solution to a problem when its parent, the problem, is a node
+        in which the player to move is equal to the perspective. Note that this
+        implies that the root is not necessarily a problem, but it is never a 
+        solution.
+
+        The initial
+        perspective is given. A blunder forces a change in the persective.
+        """
+
         # define a list to store solutions and a recursive search function
         solutions = []
         def search_node(
@@ -148,7 +166,12 @@ class ZugChessTools:
             cls,
             game: chess.pgn.Game,
             perspective: bool
-    ) -> List[chess.Board]:
+    ) -> List[List[chess.pgn.GameNode]]:
+        """
+        Returns all the lines in a PGN. A line is a longest sequence of child nodes
+        starting with a problem and ending with a solution, where problem and solution
+        are defined above.
+        """
 
         # define an empty list to store the lines and a recursive search function        
         lines = []

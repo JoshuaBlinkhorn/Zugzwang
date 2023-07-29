@@ -1,8 +1,9 @@
 import os
 
 from zugzwang.display import ZugDisplay
-from zugzwang.menu_scene import ZugInitialScene
-from zugzwang.training_scene import ZugTrainingScene
+from zugzwang.menu_scene import InitialScene
+from zugzwang.training_scene import PositionTrainingScene, LineTrainingScene
+from zugzwang.editor_scene import FenCreatorScene
 from zugzwang.group import UserData
 
 if __name__ == '__main__':
@@ -13,13 +14,13 @@ if __name__ == '__main__':
     #display.push_scene(fen)
 
     # to start from the beginning
-    scene = ZugInitialScene(display, user_data)
+    scene = InitialScene(display, user_data)
 
     # to start from a position training scene
     collection = user_data._get_children()[1]
-    category = collection._get_children()[1]
-    chapter = category._get_children()[1]
-    # scene = ZugTrainingScene(display, [chapter])
+    category = collection._get_children()[0]
+    chapter = category._get_children()[0]
+    scene = FenCreatorScene(display, category)
     
     display.push_scene(scene)
     display.main()

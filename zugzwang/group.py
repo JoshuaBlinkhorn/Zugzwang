@@ -6,74 +6,9 @@ from typing import List, Callable
 import chess
 
 from zugzwang.stats import ZugStats
-from zugzwang.chapter import ZugChapter
 from zugzwang.game import ZugRoot, ZugSolution
 from zugzwang.tools import ZugChessTools
-
-class ZugGroup:
-
-    def __init__(self, path, child_type):
-        self._path = path
-        self._child_type = child_type
-        self._children = self._get_children()
-        self.stats = self._get_stats()
-        self.name = os.path.basename(path)
-        self.menu_type = None
-
-    def _get_children(self):
-        children = []
-        for child_name in self._filter_children(sorted(os.listdir(self._path))):
-            child_path = os.path.join(self._path, child_name)
-            children.append(self._child_type(child_path))
-        return children
-
-    def get_chapters(self):
-        if self._child_type == ZugChapter:
-            return self.children
-        else:
-            chapter_lists = [child.get_chapters() for child in self.children]
-            return list(itertools.chain(*chapter_lists))
-
-    def _filter_children(self, children: List[str]) -> List[str]:
-        """
-        The base implementation here ignores filenames that start with a dot.
-
-        Override in derived class for different or additional specific filtering
-        of children.
-        """
-        return [child for child in children if not child.startswith('.')]
-
-    def _get_stats(self):
-        stats = ZugStats()
-        for child in self.children:
-            stats = stats + child.stats
-        return stats
-
-    def update_stats(self):
-        self.stats = self._get_stats()
-
-
-class ZugUserData(ZugGroup):
-    def __init__(self, path):
-        super().__init__(path, ZugCollection)
-
-
-class ZugCollection(ZugGroup):
-    def __init__(self, path):
-        super().__init__(path, ZugCategory)
-
-
-class ZugCategory(ZugGroup):
-    def __init__(self, path):
-        super().__init__(path, ZugChapter)
-
-    def _filter_children(self, children: List[str]) -> List[str]:
-        children = super()._filter_children(children)
-        return [
-            child for child in children
-            if child.endswith('.pgn') and 'STUB' not in child
-        ]
-
+from zugzwang.training import Line
 
 class Group:
     def __init__(self, path: str, parent: Group, child_type: Callable):
@@ -126,7 +61,7 @@ class Group:
 
     def _get_chapters(self):
         if self._child_type == Chapter:
-            return self.children
+            return [child for child in self._children]  # just a copy
         else:
             return [chapter for child in self._children for chapter in child.chapters]
 
@@ -212,23 +147,11 @@ class Chapter():
             )
             # Solutions are linked to the 'primary root', which keeps the chapter's
             # metadata
-
             self._solutions.extend([ZugSolution(node, self._roots[0]) for node in nodes])
 
         # update the metadata on the primary root
-        self._roots[0].update()        
+        self._roots[0].update()
             
-        # build the lines
-        # TODO: do we really need to build the lines in the constructor?
-        # I don't think so, as we don't present stats for them.
-        #
-        # It must slow the initial scene presentation down, so perhaps we should only
-        # build lines when line-based training is selected.
-        self._lines = []
-        for root in self._roots:
-            lines = ZugChessTools.get_lines(root.game_node, root.data.perspective)
-            self._lines.extend(lines)
-
         # update the root and the stats
         self._stats = self._generate_stats()
 
@@ -248,9 +171,13 @@ class Chapter():
     def solutions(self):
         return self._solutions
 
-    @property
-    def lines(self):
-        return self._lines
+    def build_lines(self):
+        """Build all of lines playable in the current chapter."""
+        return [
+            Line(line, self._roots[0])
+            for root in self._roots
+            for line in ZugChessTools.get_lines(root.game_node, root.data.perspective)
+        ]
 
     def write_to_disk(self):
         with open(self._path, 'w') as pgn_file:
@@ -258,6 +185,7 @@ class Chapter():
                 print(root.game_node, file=pgn_file, end='\n\n')
 
     def update_stats(self):
+        self._roots[0].update()        
         self._stats = self._generate_stats()
         self._parent.update_stats()
 
@@ -273,3 +201,70 @@ class Chapter():
             stats.total += 1
         stats.new = min(stats.new, self._roots[0].data.learning_remaining)
         return stats
+
+
+class ZugGroup:
+
+    def __init__(self, path, child_type):
+        self._path = path
+        self._child_type = child_type
+        self._children = self._get_children()
+        self.stats = self._get_stats()
+        self.name = os.path.basename(path)
+        self.menu_type = None
+
+    def _get_children(self):
+        children = []
+        for child_name in self._filter_children(sorted(os.listdir(self._path))):
+            child_path = os.path.join(self._path, child_name)
+            children.append(self._child_type(child_path))
+        return children
+
+    def get_chapters(self):
+        if self._child_type == ZugChapter:
+            return self.children
+        else:
+            chapter_lists = [child.get_chapters() for child in self.children]
+            return list(itertools.chain(*chapter_lists))
+
+    def _filter_children(self, children: List[str]) -> List[str]:
+        """
+        The base implementation here ignores filenames that start with a dot.
+
+        Override in derived class for different or additional specific filtering
+        of children.
+        """
+        return [child for child in children if not child.startswith('.')]
+
+    def _get_stats(self):
+        stats = ZugStats()
+        for child in self.children:
+            stats = stats + child.stats
+        return stats
+
+    def update_stats(self):
+        self.stats = self._get_stats()
+
+
+class ZugUserData(ZugGroup):
+    def __init__(self, path):
+        super().__init__(path, ZugCollection)
+
+
+class ZugCollection(ZugGroup):
+    def __init__(self, path):
+        super().__init__(path, ZugCategory)
+
+
+class ZugCategory(ZugGroup):
+    def __init__(self, path):
+        super().__init__(path, ZugChapter)
+
+    def _filter_children(self, children: List[str]) -> List[str]:
+        children = super()._filter_children(children)
+        return [
+            child for child in children
+            if child.endswith('.pgn') and 'STUB' not in child
+        ]
+
+
