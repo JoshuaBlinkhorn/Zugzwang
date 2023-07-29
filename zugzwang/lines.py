@@ -5,6 +5,19 @@ from typing import List
 from zugzwang.queue import ZugQueueItem
 from zugzwang.board import ZugBoard
 from zugzwang.gui import ZugGUI
+from zugzwang.game import ZugSolution
+
+
+class TrainingLine(ZugQueueItem):
+    def __init__(self, line: List[chess.pgn.GameNode]):
+        # the line is stored interanlly as a list of solutions
+        self._line = [ZugSolution(solution) for solution in line[::2]]
+        self._perspective = line[0].board().turn
+
+    def as_list(self):
+        """Returns a shallow copy of the line."""
+        return self._line[:]
+    
 
 class ZugTrainingLine(ZugQueueItem):
 

@@ -1,10 +1,55 @@
 import chess
 import random
-from typing import Optional, List
+from typing import Optional, List, Any
 
 from zugzwang.game import ZugSolution, ZugSolutionData
 from zugzwang.board import ZugBoard
 from zugzwang.gui import ZugGUI
+
+class Queue():
+
+    REINSERT = 'REINSERT'
+    DISCARD = 'DISCARD'    
+
+    def __init__(
+            self,
+            insertion_index: int=0,
+            insertion_radius: int=0,
+    ):
+        self._queue = []
+        self._insertion_index = insertion_index
+        self._insertion_radius = insertion_radius
+
+    @property
+    def is_empty(self):
+        return len(self._queue) == 0    
+
+    @property
+    def length(self):
+        return len(self._queue)
+
+    @property
+    def items(self):
+        return self._queue
+
+    def insert(
+            self,
+            item: Any,
+            index: Optional[int]=None,
+            radius: Optional[int]=None,
+    ) -> None:
+        radius = radius if radius is not None else self._insertion_radius
+        absolute_index = index if index is not None else self._insertion_index
+        random_offset = random.randint(-radius, radius)
+        index = max(0, absolute_index+random_offset)
+        self._queue.insert(index, item)
+
+    def append(self, item: Any):
+        self._queue.append(item)
+
+    def pop(self):
+        return self._queue.pop(0)
+
 
 # TODO (non-critical)
 # 1. Decide whether to factor the _present_front() and _present_back() methods into
@@ -91,39 +136,3 @@ class ZugQueue():
                 pass
 
 
-class Queue():
-
-    def __init__(
-            self,
-            insertion_index: int=0,
-            insertion_radius: int=0,
-    ):
-        self._queue = []
-        self._insertion_index = insertion_index
-        self._insertion_radius = insertion_radius
-
-    @property
-    def length(self):
-        return len(self._queue)
-
-    @property
-    def items(self):
-        return self._queue
-
-    def insert(
-            self,
-            item: ZugQueueItem,
-            index: Optional[int]=None,
-            radius: Optional[int]=None,
-    ):
-        radius = radius if radius is not None else self._insertion_radius
-        absolute_index = index if index is not None else self._insertion_index
-        random_offset = random.randint(-radius, radius)
-        index = max(0, absolute_index+random_offset)
-        self._queue.insert(index, item)
-
-    def append(self, item: ZugQueueItem):
-        self._queue.append(item)
-
-    def pop(self):
-        return self._queue.pop(0)

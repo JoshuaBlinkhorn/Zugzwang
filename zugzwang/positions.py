@@ -6,7 +6,7 @@ from zugzwang.game import ZugSolution
 from zugzwang.board import ZugBoard
 from zugzwang.gui import ZugGUI
 
-class ZugTrainingStatuses():
+class TrainingStatuses():
     """A training position has exactly one of these statuses at any point in time."""    
     NEW = 'NEW'
     LEARNING_STAGE_1 = 'LEARNING_STAGE_1'
@@ -15,7 +15,7 @@ class ZugTrainingStatuses():
     REMEMBERING_STAGE_2 = 'REMEMBERING_STAGE_2'
     REVIEW = 'REVIEW'
 
-class TrainingPosition(ZugQueueItem):
+class Position(ZugQueueItem):
 
     def __init__(self, solution: ZugSolution, status: str):
         self._solution = solution
@@ -54,7 +54,7 @@ class TrainingPosition(ZugQueueItem):
 
     @property
     def perspective(self):
-        return self._perspective    
+        return self._perspective
 
     def success(self):
         return self._on_success()

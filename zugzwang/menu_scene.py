@@ -9,13 +9,14 @@ from zugzwang.scene import (
     ZugSceneView,
     ZugSceneModel,    
 )
-from zugzwang.training_scene import ZugTrainingScene
+from zugzwang.training_scene import PositionTrainingScene, LineTrainingScene
+from zugzwang.editor_scene import FenCreatorScene
 from zugzwang.view import (
     ZugTextView,
     ZugViewGroup,
 )
 
-class ZugTableScene(ZugScene):
+class TableScene(ZugScene):
     _CHILD_SCENE_TYPE = None
 
     def __init__(self, display: ZugDisplay, group: ZugGroup):
@@ -38,16 +39,28 @@ class ZugTableScene(ZugScene):
             elif field == 'position_training':
                 group = self._model.get_children()[index]
                 self._load_position_training_scene(group)
+            elif field == 'line_training':
+                group = self._model.get_children()[index]
+                self._load_line_training_scene(group)
         elif view_id == 'logo':
             self._display.pop_scene()        
+        elif view_id == 'new-item':
+            self._new_item()
 
     def _load_next_scene(self, group: ZugGroup):
         scene = self._CHILD_SCENE_TYPE(self._display, group)
         self._display.push_scene(scene)
 
     def _load_position_training_scene(self, group: Group):
-        scene = ZugTrainingScene(self._display, group.chapters)
+        scene = PositionTrainingScene(self._display, group.chapters)
         self._display.push_scene(scene)
+
+    def _load_line_training_scene(self, group: Group):
+        scene = LineTrainingScene(self._display, group.chapters)
+        self._display.push_scene(scene)
+
+    def _new_item(self):
+        pass
 
 
 class ZugTableView(ZugSceneView):
@@ -61,11 +74,11 @@ class ZugTableView(ZugSceneView):
 
         self._items = {
             k: v for k, v in self._items.items()
-            if not k.startswith('table-item-')
+            if k == 'logo'
         }
         self._rects = {
             k: v for k, v in self._rects.items()
-            if not k.startswith('table-item-')
+            if k == 'logo'
         }
         
         left = 10
@@ -74,9 +87,15 @@ class ZugTableView(ZugSceneView):
         data = model.table_data()
 
         for index, row in enumerate(data):
-            item_id = f'table-item-{index}'            
-            pos = (left, top + (index * height))
+            item_id = f'table-item-{index}'
+            top += height
+            pos = (left, top)
             self._add_item(item_id, pos, ZugRowView(row))
+
+        item_id = 'new-item'
+        top += height
+        pos = (left, top)
+        self._add_item(item_id, pos, NewButton())
 
 
 class ZugTableModel(ZugSceneModel):
@@ -149,7 +168,7 @@ class ZugRowView(ZugViewGroup):
         self._add_item(item_id, position, ZugPositionTrainingButton())
 
         # tree training
-        item_id = "tree_training"
+        item_id = "line_training"
         position = (position[0] + ZugPositionTrainingButton.get_width(), 0)
         self._add_item(item_id, position, ZugTreeTrainingButton())
 
@@ -209,27 +228,46 @@ class ZugEditButton(ZugTextView):
         super().__init__(caption='E')
 
 
+class NewButton(ZugTextView):
+    _WIDTH = 50
+    _HEIGHT = ZugRowView.get_height()
+    
+    def __init__(self):
+        super().__init__(caption='+')
+
+
 class DuplicateViewIdError(ValueError):
     pass
 
 
 class ZugTreeEditor:
     pass
-        
-class ZugCategoryScene(ZugTableScene):
+
+
+class CategoryScene(TableScene):
     _CHILD_SCENE_TYPE = ZugTreeEditor
 
     def _load_next_scene(self, chapter: Chapter):
-        scene = self._CHILD_SCENE_TYPE(self._display, chapter)
+        pass
+        #scene = self._CHILD_SCENE_TYPE(self._display, chapter)
         #self._display.push_scene(scene)
 
     def _load_position_training_scene(self, chapter: Chapter):
-        scene = ZugTrainingScene(self._display, [chapter])
+        scene = PositionTrainingScene(self._display, [chapter])
         self._display.push_scene(scene)
 
-class ZugCollectionScene(ZugTableScene):
-    _CHILD_SCENE_TYPE = ZugCategoryScene
+    def _load_line_training_scene(self, chapter: Chapter):
+        scene = LineTrainingScene(self._display, [chapter])
+        self._display.push_scene(scene)
+
+    def _new_item(self):
+        scene = FenCreatorScene(self._display, self)
+        self._display.push_scene(scene)
+
+        
+class CollectionScene(TableScene):
+    _CHILD_SCENE_TYPE = CategoryScene
 
 
-class ZugInitialScene(ZugTableScene):
-    _CHILD_SCENE_TYPE = ZugCollectionScene
+class InitialScene(TableScene):
+    _CHILD_SCENE_TYPE = CollectionScene
