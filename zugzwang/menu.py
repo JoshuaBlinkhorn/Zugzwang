@@ -2,6 +2,7 @@ from typing import Union
 from zugzwang.group import ZugGroup
 from zugzwang.chapter import ZugChapter
 from zugzwang.training import ZugPositionTrainer, ZugLineTrainer
+from zugzwang.line_trainer import LineTrainer
 
 class ZugMenu:
 
@@ -186,14 +187,19 @@ class ZugCategoryMenu(ZugGroupMenu):
                 chapter.train_positions()
             return None
         if user_input == 'l':
-            for chapter in self._group.children:            
-                chapter.train_lines()            
+            self._train_lines()
             return None
         if user_input == 'b':
             return True
         return None
 
-
+    def _train_lines(self):
+        lines = [
+            line
+            for chapter in self._group.children
+            for line in chapter.lines
+        ]
+        LineTrainer(lines).train()
 
 class ZugCollectionMenu(ZugGroupMenu):
     _child_name = 'CATEGORY'
