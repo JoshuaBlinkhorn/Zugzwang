@@ -1,3 +1,4 @@
+import random
 from zugzwang.queue import ZugQueue
 from zugzwang.positions import ZugTrainingPosition, ZugTrainingStatuses
 from zugzwang.lines import ZugTrainingLine
@@ -57,6 +58,8 @@ class ZugLineTrainer(ZugTrainer):
             self._queue.append(line)
 
     def _get_lines(self):
-        return [ZugTrainingLine(line, self._gui) for line in self._chapter.lines]
+        lines = [ZugTrainingLine(line, self._gui) for line in self._chapter.lines]
+        random.shuffle(lines)
+        return lines
     
 

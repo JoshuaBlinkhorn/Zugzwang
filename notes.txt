@@ -1953,3 +1953,44 @@ No need for a new branch.
 So the question now is, can an initialised PGN be modified in HIARCS and the changes
 just work?
 If the answer is yes, we're pretty much good to start loading on new content.
+
+~~~~~~~~~~~~~~~~
+2024-02-17 18:00
+
+Coming back after six months
+The UI is decent, what's really needed is two things:
+
+1. an editor to modify the trees
+2. a method of aggregating collections of training items
+
+Currently the presentation is tied to the chapter.
+That was fair at the beginning.
+Now the presentation should be uncoupled from the chapter
+What we have actually is a training unit.
+A training unit can be any (annotated) tree of moves
+That encompasses openings, tactics, endgames.
+Then we should have some way of filling up bags of training items - runners
+independently we store the set of training items somewhere and allow
+another process to update it based on the games
+Puzzles from your own games, or from positions that you have reached, or *should* have reached
+should be prioritised.
+
+~~~~~~~~~~~~~~~~
+2024-02-25 11:00
+
+On the above:
+
+1. Let's just use HIARCS as a PGN editor
+   - what we need is a way to know which file we need to edit
+   - we could update the UI to include some details
+   - in the meantime, have the filename logged to the CLI
+
+2. We should first allow the collections hierarchy to aggregate and randomis
+   lines at all levels
+   - then we can train lines over, say, the whole Grunfeld, which must be better
+     than what we have now
+   - eventually have the structure like arbitrary files and folders
+
+
+
+
