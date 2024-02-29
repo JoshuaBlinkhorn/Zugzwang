@@ -141,6 +141,8 @@ class ZugGameNodeWrapper:
                 raise ZugGameNodeWrapperError(f'Cannot decode {game_node.comment}')
 
         # update the node comment
+        # TODO: is this always necessary? Maybe only when game_node.comment was
+        # the empty string above
         game_node.comment = data.as_string()    
             
         # assign members

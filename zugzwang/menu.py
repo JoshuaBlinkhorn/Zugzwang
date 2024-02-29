@@ -1,106 +1,66 @@
-from typing import Union
-from zugzwang.group import ZugGroup
-from zugzwang.chapter import ZugChapter
-from zugzwang.training import ZugPositionTrainer, ZugLineTrainer
-from zugzwang.line_trainer import LineTrainer
+from typing import Union, List
+import abc
+import enum
 
-class ZugMenu:
+from zugzwang.group import Item, Group, Tabia
+from zugzwang.training import Trainer 
+
+
+class Status(str, enum.Enum):
+    EXIT = "EXIT"
+    REDRAW = "REDRAW"
+
+class Menu(abc.ABC):
 
     @classmethod
     def _clear_screen(cls):
         print('\n' * 100)
     
     def display(self):
-        self._clear_screen()
         self._print_content()
-        while self._handle_input(self._prompt()) is None:
-            self._clear_screen()
+        while self._handle_input(self._prompt()) != Status.EXIT:
             self._print_content()
 
-    def _print_content(self):
-        print('default menu content\n')
+    def _print_content(self) -> None:
+        self._clear_screen()
+        for line in self._get_content():
+            print(line)
 
-    def _prompt(self):
-        print('default menu prompt')
-        print("type 'b' to go back")        
-        return input(':')
+    def _handle_input(self, input_: str) -> Status:
+        if not self._validate(input_):
+            return Status.REDRAW
+        return self._handle(input_)
 
-    def _handle_input(self, user_input):
-        if not self._validate_input(user_input):
-            return None
-        return self._handle_good_input(user_input)
-
-    def _validate_input(self, user_input):
-        return user_input == 'b'
-
-    def _handle_good_input(self):
-        return True
-
-class ZugChapterMenu(ZugMenu):
-
-    _col_width = 20
+    def _prompt(self) -> str:
+        return input(":")
     
-    def __init__(self, chapter: ZugChapter):
-        self._chapter = chapter
+    # TODO: these methods shoulddo the printing
+    # The concrete classes should just pass in text
+    @abc.abstractmethod
+    def _get_content(self) -> List[str]:
+        pass
 
-    def _print_taxonomy(self):
-        print('Collection'.ljust(self._col_width), self._chapter.collection)
-        print('Category'.ljust(self._col_width), self._chapter.category)
-        print('Chapter'.ljust(self._col_width), self._chapter.name)                
-        
-    def _print_stats(self):
-        print('New '.ljust(self._col_width), self._chapter.stats.new)
-        print('Due'.ljust(self._col_width), self._chapter.stats.due)
-        print('Learned'.ljust(self._col_width), self._chapter.stats.learned)
-        print('Total'.ljust(self._col_width), self._chapter.stats.total)        
-        
-    def _print_content(self):
-        self._print_taxonomy()
-        print('')
-        self._print_stats()        
-        print('')
+    @abc.abstractmethod
+    def _validate(self, input_: str) -> bool:
+        pass
 
-    def _prompt(self):
-        print('p - position-based training')
-        print('l - line-based training')
-        print('b - go back\n')
-        return input(':')
+    @abc.abstractmethod
+    def _handle(self, input_: str) -> Status:
+        pass
 
-    def _validate_input(self, user_input):
-        return user_input in 'plb'
+class GroupMenu(Menu):
 
-    def _handle_good_input(self, user_input):
-        if user_input == 'b':
-            return True
-        if user_input == 'p':
-            self._chapter.train_positions()
-            return None
-        if user_input == 'l':
-            self._chapter.train_lines()            
-            return None
-
-        
-class ZugGroupMenu(ZugMenu):
-
-    _child_name = 'CHILD_NAME'
-    _child_menu_type = None
-
-    def __init__(self, group: ZugGroup):
-        self._group = group
-
-    @classmethod
-    def _header(cls):
-        return {
-            'item_id': ('ID', 3),
-            'coverage': ('COV.', 5),
-            'training_available': ('', 2),
-            'item_name': (cls._child_name, 30),
-            'new': ('NEW', 4),
-            'due': ('DUE', 4),
-            'learned': ('LRN', 4),
-            'total': ('ALL', 4),                                   
-        }
-        
+    _table_schema = {
+        'item_id': ('ID', 3),
+        'coverage': ('COV.', 5),
+        'training_available': ('', 2),
+        'item_name': ('ITEM', 30),
+        'new': ('NEW', 6),
+        'due': ('DUE', 6),
+        'learned': ('LRN', 6),
+        'total': ('ALL', 6),                                   
+    }
+    
     @classmethod
     def _represents_int(cls, value):
         try:
@@ -109,105 +69,130 @@ class ZugGroupMenu(ZugMenu):
             return False
         return True
 
-    @classmethod
-    def _print_header(cls):
-        for header, spacing in cls._header().values():
-            print(header.ljust(spacing), end='')
-        print('\n')
-    
-    @classmethod
-    def _print_row(cls, index: int, child: Union[ZugGroup, ZugChapter]):
-        stats = child.stats
+    def __init__(self, group: Group):
+        self._group = group
+
+    def _get_content(self) -> List[str]:
+        return [
+            self._get_header(),
+            *self._get_table(),
+            "",
+            *self._get_choices(),
+            "",
+        ]
+
+    def _get_header(self) -> str:
+        return "".join(
+            [
+                header.ljust(spacing)
+                for header, spacing in self._table_schema.values()
+            ]
+        )
+
+    def _get_table(self) -> List[str]:
+        return [
+            self._get_row(index + 1, child)
+            for index, child in enumerate(self._group.children)
+        ]
+
+    def _get_row(self, index: int, item: Item) -> str:
+        stats = item.stats
         coverage = (stats.learned * 100) // stats.total if stats.total > 0 else 0
         row = {
-            'item_id': str(index + 1),
-            'coverage': '{}% '.format(coverage),
+            'item_id': str(index),
+            'coverage': str(coverage) + '% ',
             'training_available': '*' if stats.new + stats.learned > 0 else '',
-            'item_name': child.name,
+            'item_name': item.name,
             'new': str(stats.new),
             'due': str(stats.due),
             'learned': str(stats.learned),
             'total': str(stats.total),   
         }
+
+        row_str = ""
         for field, string in row.items():
-            _, spacing = cls._header()[field]
+            _, spacing = self._table_schema[field]
             if field == 'coverage':
-                print(string[:spacing].rjust(spacing), end='')
+                row_str += string.rjust(spacing)
                 continue
-            print(string.ljust(spacing), end='')
-        print('')
+            row_str += string.ljust(spacing)
 
-    def _print_content(self):
-        self._print_header()
-        for index, child in enumerate(self._group.children):
-            self._print_row(index, child)
-        print('')
+        return row_str
 
-    def _prompt(self):
-        print('id - select item')
-        print('b  - go back\n')
-        return input(':')
-
-    def _handle_input(self, user_input):
-        num_items = len(self._group.children)
-        if self._represents_int(user_input) and int(user_input) in range(1, num_items+1):
-            item_index = int(user_input) - 1
-            next_item = self._group.children[item_index]
-            self._load_next_menu(next_item)
-            return None
-        if user_input == 'b':
-            return True
-        return None
-
-    def _load_next_menu(self, item):
-        self._child_menu_type(item).display()
-        self._group.update_stats()
-
-
-class ZugCategoryMenu(ZugGroupMenu):
-    _child_name = 'CHAPTER'
-    _child_menu_type = ZugChapterMenu
-
-    def _prompt(self):
-        print('id - select item')
-        print('p - position-based training')
-        print('l - line-based training')
-        print('b  - go back\n')
-        return input(':')
-
-    def _handle_input(self, user_input):
-        num_items = len(self._group.children)
-        if self._represents_int(user_input) and int(user_input) in range(1, num_items+1):
-            item_index = int(user_input) - 1
-            next_item = self._group.children[item_index]
-            self._load_next_menu(next_item)
-            return None
-        if user_input == 'p':
-            for chapter in self._group.children:
-                chapter.train_positions()
-            return None
-        if user_input == 'l':
-            self._train_lines()
-            return None
-        if user_input == 'b':
-            return True
-        return None
-
-    def _train_lines(self):
-        lines = [
-            line
-            for chapter in self._group.children
-            for line in chapter.lines
+    def _get_choices(self) -> List[str]:
+        return [
+            'id - select item',
+            'p  - position-based training',
+            'l  - line-based training',
+            'b  - go back',
         ]
-        LineTrainer(lines).train()
+    
+    def _validate(self, input_) -> bool:
+        if self._represents_int(input_):
+            return int(input_) - 1 in range(0, len(self._group.children))
+        if input_ in ['p', 'l', 'b']:
+            return True
+        return False
+    
+    def _handle(self, input_):
+        if self._represents_int(input_):
+            index = int(input_) - 1
+            item = self._group.children[index]
+            cls = GroupMenu if isinstance(item, Group) else TabiaMenu
+            cls(item).display()
+            # TODO: this might be handled by the trainer
+            self._group.update_stats()
 
-class ZugCollectionMenu(ZugGroupMenu):
-    _child_name = 'CATEGORY'
-    _child_menu_type = ZugCategoryMenu
+        elif input_ == 'p':
+            training_units = self._group.tabias()
+            Trainer().train(training_units)
+
+        elif input_ == 'l':
+            training_units = self._group.lines()
+            Trainer().train(training_units)
+
+        elif input_ == 'b':
+            return Status.EXIT
 
 
-class ZugMainMenu(ZugGroupMenu):
-    _child_name = 'COLLECTION'
-    _child_menu_type = ZugCollectionMenu
+class TabiaMenu(Menu):
+
+    _col_width = 20
+    
+    def __init__(self, tabia: Tabia):
+        self._tabia = tabia
+
+    def _get_content(self) -> List[str]:
+        return [
+            " ".join(['Tabia'.ljust(self._col_width), self._tabia.name]),
+            "",
+            " ".join(['New '.ljust(self._col_width), str(self._tabia.stats.new)]),
+            " ".join(['Due'.ljust(self._col_width), str(self._tabia.stats.due)]),
+            " ".join(['Learned'.ljust(self._col_width), str(self._tabia.stats.learned)]),
+            " ".join(['Total'.ljust(self._col_width), str(self._tabia.stats.total)]),   
+            "",
+            'p - position-based training',
+            'l - line-based training',
+            'b - go back',
+            "",
+        ]
+
+    def _validate(self, input_):
+        return input_ in ['p', 'l', 'b']
+
+    def _handle(self, input_):
+        if input_ == 'p':
+            training_units = self._group.tabias()
+            Trainer(training_units).train()
+            return Status.REDRAW
+
+        elif input_ == 'l':
+            training_units = self._group.lines()
+            Trainer(training_units).train()
+            return Status.REDRAW
+
+        elif input_ == 'b':
+            return Status.EXIT
+
+
         
-

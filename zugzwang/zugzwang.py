@@ -3,11 +3,14 @@ Entry point of ZugZwang.
 """
 
 import os
+from pathlib import Path
 
-from zugzwang.group import ZugUserData
-from zugzwang.menu import ZugMainMenu
+from zugzwang.group import Group
+from zugzwang.menu import GroupMenu
 
 if __name__ == '__main__':
-    collections_dir_path = os.path.join(os.getcwd(),'../Collections')
-    user_data = ZugUserData(collections_dir_path)
-    ZugMainMenu(user_data).display()
+    top_level_group_path = Path(
+        '/Users/joshuablinkhorn/Training/Collections-Tabia-Trial'
+    )
+    user_data = Group(top_level_group_path)
+    GroupMenu(user_data).display()
