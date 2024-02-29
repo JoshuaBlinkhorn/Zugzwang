@@ -1991,6 +1991,37 @@ On the above:
      than what we have now
    - eventually have the structure like arbitrary files and folders
 
+~~~~~~~~~~~~~~~~
+2024-02-29 08:00
 
+Let's tidy up the Collections, Categories business.
 
+1 - it works with arbitray directories
+2 - zug groups and menus factored out
+3 - PGNs automatically turned into Tabias
+
+This is not going to be so easy.
+It may also be expensive.
+
+First let's assess how the script does it.
+I don't think we want to do this on initialisation of a group.
+I think it should be a callable method of a group - if possible.
+Generating stats shouldn't insist that the PGN is a tabia - if not, just return
+empty stats.
+
+Looks like prepare PGN only sets up the root.
+So how are the solutions populated?
+I think Tabia and Group should inherit from an ABC
+
+The default behaviour appears to be to populate the nodes comment in the constructor
+of the node abstractor if it's not populated.
+So in principal, all we need to is call the game node constructor.
+How can we test that?
+
+Temporarily point the collectiions dir to somewhere with a stock tabia in it.
+
+It appears to just work straight off.
+Except that it hasn't saved the data.
+Perhaps it isn't saved unless there's a completed training session.
+That's actually fine.
 

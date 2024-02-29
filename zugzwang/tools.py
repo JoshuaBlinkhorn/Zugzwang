@@ -107,10 +107,12 @@ class ZugChessTools:
     ) -> List[chess.pgn.ChildNode]:
         # define a list to store solutions and a recursive search function
         solutions = []
+        
         def search_node(
                 node: chess.pgn.GameNode,
                 solution_perspective: bool
         ):
+            nonlocal solutions
             player_to_move = node.board().turn
             if player_to_move != solution_perspective:
                 # the node is a solution or an alternative

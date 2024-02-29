@@ -7,6 +7,16 @@ from zugzwang.gui import ZugGUI
 # TODO fix this: we need this for typing but it creates a circular import
 #from zugzwang.chapter import ZugChapter
 
+class Trainer:
+    def train(units: List[Unit]) -> None:
+        for unit in units:
+            if isinstance(unit, Tabia):
+                ZugPositionTrainer(unit).train()
+                unit.save()
+            elif isinstance(unit, Line):
+                ZugLineTrainer()
+    pass
+
 class ZugTrainer():
     
     def __init__(self, chapter):
@@ -32,7 +42,7 @@ class ZugPositionTrainer(ZugTrainer):
 
     def _fill_queue(self):
         learning_capacity = self._chapter.root.data.learning_remaining
-        for solution in self._chapter.solutions:
+        for solution in self._chapter.solutions():
             if (not solution.is_learned()) and learning_capacity > 0:
                 self._queue.append(
                     ZugTrainingPosition(solution, ZugTrainingStatuses.NEW, self._gui)
@@ -46,10 +56,10 @@ class ZugPositionTrainer(ZugTrainer):
                 continue
 
 
-class ZugLineTrainer(ZugTrainer):
+class LineTrainer(ZugTrainer):
 
-    def __init__(self, chapter):
-        self._chapter = chapter
+    def __init__(self, line: Line, gui: ZugGui):
+        self._lines = lines
         self._queue = ZugQueue(insertion_index=3)
         self._gui = ZugGUI()        
 
@@ -61,5 +71,3 @@ class ZugLineTrainer(ZugTrainer):
         lines = [ZugTrainingLine(line, self._gui) for line in self._chapter.lines]
         random.shuffle(lines)
         return lines
-    
-
