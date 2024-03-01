@@ -1,6 +1,12 @@
 import random
 import dataclasses
 
+
+from typing import List
+import enum
+import random
+
+from zugzwang.group import Tabia
 from zugzwang.queue import ZugQueue
 from zugzwang.positions import ZugTrainingPosition, ZugTrainingStatuses
 from zugzwang.lines import ZugTrainingLine
@@ -11,29 +17,51 @@ from zugzwang.gui import ZugGUI
 
 
 class TrainingMode(str, enum.Enum):
-    TABIAS = "TABIAS"
+    POSITIONS = "POSITIONS"
     LINES = "LINES"
+
 
 @dataclasses.dataclass
 class TrainingOptions:
     mode: TrainingMode=TrainingMode.LINES
     randomise: bool=True
 
+
 class Trainer:
 
     def __init__(self, options=None):
         self._options = options or TrainingOptions()
+        self._queue = ZugQueue()
+        self._gui = ZugGUI()
 
-    
-    
-    def train(units: List[Unit]) -> None:
-        for unit in units:
-            if isinstance(unit, Tabia):
-                ZugPositionTrainer(unit).train()
-                unit.save()
-            elif isinstance(unit, Line):
-                ZugLineTrainer()
-    pass
+    def _fill_queue(self, tabias: List[Tabia]):
+        if self._options.mode == TrainingMode.POSITIONS:
+            if self._options.randomise is True:
+                random.shuffle(tabias)
+            positions = [
+                ZugTrainingPosition(solution, ZugTrainingStatuses.REVIEW, self._gui)
+                for tabia in tabias
+                for solution in tabia.solutions()
+            ]
+            for position in positions:
+                self._queue.append(position)
+            
+        elif self._options.mode == TrainingMode.LINES:
+            lines = [
+                ZugTrainingLine(line, self._gui)
+                for tabia in tabias
+                for line in tabia.lines()
+            ]
+            if self._options.randomise is True:
+                random.shuffle(lines)
+            for line in lines:
+                self._queue.append(line)
+
+    def train(self, tabias: List[Tabia]):
+        self._fill_queue(tabias)
+        self._queue.play()
+        self._gui.kill()
+
 
 class ZugTrainer():
     
@@ -74,18 +102,3 @@ class ZugPositionTrainer(ZugTrainer):
                 continue
 
 
-class LineTrainer(ZugTrainer):
-
-    def __init__(self, line: Line, gui: ZugGui):
-        self._lines = lines
-        self._queue = ZugQueue(insertion_index=3)
-        self._gui = ZugGUI()        
-
-    def _fill_queue(self):
-        for line in self._get_lines():
-            self._queue.append(line)
-
-    def _get_lines(self):
-        lines = [ZugTrainingLine(line, self._gui) for line in self._chapter.lines]
-        random.shuffle(lines)
-        return lines

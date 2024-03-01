@@ -31,7 +31,7 @@ class ZugQueueItem():
             return self._on_success()
         if result == self.FAILURE:
             return self._on_failure()
-
+ 
     def _on_success(self):
         return ZugQueue.DISCARD
 

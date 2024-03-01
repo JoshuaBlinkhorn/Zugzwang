@@ -14,6 +14,7 @@ class Status(str, enum.Enum):
     EXIT = "EXIT"
     REDRAW = "REDRAW"
 
+
 class Menu(abc.ABC):
 
     @classmethod
@@ -153,7 +154,10 @@ class GroupMenu(Menu):
             Trainer(options).train(tabias)
 
         elif input_ == 'l':
-            options = TrainingOptions(mode=TrainingMode.LINES)            
+            options = TrainingOptions(
+                mode=TrainingMode.LINES,
+                randomise=True,
+            )            
             tabias = self._group.tabias()
             Trainer(options).train(tabias)
 
@@ -188,13 +192,18 @@ class TabiaMenu(Menu):
 
     def _handle(self, input_):
         if input_ == 'p':
-            training_units = self._group.tabias()
-            Trainer(training_units).train()
+            options = TrainingOptions(mode=TrainingMode.POSITIONS)
+            tabias = [self._tabia]
+            Trainer(options).train(tabias)
             return Status.REDRAW
 
         elif input_ == 'l':
-            training_units = self._group.lines()
-            Trainer(training_units).train()
+            options = TrainingOptions(
+                mode=TrainingMode.LINES,
+                randomise=True,
+            )
+            tabias = [self._tabia]
+            Trainer(options).train(tabias)
             return Status.REDRAW
 
         elif input_ == 'b':
