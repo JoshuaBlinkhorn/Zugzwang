@@ -3,7 +3,11 @@ import abc
 import enum
 
 from zugzwang.group import Item, Group, Tabia
-from zugzwang.training import Trainer 
+from zugzwang.training import (
+    Trainer,
+    TrainingOptions,
+    TrainingMode,
+)
 
 
 class Status(str, enum.Enum):
@@ -144,12 +148,14 @@ class GroupMenu(Menu):
             self._group.update_stats()
 
         elif input_ == 'p':
-            training_units = self._group.tabias()
-            Trainer().train(training_units)
+            options = TrainingOptions(mode=TrainingMode.POSITIONS)
+            tabias = self._group.tabias()
+            Trainer(options).train(tabias)
 
         elif input_ == 'l':
-            training_units = self._group.lines()
-            Trainer().train(training_units)
+            options = TrainingOptions(mode=TrainingMode.LINES)            
+            tabias = self._group.tabias()
+            Trainer(options).train(tabias)
 
         elif input_ == 'b':
             return Status.EXIT

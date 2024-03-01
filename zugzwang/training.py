@@ -1,4 +1,6 @@
 import random
+import dataclasses
+
 from zugzwang.queue import ZugQueue
 from zugzwang.positions import ZugTrainingPosition, ZugTrainingStatuses
 from zugzwang.lines import ZugTrainingLine
@@ -7,7 +9,23 @@ from zugzwang.gui import ZugGUI
 # TODO fix this: we need this for typing but it creates a circular import
 #from zugzwang.chapter import ZugChapter
 
+
+class TrainingMode(str, enum.Enum):
+    TABIAS = "TABIAS"
+    LINES = "LINES"
+
+@dataclasses.dataclass
+class TrainingOptions:
+    mode: TrainingMode=TrainingMode.LINES
+    randomise: bool=True
+
 class Trainer:
+
+    def __init__(self, options=None):
+        self._options = options or TrainingOptions()
+
+    
+    
     def train(units: List[Unit]) -> None:
         for unit in units:
             if isinstance(unit, Tabia):
