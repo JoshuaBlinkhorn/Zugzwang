@@ -7,7 +7,7 @@ import abc
 
 import chess
 
-from zugzwang.chapter import ZugSolution
+from zugzwang.game import ZugSolution
 from zugzwang.stats import ZugStats
 from zugzwang.game import ZugRoot, ZugSolution
 from zugzwang.stats import ZugStats
