@@ -29,11 +29,11 @@ class Item(abc.ABC):
         return self._stats
 
     @abc.abstractmethod
-    def lines(self) -> List[ZugLine]:
+    def lines(self) -> List[Line]:
         pass
 
     @abc.abstractmethod
-    def solutions(self) -> List[ZugSolution]:
+    def solutions(self) -> List[chess.pgn.Node]:
         pass
 
     @abc.abstractmethod
@@ -59,11 +59,10 @@ class Tabia(Item):
             self._root = ZugRoot(game)
                 
         # form solution set
-        nodes = ZugChessTools.get_solution_nodes(
+        self._solutions = ZugChessTools.get_solution_nodes(
             self._root.game_node,
             self._root.data.perspective
         )
-        self._solutions = [ZugSolution(node, self.root) for node in nodes]
 
         # update root and stats
         self._root.update()
@@ -85,30 +84,13 @@ class Tabia(Item):
     def tabias(self) -> List[Tabia]:
         return [self]
     
-    # TODO: move into the menu
-    def train_positions(self):
-        ZugPositionTrainer(self).train()
-        self._root.update()
-        self._save()
-        self._generate_stats()    
-
     def save(self):
         with open(self._path, 'w') as fp:
             print(self._root.game_node, file=fp)
 
     def _generate_stats(self):
         stats = ZugStats()
-
-        for solution in self._solutions:
-            if solution.is_learned():
-                stats.learned += 1
-            else:
-                stats.new += 1
-            if solution.is_due():
-                stats.due += 1
-            stats.total += 1
-        stats.new = min(stats.new, self._root.data.learning_remaining)
-
+        stats.total = len(self._solutions)
         return stats
 
 
@@ -128,7 +110,7 @@ class Group(Item):
     def lines(self) -> List[ZugLine]:
         return [line for item in self._children for line in item.lines()]
 
-    def solutions(self) -> List[ZugSolution]:
+    def solutions(self) -> List[chess.pgn.Node]:
         return [solution for item in self._children for solution in item.solutions()]
 
     def _generate_children(self) -> List[Item]:

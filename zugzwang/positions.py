@@ -18,11 +18,11 @@ class ZugTrainingStatuses():
 
 class ZugTrainingPosition(ZugQueueItem):
 
-    def __init__(self, solution: ZugSolution, status: str, gui: ZugGUI):
+    def __init__(self, solution: chess.pgn.Node, status: str, gui: ZugGUI):
         self._solution = solution
         self._status = status
         self._gui = gui
-        self._perspective = solution.node.parent.board().turn        
+        self._perspective = solution.parent.board().turn        
 
     @property
     def solution(self):
@@ -33,7 +33,7 @@ class ZugTrainingPosition(ZugQueueItem):
         return self._status
         
     def _present(self) -> int:
-        board = self._solution.node.parent.board()
+        board = self._solution.parent.board()
         self._gui.set_perspective(self._perspective)        
         self._gui.setup_position(board)
         gui_input = self._gui.get_input()
@@ -45,15 +45,15 @@ class ZugTrainingPosition(ZugQueueItem):
         else:
             raise ValueError('Input from ZugGUI not recognised.')
         
-        if move == self._solution.node.move:
-            self._gui.setup_position(self._solution.node.board())
+        if move == self._solution.move:
+            self._gui.setup_position(self._solution.board())
             time.sleep(1)            
             return ZugQueueItem.SUCCESS
         else:
             self._gui.setup_position(board)
-            while self._gui.get_input() != self._solution.node.move:
+            while self._gui.get_input() != self._solution.move:
                 self._gui.setup_position(board)
-            self._gui.setup_position(self._solution.node.board())
+            self._gui.setup_position(self._solution.board())
             time.sleep(1)                
             return ZugQueueItem.FAILURE
             

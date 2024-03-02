@@ -28,7 +28,7 @@ class Menu(abc.ABC):
 
     def _print_content(self) -> None:
         self._clear_screen()
-        for line in self._get_content():
+        for line in self._content():
             print(line)
 
     def _handle_input(self, input_: str) -> Status:
@@ -39,10 +39,8 @@ class Menu(abc.ABC):
     def _prompt(self) -> str:
         return input(":")
     
-    # TODO: these methods shoulddo the printing
-    # The concrete classes should just pass in text
     @abc.abstractmethod
-    def _get_content(self) -> List[str]:
+    def _content(self) -> List[str]:
         pass
 
     @abc.abstractmethod
@@ -77,7 +75,7 @@ class GroupMenu(Menu):
     def __init__(self, group: Group):
         self._group = group
 
-    def _get_content(self) -> List[str]:
+    def _content(self) -> List[str]:
         return [
             self._get_header(),
             *self._get_table(),
@@ -172,7 +170,7 @@ class TabiaMenu(Menu):
     def __init__(self, tabia: Tabia):
         self._tabia = tabia
 
-    def _get_content(self) -> List[str]:
+    def _content(self) -> List[str]:
         return [
             " ".join(['Tabia'.ljust(self._col_width), self._tabia.name]),
             "",

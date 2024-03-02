@@ -2025,3 +2025,39 @@ Except that it hasn't saved the data.
 Perhaps it isn't saved unless there's a completed training session.
 That's actually fine.
 
+~~~~~~~~~~~~~~~~
+2024-03-02 07:49
+
+So now I'm going to make the tabia the atomic unit of training.
+This is a big change, a fork in the road. If we ever want to retrieve the logic,
+it is in git.
+
+So what we want to do is have a metadata file associated with each tabia.
+It is basically the information that we used to store in a node.
+We also need to define how we train a tabia.
+I think all lines should be recalled perfectly.
+For now, as tabias should be small, we can skip the prefix issue.
+
+Also, we need to think about who owns the GUI.
+It shouldn't be the training position.
+It probably shouldn't be the menu.
+In fact, it shouldn't really be any object, it should be dependency injected
+
+The first thing we should do is get rid of the Solution class and Solution data
+We don't need that at all, it can be replaced with a chess node.
+
+All training is a sequence of "positions", where a "position" is really a pair of positions, a solution and a problem.
+
+Perhaps we refer to them as Problems, each with a Question and an Answer.
+Tidied up the queue and queue item classes.
+Now we can get rid of the ZugSolution class.
+Tabias methods should just return a list of solutions, and a list of lines.
+We should introduce Line as an alias for a List[chess.pgn.GameNode]
+
+One thing that's occurred to me is that a line could be a list of solution nodes.
+The question nodes are not relevant to the definition.
+That would make the typing interaction with chess easier - we'd only need to
+deal with child nodes.
+
+For now, I think the point to get to is a working program with no ZugSolution class.
+

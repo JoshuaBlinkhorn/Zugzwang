@@ -1,3 +1,4 @@
+from typing import Optional
 import random
 import dataclasses
 
@@ -7,13 +8,9 @@ import enum
 import random
 
 from zugzwang.group import Tabia
-from zugzwang.queue import ZugQueue
-from zugzwang.positions import ZugTrainingPosition, ZugTrainingStatuses
-from zugzwang.lines import ZugTrainingLine
+from zugzwang.queue import Queue
+from zugzwang.problem import Problem, Line
 from zugzwang.gui import ZugGUI
-
-# TODO fix this: we need this for typing but it creates a circular import
-#from zugzwang.chapter import ZugChapter
 
 
 class TrainingMode(str, enum.Enum):
@@ -29,76 +26,35 @@ class TrainingOptions:
 
 class Trainer:
 
-    def __init__(self, options=None):
+    def __init__(self, options: Optional[TrainingOptions]=None):
         self._options = options or TrainingOptions()
-        self._queue = ZugQueue()
-        self._gui = ZugGUI()
+        self._queue = Queue(insertion_index=3, insertion_radius=1)
 
     def _fill_queue(self, tabias: List[Tabia]):
         if self._options.mode == TrainingMode.POSITIONS:
             if self._options.randomise is True:
                 random.shuffle(tabias)
-            positions = [
-                ZugTrainingPosition(solution, ZugTrainingStatuses.REVIEW, self._gui)
+            problems = [
+                Problem(solution)
                 for tabia in tabias
                 for solution in tabia.solutions()
             ]
-            for position in positions:
-                self._queue.append(position)
+            self._queue.extend(problems)
             
         elif self._options.mode == TrainingMode.LINES:
             lines = [
-                ZugTrainingLine(line, self._gui)
+                Line(line)
                 for tabia in tabias
                 for line in tabia.lines()
             ]
             if self._options.randomise is True:
                 random.shuffle(lines)
-            for line in lines:
-                self._queue.append(line)
+            self._queue.extend(lines)
 
     def train(self, tabias: List[Tabia]):
+        gui = ZugGUI()
         self._fill_queue(tabias)
-        self._queue.play()
-        self._gui.kill()
-
-
-class ZugTrainer():
-    
-    def __init__(self, chapter):
-        self._chapter = chapter
-        self._queue = ZugQueue()
-        self._gui = ZugGUI()
-
-    def _fill_queue(self):
-        pass
-        
-    def train(self):
-        self._fill_queue()
-        self._queue.play()
-        self._gui.kill()
-
-
-class ZugPositionTrainer(ZugTrainer):
-    
-    def __init__(self, chapter):
-        self._chapter = chapter
-        self._queue = ZugQueue(insertion_index=3, insertion_radius=1)
-        self._gui = ZugGUI()
-
-    def _fill_queue(self):
-        learning_capacity = self._chapter.root.data.learning_remaining
-        for solution in self._chapter.solutions():
-            if (not solution.is_learned()) and learning_capacity > 0:
-                self._queue.append(
-                    ZugTrainingPosition(solution, ZugTrainingStatuses.NEW, self._gui)
-                )
-                learning_capacity -= 1
-                continue
-            if solution.is_learned() and solution.is_due():
-                self._queue.append(
-                    ZugTrainingPosition(solution, ZugTrainingStatuses.REVIEW, self._gui)
-                )
-                continue
+        self._queue.play(gui)
+        gui.kill()
 
 
