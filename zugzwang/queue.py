@@ -1,9 +1,9 @@
 import chess
 import random
 from typing import Optional, List
+import abc
+import enum
 
-from zugzwang.game import ZugSolution, ZugSolutionData
-from zugzwang.board import ZugBoard
 from zugzwang.gui import ZugGUI
 
 # TODO (non-critical)
@@ -13,38 +13,50 @@ from zugzwang.gui import ZugGUI
 #    presenters too, belong with the training session classes, rather than the queue.
 #    I think they probably do.
 
-class ZugQueueItem():
+
+
+# TODO: it feels wrong that QUIT is in these enums
+# that is program flow execution
+class QueueItemResult(str, enum.Enum):
     SUCCESS = 'SUCCESS'
     FAILURE = 'FAILURE'
     QUIT = 'QUIT'
 
-    def play(self) -> Optional[int]:
-        return self._interpret_result(self._present())
 
-    def _present(self) -> str:
-        return self.SUCCESS
-
-    def _interpret_result(self, result: str) -> Optional[int]:
-        if result == self.QUIT:
-            return ZugQueue.QUIT        
-        if result == self.SUCCESS:
-            return self._on_success()
-        if result == self.FAILURE:
-            return self._on_failure()
- 
-    def _on_success(self):
-        return ZugQueue.DISCARD
-
-    def _on_failure(self):
-        return ZugQueue.REINSERT
-
-
-class ZugQueue():
-
+class QueueDirective(str, enum.Enum):
     REINSERT = 'REINSERT'
     DISCARD = 'DISCARD'
     QUIT = 'QUIT'
 
+
+class QueueItem(abc.ABC):
+    def play(self, gui: ZugGUI) -> Optional[int]:
+        return self._interpret_result(self._present(gui))
+
+    @abc.abstractmethod
+    def _present(self, gui: ZugGUI) -> QueueItemResult:
+        pass
+
+    def _on_success(self) -> QueueDirective:
+        return QueueDirective.DISCARD
+
+    def _on_failure(self) -> QueueDirective:
+        return QueueDirective.REINSERT        
+
+    def _interpret_result(
+        self,
+        result: QueueItemResult
+    ) -> QueueDirective:
+        if result == QueueItemResult.QUIT:
+            return QueueDirective.QUIT        
+        if result == QueueItemResult.SUCCESS:
+            return self._on_success()
+        if result == QueueItemResult.FAILURE:
+            return self._on_failure()
+
+
+
+class Queue():
     def __init__(
             self,
             insertion_index: int=0,
@@ -54,16 +66,18 @@ class ZugQueue():
         self._insertion_index = insertion_index
         self._insertion_radius = insertion_radius
 
-    def length(self):
+    # TODO: do we need these properties?
+    @property
+    def length(self) -> int:
         return len(self._queue)
 
     @property
-    def items(self):
+    def items(self) -> List[QueueItem]:
         return self._queue
 
-    def insert(
+    def _insert(
             self,
-            item: ZugQueueItem,
+            item: QueueItem,
             index: Optional[int]=None,
             radius: Optional[int]=None,
     ):
@@ -73,18 +87,21 @@ class ZugQueue():
         index = max(0, absolute_index+random_offset)
         self._queue.insert(index, item)
 
-    def append(self, item: ZugQueueItem):
+    def append(self, item: QueueItem) -> None:
         self._queue.append(item)
 
-    def play(self) -> None:
+    def extend(self, items: List[QueueItem]) -> None:
+        self._queue.extend(items)
+
+    def play(self, gui: ZugGUI) -> None:
         while self._queue:
             item = self._queue.pop(0)
-            item_directive = item.play()
-            if item_directive == self.QUIT:
+            directive = item.play(gui)
+            if directive == QueueDirective.QUIT:
                 break
-            if item_directive == self.REINSERT:
-                self.insert(item, self._insertion_index)                
-            if item_directive == self.DISCARD:
+            elif directive == QueueDirective.REINSERT:
+                self._insert(item, self._insertion_index) 
+            elif directive == QueueDirective.DISCARD:
                 pass
 
 

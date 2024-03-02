@@ -150,7 +150,7 @@ class ZugChessTools:
             cls,
             game: chess.pgn.Game,
             perspective: bool
-    ) -> List[chess.Board]:
+    ) -> List[chess.pgn.GameNode]:
 
         # define an empty list to store the lines and a recursive search function        
         lines = []
