@@ -2060,4 +2060,40 @@ That would make the typing interaction with chess easier - we'd only need to
 deal with child nodes.
 
 For now, I think the point to get to is a working program with no ZugSolution class.
+Done.
+
+So for the TODOs:
+
+1 - train for one hour to seek bugs
+2 - add linting and formatting via pre-commmit - black, mypy, pylint?
+3 - refactor lines to be a list of solutions i.e. ChildNodes, rather than a list
+  of consecutive nodes
+4 - refactor stats to show
+  #tabias, #problems, #lines, #average_tabia_size, #average_line_length
+5 - remove all redundant code
+6 - write a README
+7 - store / update tabia training data
+8 - global scheduled training option
+9 - yaml config file
+
+Let's attack 7
+All the scheduling logic we need should be extractable as part of what we have
+for solutions.
+
+Okay, 7 is quite a process to do cleanly.
+I don't think it's difficult, but it involves having a tabia support methods
+to update it's training status.
+All the things we had on a solution, like is_due(), learned(), recalled() etc.
+
+This also involves having the Tabia cache the metadata in it's state, and saving
+that state to json whenever it changes.
+That is bsically the bind method.
+It's probably a good idea to have a metadata class and attach that as a member to
+a tabia.
+The metadata class can support the IO somehow.
+While we're messing around with tabia, I feel like we should sort out the solutions,
+lines etc. to return generators, I don't think they should be part of the state
+of the tabia.
+That may have made sense when we needed stats per solution, but here we dont have
+that.
 

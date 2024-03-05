@@ -6,17 +6,14 @@ import enum
 
 from zugzwang.gui import ZugGUI
 
-# TODO (non-critical)
-# 1. Decide whether to factor the _present_front() and _present_back() methods into
-#    ZugQueueItem as they appear to be identical for both subclasses.
-# 2. Decide whether the ZugTrainingPosition and ZugTrainingLine, and hence their
-#    presenters too, belong with the training session classes, rather than the queue.
-#    I think they probably do.
 
+# NOTE: QUIT is in these enums
+# This deomonstrates that control of the session goes all the way down
+# to the queue item.
+# This is a feature of the current design in which the queue item talks
+# to the GUI.
+# That could be rearchitected - for the time being, it works.
 
-
-# TODO: it feels wrong that QUIT is in these enums
-# that is program flow execution
 class QueueItemResult(str, enum.Enum):
     SUCCESS = 'SUCCESS'
     FAILURE = 'FAILURE'
@@ -66,15 +63,6 @@ class Queue():
         self._insertion_index = insertion_index
         self._insertion_radius = insertion_radius
 
-    # TODO: do we need these properties?
-    @property
-    def length(self) -> int:
-        return len(self._queue)
-
-    @property
-    def items(self) -> List[QueueItem]:
-        return self._queue
-
     def _insert(
             self,
             item: QueueItem,
@@ -87,6 +75,9 @@ class Queue():
         index = max(0, absolute_index+random_offset)
         self._queue.insert(index, item)
 
+    def empty(self) -> None:
+        self._queue = []
+        
     def append(self, item: QueueItem) -> None:
         self._queue.append(item)
 

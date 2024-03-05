@@ -4,11 +4,18 @@ import enum
 
 from zugzwang.group import Item, Group, Tabia
 from zugzwang.training import (
+    train,
     Trainer,
     TrainingOptions,
     TrainingMode,
 )
 
+
+_training_mode_map = {
+    'l': TrainingMode.LINES,
+    'p': TrainingMode.PROBLEMS,
+    't': TrainingMode.TABIAS,        
+}
 
 class Status(str, enum.Enum):
     EXIT = "EXIT"
@@ -64,6 +71,9 @@ class GroupMenu(Menu):
         'total': ('ALL', 6),                                   
     }
     
+    def __init__(self, group: Group):
+        self._group = group
+
     @classmethod
     def _represents_int(cls, value):
         try:
@@ -71,9 +81,6 @@ class GroupMenu(Menu):
         except:
             return False
         return True
-
-    def __init__(self, group: Group):
-        self._group = group
 
     def _content(self) -> List[str]:
         return [
@@ -127,13 +134,14 @@ class GroupMenu(Menu):
             'id - select item',
             'p  - position-based training',
             'l  - line-based training',
+            't  - tabia-based training',            
             'b  - go back',
         ]
     
     def _validate(self, input_) -> bool:
         if self._represents_int(input_):
             return int(input_) - 1 in range(0, len(self._group.children))
-        if input_ in ['p', 'l', 'b']:
+        if input_ in ['p', 'l', 't', 'b']:
             return True
         return False
     
@@ -145,19 +153,13 @@ class GroupMenu(Menu):
             cls(item).display()
             # TODO: this might be handled by the trainer
             self._group.update_stats()
+            return Status.REDRAW
 
-        elif input_ == 'p':
-            options = TrainingOptions(mode=TrainingMode.POSITIONS)
-            tabias = self._group.tabias()
-            Trainer(options).train(tabias)
-
-        elif input_ == 'l':
-            options = TrainingOptions(
-                mode=TrainingMode.LINES,
-                randomise=True,
-            )            
-            tabias = self._group.tabias()
-            Trainer(options).train(tabias)
+        elif input_ in ['p', 'l', 't']:
+            mode = _training_mode_map[input_]
+            options = TrainingOptions(mode=mode)
+            train(self._group.tabias(), options)
+            return Status.REDRAW
 
         elif input_ == 'b':
             return Status.EXIT
@@ -181,29 +183,22 @@ class TabiaMenu(Menu):
             "",
             'p - position-based training',
             'l - line-based training',
+            't - tabia-based training',
             'b - go back',
             "",
         ]
 
     def _validate(self, input_):
-        return input_ in ['p', 'l', 'b']
+        return input_ in ['p', 'l', 't', 'b']
 
     def _handle(self, input_):
-        if input_ == 'p':
-            options = TrainingOptions(mode=TrainingMode.POSITIONS)
-            tabias = [self._tabia]
-            Trainer(options).train(tabias)
-            return Status.REDRAW
 
-        elif input_ == 'l':
-            options = TrainingOptions(
-                mode=TrainingMode.LINES,
-                randomise=True,
-            )
-            tabias = [self._tabia]
-            Trainer(options).train(tabias)
+        if input_ in ['p', 'l', 't']:
+            mode = _training_mode_map[input_]
+            options = TrainingOptions(mode=mode)
+            train([self._tabia], options)
             return Status.REDRAW
-
+            
         elif input_ == 'b':
             return Status.EXIT
 

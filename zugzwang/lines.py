@@ -8,12 +8,11 @@ from zugzwang.gui import ZugGUI
 
 class ZugTrainingLine(ZugQueueItem):
 
-    def __init__(self, line: List[chess.pgn.GameNode], gui: ZugGUI):
+    def __init__(self, line: List[chess.pgn.GameNode]):
         self._line = line
-        self._gui = gui
 
-    def _present(self):        
-        return ZugTrainingLinePresenter(self._line, self._gui).present()
+    def _present(self, gui: ZugGUI):        
+        return ZugTrainingLinePresenter(self._line).present(gui)
 
         
 class ZugTrainingLinePresenter():
