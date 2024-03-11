@@ -14,43 +14,16 @@ from zugzwang.gui import ZugGUI
 # to the GUI.
 # That could be rearchitected - for the time being, it works.
 
-class QueueItemResult(str, enum.Enum):
+class QueueResult(str, enum.Enum):
     SUCCESS = 'SUCCESS'
     FAILURE = 'FAILURE'
     QUIT = 'QUIT'
 
 
-class QueueDirective(str, enum.Enum):
-    REINSERT = 'REINSERT'
-    DISCARD = 'DISCARD'
-    QUIT = 'QUIT'
-
-
 class QueueItem(abc.ABC):
-    def play(self, gui: ZugGUI) -> Optional[int]:
-        return self._interpret_result(self._present(gui))
-
-    @abc.abstractmethod
-    def _present(self, gui: ZugGUI) -> QueueItemResult:
-        pass
-
-    def _on_success(self) -> QueueDirective:
-        return QueueDirective.DISCARD
-
-    def _on_failure(self) -> QueueDirective:
-        return QueueDirective.REINSERT        
-
-    def _interpret_result(
-        self,
-        result: QueueItemResult
-    ) -> QueueDirective:
-        if result == QueueItemResult.QUIT:
-            return QueueDirective.QUIT        
-        if result == QueueItemResult.SUCCESS:
-            return self._on_success()
-        if result == QueueItemResult.FAILURE:
-            return self._on_failure()
-
+    @abc.abstractmethod    
+    def play(self, gui: ZugGUI) -> QueueResult:
+        return self._present(gui)
 
 
 class Queue():
@@ -85,14 +58,17 @@ class Queue():
         self._queue.extend(items)
 
     def play(self, gui: ZugGUI) -> None:
+        queue_result = QueueResult.SUCCESS
+    
         while self._queue:
             item = self._queue.pop(0)
-            directive = item.play(gui)
-            if directive == QueueDirective.QUIT:
-                break
-            elif directive == QueueDirective.REINSERT:
-                self._insert(item, self._insertion_index) 
-            elif directive == QueueDirective.DISCARD:
-                pass
+            result = item.play(gui)
 
+            if result == QueueResult.QUIT:
+                return result
+            elif result == QueueResult.FAILURE:
+                self._insert(item, self._insertion_index)
+                queue_result = result
+
+        return queue_result
 

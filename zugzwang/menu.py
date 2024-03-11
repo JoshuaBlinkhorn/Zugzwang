@@ -14,7 +14,8 @@ from zugzwang.training import (
 _training_mode_map = {
     'l': TrainingMode.LINES,
     'p': TrainingMode.PROBLEMS,
-    't': TrainingMode.TABIAS,        
+    't': TrainingMode.TABIAS,
+    's': TrainingMode.TABIAS,           
 }
 
 class Status(str, enum.Enum):
@@ -60,6 +61,7 @@ class Menu(abc.ABC):
 
 class GroupMenu(Menu):
 
+    _learning_limit = 1
     _table_schema = {
         'item_id': ('ID', 3),
         'coverage': ('COV.', 5),
@@ -134,16 +136,23 @@ class GroupMenu(Menu):
             'id - select item',
             'p  - position-based training',
             'l  - line-based training',
-            't  - tabia-based training',            
+            't  - tabia-based training',
+            's  - scheduled training',            
             'b  - go back',
         ]
     
     def _validate(self, input_) -> bool:
         if self._represents_int(input_):
             return int(input_) - 1 in range(0, len(self._group.children))
-        if input_ in ['p', 'l', 't', 'b']:
+        if input_ in ['p', 'l', 't', 's', 'b']:
             return True
         return False
+
+    def _get_scheduled(self) -> List[Tabia]:
+        new = [tabia for tabia in self._group.tabias() if not tabia.is_learned()]
+        due = [tabia for tabia in self._group.tabias() if tabia.is_due()]
+        import pdb; pdb.set_trace()
+        return new[:self._learning_limit] + due
     
     def _handle(self, input_):
         if self._represents_int(input_):
@@ -155,10 +164,11 @@ class GroupMenu(Menu):
             self._group.update_stats()
             return Status.REDRAW
 
-        elif input_ in ['p', 'l', 't']:
+        elif input_ in ['p', 'l', 't', 's']:
+            tabias = self._group.tabias() if input_ != 's' else self._get_scheduled()
             mode = _training_mode_map[input_]
             options = TrainingOptions(mode=mode)
-            train(self._group.tabias(), options)
+            train(tabias, options)
             return Status.REDRAW
 
         elif input_ == 'b':
@@ -175,6 +185,7 @@ class TabiaMenu(Menu):
     def _content(self) -> List[str]:
         return [
             " ".join(['Tabia'.ljust(self._col_width), self._tabia.name]),
+            " ".join(['PErspective'.ljust(self._col_width), self._tabia.metadata.perspective]),            
             "",
             " ".join(['New '.ljust(self._col_width), str(self._tabia.stats.new)]),
             " ".join(['Due'.ljust(self._col_width), str(self._tabia.stats.due)]),
@@ -184,12 +195,13 @@ class TabiaMenu(Menu):
             'p - position-based training',
             'l - line-based training',
             't - tabia-based training',
+            'f - flip perspective',            
             'b - go back',
             "",
         ]
 
     def _validate(self, input_):
-        return input_ in ['p', 'l', 't', 'b']
+        return input_ in ['p', 'l', 't', 'f', 'b']
 
     def _handle(self, input_):
 
@@ -198,6 +210,9 @@ class TabiaMenu(Menu):
             options = TrainingOptions(mode=mode)
             train([self._tabia], options)
             return Status.REDRAW
+
+        elif input_ == 'f':
+            self._tabia.metadata.perspective = not self._tabia.metadata.perspective
             
         elif input_ == 'b':
             return Status.EXIT
