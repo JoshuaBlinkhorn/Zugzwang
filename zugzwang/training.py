@@ -8,8 +8,8 @@ import enum
 import random
 import abc
 
-from zugzwang.group import Tabia
-from zugzwang.queue import Queue
+from zugzwang.group import Tabia, Result as TabiaResult
+from zugzwang.queue import Queue, QueueResult
 from zugzwang.problem import Problem, Line
 from zugzwang.gui import ZugGUI
 
@@ -28,6 +28,7 @@ class TrainingStatus(str, enum.Enum):
 class TrainingResult(str, enum.Enum):
     SUCCESS = "SUCCESS"
     FAILURE = "FAILURE"
+    INCOMPLETE = "INCOMPLETE"
 
 
 @dataclasses.dataclass
@@ -61,15 +62,20 @@ def train(
 
 class Trainer(abc.ABC):
 
+    _result_map = {
+        QueueResult.QUIT: TrainingResult.INCOMPLETE,
+        QueueResult.SUCCESS: TrainingResult.SUCCESS,
+        QueueResult.FAILURE: TrainingResult.FAILURE,        
+    }
+    
     def __init__(self, options: Optional[TrainingOptions]=None):
         self._options = options or TrainingOptions()
         self._queue = Queue(insertion_index=3, insertion_radius=1)
 
-    def train(self, tabias: List[Tabia], gui: ZugGui):
-
+    def train(self, tabias: List[Tabia], gui: ZugGui) -> TrainingResult:
         self._queue.empty()        
         self._fill_queue(tabias)
-        self._queue.play(gui)
+        return self._result_map[self._queue.play(gui)]
 
     @abc.abstractmethod
     def _fill_queue(self, tabias: List[Tabia]) -> None:
@@ -101,13 +107,27 @@ class TabiaTrainer(Trainer):
         self._problem_trainer = ProblemTrainer(options)        
 
 
-    def train(self, tabias: List[Tabia], gui: ZugGUI) -> None:
+    def train(self, tabias: List[Tabia], gui: ZugGUI) -> TrainingResult:
         if self._options.randomise:
             random.shuffle(tabias)
         for tabia in tabias:
-            self._line_trainer.train([tabia], gui)
-            self._problem_trainer.train([tabia], gui)
-            
+            res = TrainingResult.SUCCESS
+            line_res = self._line_trainer.train([tabia], gui)
+            if line_res == QueueResult.QUIT:
+                return TrainingResult.INCOMPLETE
+            prob_res = self._problem_trainer.train([tabia], gui)
+            if prob_res == QueueResult.QUIT:
+                return TrainingResult.INCOMPLETE
+            if line_res == QueueResult.FAILURE or prob_res == QueueResult.FAILURE:
+                res = TrainingResult.FAILURE
+
+            self._record_attempt(tabia, res)
+
+    def _record_attempt(self, tabia: Tabia, result: TrainingResult) -> None:
+        if result == TrainingResult.SUCCESS:
+            tabia.record_attempt(TabiaResult.SUCCESS)
+        elif result == TrainingResult.FAILURE:
+            tabia.record_attempt(TabiaResult.FAILURE)    
 
     def _fill_queue(self, tabias: List[Tabia]) -> None:
         pass

@@ -1,5 +1,20 @@
 import datetime
 from random import randint
+import datetime
+
+def _today():
+    return datetime.date.today()
+
+def today():
+    return _today()
+
+def yesterday():
+    return _today() - datetime.timedelta(days=1)
+
+def tomorrow():
+    return _today() + datetime.timedelta(days=1)
+
+
 
 class ZugDates():
 

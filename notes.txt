@@ -2097,3 +2097,63 @@ of the tabia.
 That may have made sense when we needed stats per solution, but here we dont have
 that.
 
+2024-03-05
+
+Now we have tabia based training.. what we want is for the metadata to be updated based
+on a successful/failed attempt.
+
+Does there need to be a distinction?
+Perhsaps not. If the first attempt is a success or failure, it's irrelevant as
+long as it's complete.
+All subsequent runs are not the first, and then success and failure work as in the
+first attempt.
+So if it's new or failed, schedule for tomorrow; if it's succeeded, schedule as due.
+And hence the tabia trainer only need a verdict for each tabia and the scheduling
+can be done.
+We need some logic somewhere that handles the "first attempt" case.
+I think in that case, last study date should just be None.
+
+2024-03-07
+
+Now we have an IO manager.
+That should be used but the Tabia should not own it.
+The next pieces of developments should involve:
+
+1 - getting rid of all redundant code - this means all of the old UI stuff (stash it
+  somewhere) and all of the node wrapper classes
+
+2 - getting rid of all Zug classname prefixes
+
+3 - decoupling/re-architecting the class structure - this means having a driving process
+  that owns everything (IOManager, CLI, UI, Tabias, etc.)
+
+3 could be quite difficult but the benefits are obvious. A training item should not need to communicate with a GUI; a queue should not need to handle training results;
+  a tabia shouldn't need to own an IO manager.
+
+The architecture is all wrong, time to fix it.
+
+Now then, a tabia needs an IOManager to get its game node.
+So how do we work that out?
+I don't really want the Tabia to own an IO manager
+But it needs one to offer solutions(), lines() etc.
+
+2024-03-08
+
+Okay, bit of a mess but we've got somewhere.
+The tabia is no longer aware of its location on the file system.
+We've got code that generates the tree of groups/tabias from the user's dir.
+Stats are being generated but the metadata isn't there, so we need to initialise
+the tabias with a game and the metadata.
+What we need now is to initialise them during the collection process.
+
+For that, we need to implement an initialise method for a tabia.
+Or pass the io_manager into the constructor - that feels weird but maybe it's
+correct.
+We then read the game and metadata and assign them to members.
+And after that, we should be fairly close to having a decent tabia class.
+
+2024-03-10
+
+What we want to do now is get the trainer working again.
+We've made some improvements, but what we want is a working trainer.
+
