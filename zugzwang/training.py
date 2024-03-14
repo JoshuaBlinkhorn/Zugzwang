@@ -8,14 +8,21 @@ import enum
 import random
 import abc
 
-from zugzwang.group import Tabia, Result as TabiaResult
+from zugzwang.config import config
+from zugzwang.group import (
+    Group,
+    Item,
+    Result as TabiaResult,    
+    Tabia,
+)
 from zugzwang.queue import Queue, QueueResult
 from zugzwang.problem import Problem, Line
 from zugzwang.gui import ZugGUI
-
+from zugzwang.scenes import Scene, SceneResult
 
 class TrainingMode(str, enum.Enum):
     TABIAS = "TABIA"
+    SCHEDULED = "SCHEDULED"
     PROBLEMS = "PROBLEMS"
     LINES = "LINES"
 
@@ -37,14 +44,31 @@ class TrainingOptions:
     randomise: bool=True
 
 
+@dataclasses.dataclass
+class TrainingSpec:
+    item: Item
+    options: TrainingOptions
+
+
 def _get_trainer(options: TrainingOptions) -> Trainer:
     cls_dict = {
         TrainingMode.TABIAS: TabiaTrainer,
+        TrainingMode.SCHEDULED: TabiaTrainer,                
         TrainingMode.LINES: LineTrainer, 
-        TrainingMode.PROBLEMS: ProblemTrainer,        
+        TrainingMode.PROBLEMS: ProblemTrainer,
     }
     cls = cls_dict[options.mode]
     return cls(options)
+
+def _get_tabias(item: Item, options: TrainingOptions) -> List[Tabia]:
+    if isinstance(item, Tabia):
+        return [item]
+    tabias = item.tabias()
+    if options.mode == TrainingMode.SCHEDULED:
+        due_tabias = [tabia for tabia in tabias if tabia.is_due()]
+        new_tabias = [tabia for tabia in tabias if not tabia.is_learned()]
+        tabias = due_tabias + new_tabias[:config['learning_limit']]
+    return tabias
 
 
 def train(
@@ -60,6 +84,15 @@ def train(
     return TrainingStatus.COMPLETED
 
 
+def train(spec: TrainingSpec, gui: ZugGUI) -> TrainingResult:
+    trainer = _get_trainer(spec.options)
+    tabias = _get_tabias(spec.item, spec.options)
+
+    trainer.train(tabias, gui)
+
+    return TrainingStatus.COMPLETED
+    
+
 class Trainer(abc.ABC):
 
     _result_map = {
@@ -73,7 +106,7 @@ class Trainer(abc.ABC):
         self._queue = Queue(insertion_index=3, insertion_radius=1)
 
     def train(self, tabias: List[Tabia], gui: ZugGui) -> TrainingResult:
-        self._queue.empty()        
+        self._queue.empty()    
         self._fill_queue(tabias)
         return self._result_map[self._queue.play(gui)]
 
@@ -91,7 +124,7 @@ class LineTrainer(Trainer):
 
 
 class ProblemTrainer(Trainer):
-    def _fill_queue(self, tabias: List[Tabia]) -> None:    
+    def _fill_queue(self, tabias: List[Tabia]) -> None:
         problems = [
             Problem(solution) for tabia in tabias for solution in tabia.solutions()
         ]
@@ -133,3 +166,12 @@ class TabiaTrainer(Trainer):
         pass
 
         
+class TrainingSession(Scene):
+
+    def __init__(self, spec: TrainingSpec, gui: ZugGUI):
+        self._spec = spec
+        self._gui = gui
+    
+    def go(self) -> Optional[SceneResult]:
+        train(self._spec, self._gui)
+        return None
