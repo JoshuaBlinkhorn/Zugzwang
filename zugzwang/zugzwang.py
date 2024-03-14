@@ -9,6 +9,10 @@ import pathlib
 from zugzwang.group import Group, Tabia, Item, DefaultIOManager
 from zugzwang.menu import GroupMenu
 from zugzwang.gui import ZugGUI
+from zugzwang.config import config
+from zugzwang.scenes import Scene
+from zugzwang.menus import GroupScene, TabiaScene
+from zugzwang.training import TrainingSpec, TrainingSession
 
 def is_excluded(filename: str):
     return "." in filename and not filename.endswith(".pgn")
@@ -60,13 +64,34 @@ def initialise_group(
 
     return group
 
+def quit_scene():
+    pass
+
 if __name__ == '__main__':
-    data_path = pathlib.Path(
-        #'/Users/joshuablinkhorn/Training/Tabias'        
-        #'/Users/joshuablinkhorn/Training/Collections-Tabia-Trial'
-        '/Users/joshuablinkhorn/Training/Collections'        
-    )
+    data_path = pathlib.Path(config['user_data'])
     io_manager = DefaultIOManager()
     user_data = initialise_group("UserData", data_path, io_manager)
     user_data.update_stats()
-    GroupMenu(user_data).display()
+    gui = ZugGUI()
+
+    scenes: List[Scene] = []
+    scene = GroupScene(user_data)
+    scenes.append(scene)
+
+    while scenes:
+        scene = scenes.pop()
+        result = scene.go()
+        if isinstance(result, Group):
+            scenes.append(scene)
+            scene = GroupScene(result)
+            scenes.append(scene)
+        if isinstance(result, Tabia):
+            scenes.append(scene)
+            scene = TabiaScene(result)
+            scenes.append(scene)
+        if isinstance(result, TrainingSpec):
+            scenes.append(scene)
+            scene = TrainingSession(result, gui)
+            scenes.append(scene)
+
+    gui.kill()
