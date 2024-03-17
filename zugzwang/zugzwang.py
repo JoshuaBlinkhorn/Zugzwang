@@ -79,19 +79,19 @@ if __name__ == '__main__':
     scenes.append(scene)
 
     while scenes:
-        scene = scenes.pop()
-        result = scene.go()
+        scene = scenes[-1]
+        result = scene.go(io_manager)
         if isinstance(result, Group):
-            scenes.append(scene)
             scene = GroupScene(result)
             scenes.append(scene)
         if isinstance(result, Tabia):
-            scenes.append(scene)
             scene = TabiaScene(result)
             scenes.append(scene)
         if isinstance(result, TrainingSpec):
-            scenes.append(scene)
             scene = TrainingSession(result, gui)
             scenes.append(scene)
+        if result is None:
+            scene.kill(io_manager)
+            scenes.pop()
 
     gui.kill()

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import chess.pgn
 
 from zugzwang.group import Group, Tabia
-from zugzwang.config import DATA_DIR
+
 
 class IOManager(abc.ABC):
     @abc.abstractmethod
@@ -14,7 +14,7 @@ class IOManager(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def write_meta(self, tabia: Tabia, metadata: str) -> None:
+    def write_meta(self, tabia: Tabia) -> None:
         pass
 
     @abc.abstractmethod
@@ -35,9 +35,9 @@ class DefaultIOManager(IOManager):
             string = fp.read()
         return string
 
-    def write_meta(self, tabia: Tabia, metadata: str) -> None:
+    def write_meta(self, tabia: Tabia) -> None:
         with open(self._meta_path(), "w") as fp:
-            fp.write(metadata)
+            fp.write(tabia.metadata.as_json())
 
     def read(self, tabia: Tabia) -> chess.pgn.Game:
         with open(self._pgn_path(tabia)) as fp:

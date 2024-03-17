@@ -3,12 +3,8 @@ from typing import Optional, List, Union
 
 from zugzwang.scenes import Scene, SceneResult
 from zugzwang.training import TrainingMode, TrainingOptions, TrainingSpec
-from zugzwang.group import Item, Tabia, Group
+from zugzwang.group import Item, Tabia, Group, IOManager
 
-
-# TODO: Tabia menu scene accessing protected Tabia property
-# either configure access propery or figure out a better way
-# to set the perspective
 
 _training_mode_map = {
     'l': TrainingMode.LINES,
@@ -31,7 +27,8 @@ class MenuScene(Scene):
     def _handle(self, input_: str) -> Optional[Union[SceneResult, bool]]:
         pass
 
-    def go(self) -> SceneResult:
+    def go(self, io_manager: IOManager) -> SceneResult:
+        _ = io_manager
         result = False
         while result is False:
             self._print_content()
@@ -60,12 +57,16 @@ class TabiaScene(MenuScene):
     def __init__(self, tabia: Tabia):
         self._tabia = tabia
 
+    def kill(self, io_manager: IOManager) -> None:
+        io_manager.write_meta(self._tabia)
+        self._tabia.parent.update_stats()
+        
     def _content(self) -> List[str]:
         return [
             " ".join(['Tabia'.ljust(self._col_width), self._tabia.name]),
             " ".join([
                 'Perspective'.ljust(self._col_width),
-                "White" if self._tabia._metadata.perspective else "Black"
+                "White" if self._tabia.metadata.perspective else "Black"
             ]),          
             "",
             " ".join(['New '.ljust(self._col_width), str(self._tabia.stats.new)]),
@@ -93,7 +94,7 @@ class TabiaScene(MenuScene):
             return TrainingSpec(self._tabia, options)
 
         elif input_ == 'f':
-            self._tabia._metadata.perspective = not self._tabia._metadata.perspective
+            self._tabia.flip_perspective()
             return False
             
         elif input_ == 'b':
@@ -113,9 +114,13 @@ class GroupScene(MenuScene):
         'learned': ('LRN', 6),
         'total': ('ALL', 6),                                   
     }
-    
+
     def __init__(self, group: Group):
         self._group = group
+
+    def kill(self, io_manager: IOManager) -> None:
+        if (parent := self._group.parent) is not None:
+            parent.update_stats()
 
     def _content(self) -> List[str]:
         return [
@@ -202,7 +207,3 @@ class GroupScene(MenuScene):
         except:
             return False
         return True
-
-
-
-    

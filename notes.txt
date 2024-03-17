@@ -2157,3 +2157,21 @@ And after that, we should be fairly close to having a decent tabia class.
 What we want to do now is get the trainer working again.
 We've made some improvements, but what we want is a working trainer.
 
+2024-03-13
+
+Now there are a bunch of things to do:
+
+1. Fix the cleanness issues regarding accessing the tabia metadata
+2. Get the old tabias into the new shape
+3. Loosen interaction between queue items and gui - allowing in-session training
+   data updates, like 'positions left, tabia name, etc.'
+4. assess saving of Tabias, for example when perspective is updated
+
+Let's try for 1 now.
+
+NEXT steps:
+check that it works, and merge
+work on 2 - should be easy for the endgames
+for the grunfeld repertoire - perhaps we should build it up as and when
+we get it in games
+We can make the root tabia(s, that will be a good exercise
