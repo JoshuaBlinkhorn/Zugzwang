@@ -3,40 +3,43 @@ import chess
 
 from typing import List, Tuple, Dict, Callable
 
+
 class ColourScheme:
     def __init__(
-            self,
-            white,
-            black,
-            white_highlight,
-            black_highlight,
-            white_move_highlight,
-            black_move_highlight,
+        self,
+        white,
+        black,
+        white_highlight,
+        black_highlight,
+        white_move_highlight,
+        black_move_highlight,
     ):
         self.white = white
         self.black = black
         self.white_highlight = white_highlight
         self.black_highlight = black_highlight
         self.white_move_highlight = white_move_highlight
-        self.black_move_highlight = black_move_highlight    
+        self.black_move_highlight = black_move_highlight
+
 
 STANDARD_THEME = ColourScheme(
-    white = (220, 220, 220),
-    black = (180, 180, 180),
-    white_highlight = (220, 220, 250),
-    black_highlight = (180, 180, 230),
-    white_move_highlight = (220, 250, 220),
-    black_move_highlight = (180, 230, 180),       
+    white=(220, 220, 220),
+    black=(180, 180, 180),
+    white_highlight=(220, 220, 250),
+    black_highlight=(180, 180, 230),
+    white_move_highlight=(220, 250, 220),
+    black_move_highlight=(180, 230, 180),
 )
 
 ROUGE_THEME = ColourScheme(
-    white = (237, 220, 180),
-    black = (180, 134, 100),
-    white_highlight = (113, 143, 101),
-    black_highlight = (99, 117, 81),
-    white_move_highlight = (190, 198, 100),
-    black_move_highlight = (158, 156, 40),       
+    white=(237, 220, 180),
+    black=(180, 134, 100),
+    white_highlight=(113, 143, 101),
+    black_highlight=(99, 117, 81),
+    white_move_highlight=(190, 198, 100),
+    black_move_highlight=(158, 156, 40),
 )
+
 
 class ZugGUI:
     """Draws the chess board."""
@@ -47,22 +50,30 @@ class ZugGUI:
     _AWAITING_TARGET = "AWAITING TARGET"
     _AWAITING_PROMOTION = "AWAITING PROMOTION"
     _SLEEPING = "SLEEPING"
-    
+
     _SQUARE_SIZE = 60
 
     _PIECE_IMAGES = {
-        chess.Piece(chess.PAWN, chess.WHITE): pygame.image.load('img/white_pawn.png'),
-        chess.Piece(chess.KNIGHT, chess.WHITE): pygame.image.load('img/white_knight.png'),
-        chess.Piece(chess.BISHOP, chess.WHITE): pygame.image.load('img/white_bishop.png'),
-        chess.Piece(chess.ROOK, chess.WHITE): pygame.image.load('img/white_rook.png'),
-        chess.Piece(chess.QUEEN, chess.WHITE): pygame.image.load('img/white_queen.png'),
-        chess.Piece(chess.KING, chess.WHITE): pygame.image.load('img/white_king.png'),    
-        chess.Piece(chess.PAWN, chess.BLACK): pygame.image.load('img/black_pawn.png'),
-        chess.Piece(chess.KNIGHT, chess.BLACK): pygame.image.load('img/black_knight.png'),
-        chess.Piece(chess.BISHOP, chess.BLACK): pygame.image.load('img/black_bishop.png'),
-        chess.Piece(chess.ROOK, chess.BLACK): pygame.image.load('img/black_rook.png'),
-        chess.Piece(chess.QUEEN, chess.BLACK): pygame.image.load('img/black_queen.png'),
-        chess.Piece(chess.KING, chess.BLACK): pygame.image.load('img/black_king.png'),
+        chess.Piece(chess.PAWN, chess.WHITE): pygame.image.load("img/white_pawn.png"),
+        chess.Piece(chess.KNIGHT, chess.WHITE): pygame.image.load(
+            "img/white_knight.png"
+        ),
+        chess.Piece(chess.BISHOP, chess.WHITE): pygame.image.load(
+            "img/white_bishop.png"
+        ),
+        chess.Piece(chess.ROOK, chess.WHITE): pygame.image.load("img/white_rook.png"),
+        chess.Piece(chess.QUEEN, chess.WHITE): pygame.image.load("img/white_queen.png"),
+        chess.Piece(chess.KING, chess.WHITE): pygame.image.load("img/white_king.png"),
+        chess.Piece(chess.PAWN, chess.BLACK): pygame.image.load("img/black_pawn.png"),
+        chess.Piece(chess.KNIGHT, chess.BLACK): pygame.image.load(
+            "img/black_knight.png"
+        ),
+        chess.Piece(chess.BISHOP, chess.BLACK): pygame.image.load(
+            "img/black_bishop.png"
+        ),
+        chess.Piece(chess.ROOK, chess.BLACK): pygame.image.load("img/black_rook.png"),
+        chess.Piece(chess.QUEEN, chess.BLACK): pygame.image.load("img/black_queen.png"),
+        chess.Piece(chess.KING, chess.BLACK): pygame.image.load("img/black_king.png"),
     }
 
     def __init__(self):
@@ -87,7 +98,7 @@ class ZugGUI:
         self._draw_squares()
         self._highlight_move()
         self._draw_pieces()
-        pygame.display.flip()        
+        pygame.display.flip()
 
     def get_input(self):
         self._flush_events()
@@ -98,14 +109,14 @@ class ZugGUI:
         return self._input
 
     def kill(self):
-        pygame.quit()        
+        pygame.quit()
 
     def _flush_events(self):
         for event in pygame.event.get():
             continue
 
     def _event_loop(self):
-        self._running = True        
+        self._running = True
         while self._running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -118,7 +129,7 @@ class ZugGUI:
                     pos = pygame.mouse.get_pos()
                     self._mouse_up(pos)
             pygame.display.flip()
-        
+
     def _mouse_down(self, coordinates: Tuple[int, int]):
         square = self._get_square(coordinates)
         self._down = square
@@ -126,7 +137,7 @@ class ZugGUI:
     def _mouse_up(self, coordinates: Tuple[int, int]):
         square = self._get_square(coordinates)
         if self._down == square:
-            self._down = None            
+            self._down = None
             self._clicked(square)
 
     def _clicked(self, square: chess.Square):
@@ -148,7 +159,7 @@ class ZugGUI:
         self._source = square
         self._highlight_square(square)
         self._status = self._AWAITING_TARGET
-        
+
     def _target_selected(self, square: chess.Square):
         self._target = square
         if self._source == self._target:
@@ -172,7 +183,7 @@ class ZugGUI:
         if promotion == None:
             self._reset()
             return
-        
+
         move = chess.Move(self._source, self._target, promotion)
         self._move_registered(move)
 
@@ -180,7 +191,7 @@ class ZugGUI:
         self._STATUS = self._SLEEPING
         self._input = move
         self._running = False
-        
+
     def make_move(self, move):
         self._board.push(move)
         self._reset()
@@ -216,14 +227,14 @@ class ZugGUI:
         ranks = (7, 6, 5, 4) if self._board.turn == chess.WHITE else (0, 1, 2, 3)
         pieces = (chess.QUEEN, chess.ROOK, chess.BISHOP, chess.KNIGHT)
         return {chess.square(file, rank): piece for (rank, piece) in zip(ranks, pieces)}
-    
+
     @staticmethod
     def _square_colour(square):
         if (chess.square_file(square) + chess.square_rank(square)) % 2 == 0:
             return chess.BLACK
         else:
             return chess.WHITE
-            
+
     def _highlight_square(self, square: chess.Square):
         if self._square_colour(square) == chess.WHITE:
             colour = self._colour_scheme.white_highlight
@@ -250,7 +261,7 @@ class ZugGUI:
         """
         x = coordinates[0] // self._SQUARE_SIZE
         y = coordinates[1] // self._SQUARE_SIZE
-        
+
         if self._perspective == chess.WHITE:
             file = x
             rank = 7 - y
@@ -266,7 +277,7 @@ class ZugGUI:
         """
         rank = chess.square_rank(square)
         file = chess.square_file(square)
-        
+
         if self._perspective == chess.WHITE:
             left = file * self._SQUARE_SIZE
             top = (7 - rank) * self._SQUARE_SIZE
@@ -308,12 +319,9 @@ class ZugGUI:
                 self._screen.blit(image, self._get_coordinates(square))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     gui = ZugGUI()
     gui.setup_position(chess.Board())
     move = gui.get_move()
-    print(move)    
+    print(move)
     gui.quit()
-
-        
-    

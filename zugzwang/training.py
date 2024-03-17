@@ -12,7 +12,7 @@ from zugzwang.config import config
 from zugzwang.group import (
     Group,
     Item,
-    Result as TabiaResult,    
+    Result as TabiaResult,
     Tabia,
 )
 from zugzwang.queue import Queue, QueueResult
@@ -45,8 +45,8 @@ class TrainingResult(str, enum.Enum):
 
 @dataclasses.dataclass
 class TrainingOptions:
-    mode: TrainingMode=TrainingMode.LINES
-    randomise: bool=True
+    mode: TrainingMode = TrainingMode.LINES
+    randomise: bool = True
 
 
 @dataclasses.dataclass
@@ -58,12 +58,13 @@ class TrainingSpec:
 def _get_trainer(options: TrainingOptions) -> Trainer:
     cls_dict = {
         TrainingMode.TABIAS: TabiaTrainer,
-        TrainingMode.SCHEDULED: TabiaTrainer,                
-        TrainingMode.LINES: LineTrainer, 
+        TrainingMode.SCHEDULED: TabiaTrainer,
+        TrainingMode.LINES: LineTrainer,
         TrainingMode.PROBLEMS: ProblemTrainer,
     }
     cls = cls_dict[options.mode]
     return cls(options)
+
 
 def _get_tabias(item: Item, options: TrainingOptions) -> List[Tabia]:
     if isinstance(item, Tabia):
@@ -71,14 +72,14 @@ def _get_tabias(item: Item, options: TrainingOptions) -> List[Tabia]:
     if options.mode == TrainingMode.SCHEDULED:
         due_tabias = [tabia for tabia in item.tabias() if tabia.is_due()]
         new_tabias = [tabia for tabia in item.tabias() if not tabia.is_learned()]
-        tabias = due_tabias + new_tabias[:config['learning_limit']]
+        tabias = due_tabias + new_tabias[: config["learning_limit"]]
     return tabias
 
 
 def train(
-        tabias: List[Tabias],
-        options: TrainingOptions,
-        io_manager: IOManager,
+    tabias: List[Tabias],
+    options: TrainingOptions,
+    io_manager: IOManager,
 ) -> TrainingStatus:
     trainer = _get_trainer(options)
     gui = ZugGUI()
@@ -90,46 +91,45 @@ def train(
 
 
 def train(
-        spec: TrainingSpec,
-        gui: ZugGUI,
-        io_manager: IOManager,
+    spec: TrainingSpec,
+    gui: ZugGUI,
+    io_manager: IOManager,
 ) -> TrainingResult:
     trainer = _get_trainer(spec.options)
     tabias = _get_tabias(spec.item, spec.options)
 
-    trainer.train(tabias, gui, io_manager)    
+    trainer.train(tabias, gui, io_manager)
 
     return TrainingStatus.COMPLETED
-    
+
 
 class Trainer(abc.ABC):
 
     _result_map = {
         QueueResult.QUIT: TrainingResult.INCOMPLETE,
         QueueResult.SUCCESS: TrainingResult.SUCCESS,
-        QueueResult.FAILURE: TrainingResult.FAILURE,        
+        QueueResult.FAILURE: TrainingResult.FAILURE,
     }
-    
-    def __init__(self, options: Optional[TrainingOptions]=None):
+
+    def __init__(self, options: Optional[TrainingOptions] = None):
         self._options = options or TrainingOptions()
         self._queue = Queue(insertion_index=3, insertion_radius=1)
 
     def train(
-            self,
-            tabias: List[Tabia],
-            gui: ZugGui,
-            io_manager: IOManager,
-            
+        self,
+        tabias: List[Tabia],
+        gui: ZugGui,
+        io_manager: IOManager,
     ) -> TrainingResult:
         _ = io_manager
-        self._queue.empty()    
+        self._queue.empty()
         self._fill_queue(tabias)
         return self._result_map[self._queue.play(gui)]
 
     @abc.abstractmethod
     def _fill_queue(self, tabias: List[Tabia]) -> None:
         pass
-    
+
 
 class LineTrainer(Trainer):
     def _fill_queue(self, tabias: List[Tabia]) -> None:
@@ -147,20 +147,19 @@ class ProblemTrainer(Trainer):
         if self._options.randomise is True:
             random.shuffle(problems)
         self._queue.extend(problems)
-            
+
 
 class TabiaTrainer(Trainer):
     def __init__(self, options: TrainingOptions):
         self._options = options
         self._line_trainer = LineTrainer(options)
-        self._problem_trainer = ProblemTrainer(options)        
-
+        self._problem_trainer = ProblemTrainer(options)
 
     def train(
-            self,
-            tabias: List[Tabia],
-            gui: ZugGUI,
-            io_manager: IOManager,
+        self,
+        tabias: List[Tabia],
+        gui: ZugGUI,
+        io_manager: IOManager,
     ) -> TrainingResult:
         if self._options.randomise:
             random.shuffle(tabias)
@@ -183,18 +182,17 @@ class TabiaTrainer(Trainer):
         if result == TrainingResult.SUCCESS:
             tabia.record_attempt(TabiaResult.SUCCESS)
         elif result == TrainingResult.FAILURE:
-            tabia.record_attempt(TabiaResult.FAILURE)    
+            tabia.record_attempt(TabiaResult.FAILURE)
 
     def _fill_queue(self, tabias: List[Tabia]) -> None:
         pass
 
-        
-class TrainingSession(Scene):
 
+class TrainingSession(Scene):
     def __init__(self, spec: TrainingSpec, gui: ZugGUI):
         self._spec = spec
         self._gui = gui
-    
+
     def go(self, io_manager: IOManager) -> Optional[SceneResult]:
         train(self._spec, self._gui, io_manager)
         return None

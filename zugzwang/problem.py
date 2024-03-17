@@ -6,8 +6,9 @@ import chess
 from zugzwang.queue import QueueItem, QueueResult
 from zugzwang.gui import ZugGUI
 
+
 def _present_problem(solution: chess.pgn.ChildNode, gui: ZugGUI) -> QueueResult:
-    failed = False    
+    failed = False
 
     while (result := _get_result(solution, gui)) == QueueResult.FAILURE:
         failed = True
@@ -23,25 +24,24 @@ def _get_result(solution: chess.pgn.ChildNode, gui: ZugGUI) -> QueueResult:
 
     if input_ == ZugGUI.QUIT:
         return QueueResult.QUIT
-        
+
     if not isinstance(input_, chess.Move):
-        raise ValueError('Input from ZugGUI not recognised.')
+        raise ValueError("Input from ZugGUI not recognised.")
 
     if input_ == solution.move:
         gui.setup_position(solution.board())
-        time.sleep(1)            
+        time.sleep(1)
         return QueueResult.SUCCESS
     else:
         return QueueResult.FAILURE
 
 
 class Problem(QueueItem):
-
     def __init__(self, solution: chess.pgn.ChildNode):
         self._solution = solution
 
     def play(self, gui: ZugGUI) -> QueueResult:
-        gui.set_perspective(self._solution.parent.board().turn)   
+        gui.set_perspective(self._solution.parent.board().turn)
         return _present_problem(self._solution, gui)
 
 

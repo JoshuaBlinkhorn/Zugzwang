@@ -14,7 +14,7 @@ from zugzwang.game import (
     ZugSolution,
     ZugDataError,
     ZugDataDecodeError,
-    ZugDataFieldError,    
+    ZugDataFieldError,
     ZugRootError,
 )
 from zugzwang.constants import ZugColours, ZugSolutionStatuses
@@ -82,39 +82,24 @@ class TestZugData:
                     "integer": 100,
                     "string": "barfoo",
                 },
-                {
-                    "date": TODAY,
-                    "floater": 100.0,
-                    "integer": 100,
-                    "string": "barfoo"
-                },
+                {"date": TODAY, "floater": 100.0, "integer": 100, "string": "barfoo"},
                 id="partial json no date",
             ),
             pytest.param(
                 {
                     "date": TOMORROW,
                 },
-                {
-                    "date": TOMORROW,
-                    "floater": 0.0,
-                    "integer": 0,
-                    "string": "foobar"
-                },
+                {"date": TOMORROW, "floater": 0.0, "integer": 0, "string": "foobar"},
                 id="partial json with date",
             ),
             pytest.param(
                 {
-                    "date": TODAY, 
+                    "date": TODAY,
                     "floater": 100.0,
                     "integer": 100,
                     "string": "barfoo",
                 },
-                {
-                    "date": TODAY,
-                    "floater": 100.0,
-                    "integer": 100,
-                    "string": "barfoo"
-                },
+                {"date": TODAY, "floater": 100.0, "integer": 100, "string": "barfoo"},
                 id="complete json",
             ),
         ],
@@ -184,7 +169,7 @@ class TestZugData:
             "date": TODAY,
             "floater": 0.0,
             "integer": 0,
-            "string": "foobar"
+            "string": "foobar",
         }
         assert MyZugData().as_dict() == expected_dict
 
@@ -201,44 +186,35 @@ class TestZugData:
         """
         # default values of MyZugData in constructor order, strings double-quoted
         expected_string = (
-        '['
+            "["
             '"integer": 0, '
             '"floater": 0.0, '
             '"string": "foobar", '
             f'"date": "{TODAY.isoformat()}"'
-        ']'
+            "]"
         )
         assert MyZugData().as_string() == expected_string
 
     @pytest.mark.parametrize(
-        'zug_string, kwargs',
+        "zug_string, kwargs",
         [
+            pytest.param("[]", {}, id="empty"),
             pytest.param(
-                '[]',
-                {},
-                id='empty'
-            ),
-            pytest.param(
-                (
-                    '['
-                    '"integer": 100, '
-                    f'"date": "{TOMORROW.isoformat()}"'
-                    ']'
-                ),
+                ("[" '"integer": 100, ' f'"date": "{TOMORROW.isoformat()}"' "]"),
                 {
                     "integer": 100,
                     "date": TOMORROW,
                 },
-                id='partial'
+                id="partial",
             ),
             pytest.param(
                 (
-                    '['
+                    "["
                     '"integer": 100, '
                     '"floater": 100.0, '
                     '"string": "barfoo", '
                     f'"date": "{TOMORROW.isoformat()}"'
-                    ']'
+                    "]"
                 ),
                 {
                     "integer": 100,
@@ -246,52 +222,39 @@ class TestZugData:
                     "string": "barfoo",
                     "date": TOMORROW,
                 },
-                id='complete'
+                id="complete",
             ),
-        ]
+        ],
     )
     def test_from_string(self, zug_string, kwargs, MyZugData):
         """Creates a data object from a 'zug-string'."""
         assert MyZugData.from_string(zug_string) == MyZugData(**kwargs)
 
     @pytest.mark.parametrize(
-        'invalid_string',
+        "invalid_string",
         [
+            pytest.param("{}", id="empty curly braces"),
+            pytest.param('{"string": "barfoo"}', id="non empty curly braces"),
+            pytest.param("adshfapishfn", id="gobbledygook"),
             pytest.param(
-                '{}',
-                id='empty curly braces'
+                '["string": "barfoo" "integer": 0]', id="badly formatted square braces"
             ),
-            pytest.param(
-                '{"string": "barfoo"}',
-                id='non empty curly braces'
-            ),
-            pytest.param(
-                'adshfapishfn',
-                id='gobbledygook'
-            ),
-            pytest.param(
-                '["string": "barfoo" "integer": 0]',
-                id='badly formatted square braces'
-            ),            
-        ]
+        ],
     )
     def test_from_string_invalid_string(self, invalid_string, MyZugData):
         with pytest.raises(ZugDataDecodeError):
             MyZugData.from_string(invalid_string)
 
     @pytest.mark.parametrize(
-        'data_dict',
+        "data_dict",
         [
-            pytest.param(
-                {},
-                id='empty'
-            ),
+            pytest.param({}, id="empty"),
             pytest.param(
                 {
                     "integer": 100,
                     "date": TOMORROW,
                 },
-                id='partial'
+                id="partial",
             ),
             pytest.param(
                 {
@@ -300,9 +263,9 @@ class TestZugData:
                     "string": "barfoo",
                     "date": TOMORROW,
                 },
-                id='complete'
+                id="complete",
             ),
-        ]
+        ],
     )
     def test_from_dict(self, data_dict, MyZugData):
         """Creates a data object from a dict."""
@@ -325,7 +288,7 @@ class TestZugData:
         assert this != that
 
         that.floater = 100.0
-        assert this == that        
+        assert this == that
 
 
 ###############
@@ -339,6 +302,7 @@ DEFAULT_LEARNING_LIMIT = 10
 DEFAULT_RECALL_FACTOR = 2.0
 DEFAULT_RECALL_RADIUS = 3
 DEFAULT_RECALL_MAX = 365
+
 
 @pytest.fixture
 def default_root_data():
@@ -405,6 +369,7 @@ class TestZugSolutionData:
 # ZugGameNodeWrapper #
 ######################
 
+
 @pytest.fixture
 def MyZugGameNodeWrapper(MyZugData):
     """Fixture representing a typical ZugGameNodeWrapper subclass"""
@@ -425,13 +390,13 @@ class TestZugGameNodeWrapper:
         """
 
         # Setup
-        node = chess.pgn.Game()        
+        node = chess.pgn.Game()
         zug_data = MyZugData()
         json_string = ZugJsonTools.encode(zug_data.as_dict())
         expected_comment = ZugStringTools.to_square_braces(json_string)
 
         # Create the wrapper
-        assert node.comment == ''
+        assert node.comment == ""
         wrapper = MyZugGameNodeWrapper(node)
 
         # Assert that the wrapper's data and node's comment are the defaults
@@ -439,20 +404,18 @@ class TestZugGameNodeWrapper:
         assert node.comment == expected_comment
 
     @pytest.mark.parametrize(
-        'invalid_comment',
+        "invalid_comment",
         [
-            pytest.param('foobar', id='gbbledygook'),
-            pytest.param('{}', id='curly braces'),
-            pytest.param('["string": "foobar" "integer": 0]', id='badly formatted'),
-        ]
+            pytest.param("foobar", id="gbbledygook"),
+            pytest.param("{}", id="curly braces"),
+            pytest.param('["string": "foobar" "integer": 0]', id="badly formatted"),
+        ],
     )
     def test_constructor_invalid_game_node_comment(
-            self,
-            invalid_comment,
-            MyZugGameNodeWrapper
+        self, invalid_comment, MyZugGameNodeWrapper
     ):
         """If the supplied game node has an invalid comment, an exception is raised."""
-        
+
         # Setup
         game_node = chess.pgn.Game()
         game_node.comment = invalid_comment
@@ -462,24 +425,21 @@ class TestZugGameNodeWrapper:
             wrapper = MyZugGameNodeWrapper(game_node)
 
     @pytest.mark.parametrize(
-        'partial_data_dict',
+        "partial_data_dict",
         [
+            pytest.param({}, id="empty dict"),
             pytest.param(
-                {},
-                id='empty dict'
+                {
+                    "floater": 100.0,
+                    "integer": 100,
+                },
+                id="partial dict without dates",
             ),
             pytest.param(
                 {
-                    'floater': 100.0,
-                    'integer': 100,
+                    "date": TOMORROW,
                 },
-                id='partial dict without dates'
-            ),
-            pytest.param(
-                {
-                    'date': TOMORROW,
-                },
-                id='partial dict with dates'
+                id="partial dict with dates",
             ),
             pytest.param(
                 {
@@ -488,15 +448,15 @@ class TestZugGameNodeWrapper:
                     "integer": 100,
                     "string": "barfoo",
                 },
-                id='complete dict'
+                id="complete dict",
             ),
-        ]
+        ],
     )
     def test_constructor_game_comment(
-            self,
-            partial_data_dict,
-            MyZugGameNodeWrapper,
-            MyZugData,
+        self,
+        partial_data_dict,
+        MyZugGameNodeWrapper,
+        MyZugData,
     ):
         """
         If an commented node is supplied, and the comment is valid, the wrapper's data
@@ -506,7 +466,7 @@ class TestZugGameNodeWrapper:
         missing fields should be filled in with defaults. This ensures backwards
         compatibility for adding new fields.
         """
-        
+
         # Setup
         game_node = chess.pgn.Game()
         json_string = ZugJsonTools.encode(partial_data_dict)
@@ -515,7 +475,7 @@ class TestZugGameNodeWrapper:
         # formulate expectations
         expected_data = MyZugData(**partial_data_dict)
         json_string = ZugJsonTools.encode(expected_data.as_dict())
-        expected_comment = ZugStringTools.to_square_braces(json_string)        
+        expected_comment = ZugStringTools.to_square_braces(json_string)
 
         # Create the wrapper
         wrapper = MyZugGameNodeWrapper(game_node)
@@ -587,7 +547,7 @@ class TestZugRoot:
         }
         json_string = ZugJsonTools.encode(ZugRootData(**data_dict).as_dict())
         game_node.comment = ZugStringTools.to_square_braces(json_string)
-        
+
         root = ZugRoot(game_node)
 
         # Form the expected comment after update
@@ -708,7 +668,7 @@ class TestZugSolution:
             last_study_date=YESTERDAY,
             status=ZugSolutionStatuses.UNLEARNED,
             failures=0,
-            successes=0,            
+            successes=0,
         )
         solution_node.comment = solution_data.as_string()
 
@@ -752,7 +712,7 @@ class TestZugSolution:
             last_study_date=PAST_EPOCH,
             status=ZugSolutionStatuses.LEARNED,
             failures=0,
-            successes=1,            
+            successes=1,
         )
         solution_node.comment = solution_data.as_string()
 
@@ -774,7 +734,7 @@ class TestZugSolution:
         # Check the results
         assert solution.data == expected_data
         assert solution.game_node.comment == expected_comment
-        root.decrement_learning_remaining.assert_not_called()        
+        root.decrement_learning_remaining.assert_not_called()
 
     def test_forgotten(self, solution_node, root):
         """
@@ -799,7 +759,7 @@ class TestZugSolution:
         # Describe expected data
         expected_data = ZugSolutionData(
             due_date=TODAY,
-            last_study_date=PAST_EPOCH,            
+            last_study_date=PAST_EPOCH,
             failures=1,
             status=ZugSolutionStatuses.UNLEARNED,
             successes=1,

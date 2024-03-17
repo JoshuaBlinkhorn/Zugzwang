@@ -13,24 +13,21 @@ import chess
 # 2. It would be nice to do perspective.switch(); i.e. let's have a class ZugColour
 #    and ZugBlack and ZugWhite as instances, which support that method.
 
-class ZugColours():
+
+class ZugColours:
     WHITE = True
     BLACK = False
-    
-
-class ZugSolutionStatuses():
-    LEARNED = 'LEARNED'
-    UNLEARNED = 'UNLEARNED'
 
 
-class ZugPieces():
+class ZugSolutionStatuses:
+    LEARNED = "LEARNED"
+    UNLEARNED = "UNLEARNED"
+
+
+class ZugPieces:
     KING = chess.KING
     QUEEN = chess.QUEEN
     ROOK = chess.ROOK
     BISHOP = chess.BISHOP
-    KNIGHT = chess.KNIGHT    
+    KNIGHT = chess.KNIGHT
     PAWN = chess.PAWN
-
-
-
-

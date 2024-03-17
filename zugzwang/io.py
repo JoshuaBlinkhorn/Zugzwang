@@ -23,13 +23,12 @@ class IOManager(abc.ABC):
 
 
 class DefaultIOManager(IOManager):
-
     def __init__(self):
         self._groups: Dict[Group, pathlib.Path] = {}
 
     def register_group(self, group: Group, path: pathlib.Path):
         self._groups[group] = path
-    
+
     def read_meta(self, tabia: Tabia) -> str:
         with open(self._meta_path(tabia)) as fp:
             string = fp.read()
@@ -46,6 +45,6 @@ class DefaultIOManager(IOManager):
 
     def _meta_path(self, tabia: Tabia) -> pathlib.Path:
         return self._groups[tabia.parent] / (tabia.name + ".json")
-    
+
     def _pgn_path(self, tabia: Tabia) -> pathlib.Path:
         return self._groups[tabia.parent] / (tabia.name + ".pgn")

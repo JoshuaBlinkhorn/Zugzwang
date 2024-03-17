@@ -10,14 +10,16 @@ from zugzwang.dates import ZugDates
 # For test files, we provide the function epoch_shift(), which returns a datetime.date
 # relative to EPOCH.
 
-EPOCH = datetime.date(2000,1,1)
+EPOCH = datetime.date(2000, 1, 1)
+
 
 def epoch_shift(shift: int):
     return EPOCH + datetime.timedelta(days=shift)
 
+
 @pytest.fixture(autouse=True)
 def mock_today(monkeypatch):
     def mock_today():
-        return EPOCH    
-    monkeypatch.setattr(ZugDates, '_today', mock_today)
+        return EPOCH
 
+    monkeypatch.setattr(ZugDates, "_today", mock_today)

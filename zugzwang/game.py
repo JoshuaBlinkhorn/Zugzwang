@@ -1,5 +1,5 @@
 # Python's workaround to annotate method's return type as enclosing class
-from __future__ import annotations  
+from __future__ import annotations
 
 import chess.pgn
 import datetime
@@ -16,20 +16,24 @@ from zugzwang.tools import (
     ZugJsonDecodeError,
 )
 
+
 class ZugRootError(ValueError):
     pass
-    
+
+
 class ZugDataError(Exception):
     pass
-    
+
+
 class ZugDataDecodeError(ZugDataError):
     pass
-    
+
+
 class ZugDataFieldError(ZugDataError):
     pass
-    
 
-class ZugDefaults():
+
+class ZugDefaults:
     LEARNING_REMAINING = 10
     LEARNING_LIMIT = 10
     RECALL_FACTOR = 2.0
@@ -38,22 +42,21 @@ class ZugDefaults():
 
 
 class ZugData:
-
     def __init__(self):
         pass
-            
+
     def __eq__(self, other: ZugData):
         return self.as_dict() == other.as_dict()
 
     def update(self, update_dict) -> None:
         if not set(update_dict.keys()) <= set(self.__dict__.keys()):
             raise ZugDataFieldError(
-                'attempted to update data dict with unrecognised key'
+                "attempted to update data dict with unrecognised key"
             )
         self.__dict__.update(update_dict)
 
     def as_dict(self) -> Dict[str, Any]:
-        is_private = lambda key: key.startswith('_')
+        is_private = lambda key: key.startswith("_")
         return {key: val for key, val in self.__dict__.items() if not is_private(key)}
 
     def as_string(self) -> Dict[str, Any]:
@@ -64,34 +67,35 @@ class ZugData:
     def from_string(cls, zug_string) -> ZugData:
         # Type check
         if not isinstance(zug_string, str):
-            raise TypeError(f'{zug_string} is not a string.')
+            raise TypeError(f"{zug_string} is not a string.")
 
         # Convert the string to json
         try:
             json_string = ZugStringTools.to_curly_braces(zug_string)
         except ZugStringDelimiterError:
-            raise ZugDataDecodeError(f'Bad delimiters in this string: {zug_string}')
+            raise ZugDataDecodeError(f"Bad delimiters in this string: {zug_string}")
 
         # Convert to a dictionary
         try:
             return cls(**ZugJsonTools.decode(json_string))
         except ZugJsonDecodeError:
-            raise ZugDataDecodeError(f'Invalid string: {zug_string}')
+            raise ZugDataDecodeError(f"Invalid string: {zug_string}")
 
     @classmethod
     def from_dict(cls, kwargs) -> ZugData:
         return cls(**kwargs)
 
+
 class ZugRootData(ZugData):
     def __init__(
-            self,
-            perspective: bool = ZugColours.WHITE,
-            last_access: datetime.date = None,
-            learning_remaining: int = ZugDefaults.LEARNING_REMAINING,
-            learning_limit: int = ZugDefaults.LEARNING_LIMIT,
-            recall_factor: float = ZugDefaults.RECALL_FACTOR,
-            recall_radius: float = ZugDefaults.RECALL_RADIUS,
-            recall_max: int = ZugDefaults.RECALL_MAX
+        self,
+        perspective: bool = ZugColours.WHITE,
+        last_access: datetime.date = None,
+        learning_remaining: int = ZugDefaults.LEARNING_REMAINING,
+        learning_limit: int = ZugDefaults.LEARNING_LIMIT,
+        recall_factor: float = ZugDefaults.RECALL_FACTOR,
+        recall_radius: float = ZugDefaults.RECALL_RADIUS,
+        recall_max: int = ZugDefaults.RECALL_MAX,
     ):
         self.perspective = perspective
         self.last_access = ZugDates.today() if last_access is None else last_access
@@ -100,16 +104,16 @@ class ZugRootData(ZugData):
         self.recall_factor = recall_factor
         self.recall_radius = recall_radius
         self.recall_max = recall_max
-        
+
 
 class ZugSolutionData(ZugData):
     def __init__(
-            self,
-            status: str = ZugSolutionStatuses.UNLEARNED,
-            last_study_date: datetime.date = None,
-            due_date: datetime.date = None,
-            successes: int = 0,
-            failures: int = 0,
+        self,
+        status: str = ZugSolutionStatuses.UNLEARNED,
+        last_study_date: datetime.date = None,
+        due_date: datetime.date = None,
+        successes: int = 0,
+        failures: int = 0,
     ):
         self.status = status
         self.last_study_date = (
@@ -117,7 +121,7 @@ class ZugSolutionData(ZugData):
         )
         self.due_date = ZugDates.yesterday() if due_date is None else due_date
         self.successes = successes
-        self.failures = failures        
+        self.failures = failures
 
 
 class ZugGameNodeWrapperError(Exception):
@@ -128,36 +132,35 @@ class ZugGameNodeWrapper:
     """Abstract base class for wrapping chess nodes with custom functionality."""
 
     _data_class = ZugData
-    
+
     def __init__(self, game_node: chess.pgn.GameNode):
 
         # Set up the data
-        if game_node.comment == '':
+        if game_node.comment == "":
             data = self._data_class()
         else:
             try:
                 data = self._data_class.from_string(game_node.comment)
             except ZugDataDecodeError:
-                raise ZugGameNodeWrapperError(f'Cannot decode {game_node.comment}')
+                raise ZugGameNodeWrapperError(f"Cannot decode {game_node.comment}")
 
         # update the node comment
         # TODO: is this always necessary? Maybe only when game_node.comment was
         # the empty string above
-        game_node.comment = data.as_string()    
-            
+        game_node.comment = data.as_string()
+
         # assign members
         self._data = data
         self._game_node = game_node
-        
-    
+
     @property
     def game_node(self):
         return self._game_node
-        
+
     @property
     def data(self):
         return self._data
-        
+
     def _bind(self):
         # Synchronise the node's comment with the wrapper's data
         json_string = ZugJsonTools.encode(self._data.as_dict())
@@ -171,15 +174,15 @@ class ZugRoot(ZugGameNodeWrapper):
     @property
     def recall_radius(self):
         return self._data.recall_radius
-    
+
     @property
     def recall_factor(self):
         return self._data.recall_factor
-    
+
     @property
     def recall_max(self):
         return self._data.recall_max
-    
+
     def update(self) -> None:
         """
         Update the root's data.
@@ -201,7 +204,7 @@ class ZugRoot(ZugGameNodeWrapper):
             error_message = "cannot decrement zero 'learning_remaining'"
             raise ZugRootError(error_message)
         self._data.learning_remaining -= 1
-        self._bind()        
+        self._bind()
 
     def has_learning_capacity(self) -> bool:
         return self._data.learning_remaining > 0
@@ -213,11 +216,11 @@ class ZugRoot(ZugGameNodeWrapper):
         root = ZugRoot(game)
         root._set_default_solution_data()
         return root
-    
+
     def _set_default_solution_data(self):
         solution_data = ZugSolutionData()
         for solution in self.solution_nodes():
-            solution.comment = solution_data.make_comment()                
+            solution.comment = solution_data.make_comment()
 
     def reset_training_data(self):
         self._data = ZugRootData(perspective=self._data.perspective)
@@ -236,55 +239,55 @@ class ZugSolution(ZugGameNodeWrapper):
     @property
     def data(self):
         return self._data
-        
+
     @property
     def node(self):
         return self._game_node
-        
+
     @property
     def root(self):
         return self._root
 
     def is_learned(self):
         return self._data.status == ZugSolutionStatuses.LEARNED
-        
+
     def is_due(self):
         return self.is_learned() and self._data.due_date <= ZugDates.today()
-        
+
     def learned(self):
         self._root.decrement_learning_remaining()
         self._data.update(
             {
-                'status': ZugSolutionStatuses.LEARNED,
-                'last_study_date': ZugDates.today(),
-                'due_date': ZugDates.tomorrow(),
-                'successes': self._data.successes + 1,
+                "status": ZugSolutionStatuses.LEARNED,
+                "last_study_date": ZugDates.today(),
+                "due_date": ZugDates.tomorrow(),
+                "successes": self._data.successes + 1,
             }
         )
-        self._bind()        
-        
+        self._bind()
+
     def recalled(self):
         next_due_date = ZugDates.due_date(
             self._data.last_study_date,
             self._data.due_date,
             self._root.recall_radius,
             self._root.recall_factor,
-            self._root.recall_max,            
+            self._root.recall_max,
         )
         self._data.update(
             {
-                'successes': self._data.successes + 1,
-                'last_study_date': ZugDates.today(),
-                'due_date': next_due_date,
+                "successes": self._data.successes + 1,
+                "last_study_date": ZugDates.today(),
+                "due_date": next_due_date,
             }
         )
         self._bind()
-        
+
     def forgotten(self):
         self._data.update(
             {
-                'status': ZugSolutionStatuses.UNLEARNED,                
-                'failures': self._data.failures + 1,
+                "status": ZugSolutionStatuses.UNLEARNED,
+                "failures": self._data.failures + 1,
             }
         )
         self._bind()
@@ -292,10 +295,10 @@ class ZugSolution(ZugGameNodeWrapper):
     def remembered(self):
         self._data.update(
             {
-                'status': ZugSolutionStatuses.LEARNED,
-                'last_study_date': ZugDates.today(),
-                'due_date': ZugDates.tomorrow(),
-                'successes': self._data.successes + 1,
+                "status": ZugSolutionStatuses.LEARNED,
+                "last_study_date": ZugDates.today(),
+                "due_date": ZugDates.tomorrow(),
+                "successes": self._data.successes + 1,
             }
         )
         self._bind()

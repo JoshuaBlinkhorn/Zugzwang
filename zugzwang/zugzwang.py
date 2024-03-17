@@ -14,23 +14,23 @@ from zugzwang.scenes import Scene
 from zugzwang.menus import GroupScene, TabiaScene
 from zugzwang.training import TrainingSpec, TrainingSession
 
+
 def is_excluded(filename: str):
     return "." in filename and not filename.endswith(".pgn")
 
+
 def search_dir(
-        path: pathlib.Path,
-        parent: Group,
+    path: pathlib.Path,
+    parent: Group,
 ) -> List[Item]:
-    
+
     names: List[str] = [
-        name
-        for name in sorted(os.listdir(path))
-        if not is_excluded(name)
+        name for name in sorted(os.listdir(path)) if not is_excluded(name)
     ]
     items: List[Item] = []
 
     for name in names:
-        if name.endswith('.pgn'):
+        if name.endswith(".pgn"):
             tabia = Tabia(
                 name=name[:-4],
                 parent=parent,
@@ -45,14 +45,15 @@ def search_dir(
                 parent=parent,
             )
             items.append(group)
-    
+
     return items
 
+
 def initialise_group(
-        name: str,
-        path: pathlib.Path,
-        io_manager: DefaultIOManager,
-        parent: Optional[Group]=None      
+    name: str,
+    path: pathlib.Path,
+    io_manager: DefaultIOManager,
+    parent: Optional[Group] = None,
 ) -> Group:
     group = Group(
         name=name,
@@ -64,11 +65,13 @@ def initialise_group(
 
     return group
 
+
 def quit_scene():
     pass
 
-if __name__ == '__main__':
-    data_path = pathlib.Path(config['user_data'])
+
+if __name__ == "__main__":
+    data_path = pathlib.Path(config["user_data"])
     io_manager = DefaultIOManager()
     user_data = initialise_group("UserData", data_path, io_manager)
     user_data.update_stats()

@@ -8,12 +8,13 @@ from zugzwang.view import (
     ZugLogoView,
 )
 
+
 class ZugScene:
     def __init__(
-            self,
-            display: ZugDisplay,
-            model: ZugSceneModel,            
-            view: ZugSceneView,
+        self,
+        display: ZugDisplay,
+        model: ZugSceneModel,
+        view: ZugSceneView,
     ):
         self._display = display
         self._model = model
@@ -28,17 +29,17 @@ class ZugScene:
                 if event.button == 1:
                     self._left_click_registered(vid)
                 if event.button == 3:
-                    self._right_click_registered(vid)                        
+                    self._right_click_registered(vid)
 
     def _left_click_registered(self, view_id: str):
         print("left_click:", view_id)
 
     def _right_click_registered(self, view_id: str):
-        print("right_click:", view_id)        
+        print("right_click:", view_id)
 
     def _update(self):
         self._view.update(self._model)
-                    
+
     def _draw(self):
         self._display.get_screen().blit(self._view.draw(), (0, 0))
 
@@ -57,14 +58,14 @@ class ZugSceneView(ZugViewGroup):
     # They should be passed in by the scene's owner
     _WIDTH = None
     _HEIGHT = None
-    
+
     def __init__(self, width: int, height: int):
         super().__init__()
 
         # dimensions
         self._width = width
         self._height = height
-        
+
         # logo
         item_id = "logo"
         position = (10, 10)
@@ -72,7 +73,7 @@ class ZugSceneView(ZugViewGroup):
 
     def get_width(self):
         return self._width
-    
+
     def get_height(self):
         return self._width
 
