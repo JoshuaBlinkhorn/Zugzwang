@@ -29,6 +29,14 @@ class Result(str, enum.Enum):
     FAILURE = 'FAILURE'
 
 
+class MetadataError(Exception):
+    pass
+
+
+class IOError(Exception):
+    pass
+
+
 @dataclasses.dataclass
 class Metadata:
     perspective: chess.Color = chess.WHITE
@@ -43,12 +51,20 @@ class Metadata:
 
     @classmethod
     def from_json(cls, json_str: str) -> Metadata:
-        dict_ = json.loads(json_str)
+        try:
+            dict_ = json.loads(json_str)
+        except json.decoder.JSONDecodeError as exc:
+            raise MetadataError()
         dict_ = {key: cls._inverse(val) for key, val in dict_.items()}
         return cls(**dict_)
 
     def as_json(self) -> str:
-        return json.dumps(self.asdict(), default=self._default)
+        string = json.dumps(
+            dataclasses.asdict(self),
+            default=self._default,
+            indent=2,
+        )
+        return string + '\n'
 
     def success(self):
         self.status = Status.LEARNED        
@@ -194,9 +210,16 @@ class Tabia(Item):
         self._name = name
         self._parent = parent
         self._game = io_manager.read(self)
-        self._metadata = io_manager.read_meta(self) or Metadata(perspective=not self._game.board().turn)
+        self._metadata = io_manager.read_meta(self) or self._default_metadata()
         self._stats = None
 
+    @property
+    def metadata(self) -> Metadata:
+        return self._metadata
+
+    def flip_perspective(self):
+        self._metadata.perspective = not self._metadata.perspective
+        
     def tabias(self) -> Generator[Tabia, None, None]:
         def gen():
             yield self
@@ -231,6 +254,15 @@ class Tabia(Item):
         stats.total = len(self.solutions())
         return stats
 
+    def _default_metadata(self) -> Metadata:
+        if self._game.headers["White"] == 'p':
+            perspective = chess.WHITE
+        elif self._game.headers["Black"] == 'p':
+            perspective = chess.BLACK
+        else:
+            perspective = not self._game.board().turn
+        return Metadata(perspective=perspective)
+
 
 class IOManager(abc.ABC):
     @abc.abstractmethod
@@ -238,7 +270,7 @@ class IOManager(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def write_meta(self, tabia: Tabia, metadata: Metadata) -> None:
+    def write_meta(self, tabia: Tabia) -> None:
         pass
 
     @abc.abstractmethod
@@ -257,11 +289,15 @@ class DefaultIOManager(IOManager):
             return None
         with open(meta_path) as fp:
             data = fp.read()
-        return Metadata.from_json(data)
+        try:
+            meta = Metadata.from_json(data)
+        except MetadataError as exc:
+            raise IOError(f"Cannot read metadata for {tabia.name}") from exc
+        return meta
 
-    def write_meta(self, tabia: Tabia, metadata: Metadata) -> None:
-        with open(self._meta_path(), "w") as fp:
-            fp.write(metadata.as_json())
+    def write_meta(self, tabia: Tabia) -> None:
+        with open(self._meta_path(tabia), "w") as fp:
+            fp.write(tabia.metadata.as_json())
 
     def read(self, tabia: Tabia) -> chess.pgn.Game:
         with open(self._pgn_path(tabia)) as fp:
@@ -272,6 +308,8 @@ class DefaultIOManager(IOManager):
         self._groups[group] = path
     
     def _meta_path(self, tabia: Tabia) -> pathlib.Path:
+        if not isinstance(tabia, Tabia):
+            import pdb; pdb.set_trace()
         return self._groups[tabia.parent] / (tabia.name + ".json")
     
     def _pgn_path(self, tabia: Tabia) -> pathlib.Path:

@@ -20,6 +20,11 @@ from zugzwang.problem import Problem, Line
 from zugzwang.gui import ZugGUI
 from zugzwang.scenes import Scene, SceneResult
 
+# TODO: assess use of io_manager
+# Having it pushed all the way into Trainer.train() feels wrong
+# Training session return the trained tabias, and the caller saves those?
+
+
 class TrainingMode(str, enum.Enum):
     TABIAS = "TABIA"
     SCHEDULED = "SCHEDULED"
@@ -63,17 +68,17 @@ def _get_trainer(options: TrainingOptions) -> Trainer:
 def _get_tabias(item: Item, options: TrainingOptions) -> List[Tabia]:
     if isinstance(item, Tabia):
         return [item]
-    tabias = item.tabias()
     if options.mode == TrainingMode.SCHEDULED:
-        due_tabias = [tabia for tabia in tabias if tabia.is_due()]
-        new_tabias = [tabia for tabia in tabias if not tabia.is_learned()]
+        due_tabias = [tabia for tabia in item.tabias() if tabia.is_due()]
+        new_tabias = [tabia for tabia in item.tabias() if not tabia.is_learned()]
         tabias = due_tabias + new_tabias[:config['learning_limit']]
     return tabias
 
 
 def train(
         tabias: List[Tabias],
-        options: TrainingOptions
+        options: TrainingOptions,
+        io_manager: IOManager,
 ) -> TrainingStatus:
     trainer = _get_trainer(options)
     gui = ZugGUI()
@@ -84,11 +89,15 @@ def train(
     return TrainingStatus.COMPLETED
 
 
-def train(spec: TrainingSpec, gui: ZugGUI) -> TrainingResult:
+def train(
+        spec: TrainingSpec,
+        gui: ZugGUI,
+        io_manager: IOManager,
+) -> TrainingResult:
     trainer = _get_trainer(spec.options)
     tabias = _get_tabias(spec.item, spec.options)
 
-    trainer.train(tabias, gui)
+    trainer.train(tabias, gui, io_manager)    
 
     return TrainingStatus.COMPLETED
     
@@ -105,7 +114,14 @@ class Trainer(abc.ABC):
         self._options = options or TrainingOptions()
         self._queue = Queue(insertion_index=3, insertion_radius=1)
 
-    def train(self, tabias: List[Tabia], gui: ZugGui) -> TrainingResult:
+    def train(
+            self,
+            tabias: List[Tabia],
+            gui: ZugGui,
+            io_manager: IOManager,
+            
+    ) -> TrainingResult:
+        _ = io_manager
         self._queue.empty()    
         self._fill_queue(tabias)
         return self._result_map[self._queue.play(gui)]
@@ -140,21 +156,28 @@ class TabiaTrainer(Trainer):
         self._problem_trainer = ProblemTrainer(options)        
 
 
-    def train(self, tabias: List[Tabia], gui: ZugGUI) -> TrainingResult:
+    def train(
+            self,
+            tabias: List[Tabia],
+            gui: ZugGUI,
+            io_manager: IOManager,
+    ) -> TrainingResult:
         if self._options.randomise:
             random.shuffle(tabias)
         for tabia in tabias:
             res = TrainingResult.SUCCESS
-            line_res = self._line_trainer.train([tabia], gui)
+            line_res = self._line_trainer.train([tabia], gui, io_manager)
+
             if line_res == QueueResult.QUIT:
                 return TrainingResult.INCOMPLETE
-            prob_res = self._problem_trainer.train([tabia], gui)
+            prob_res = self._problem_trainer.train([tabia], gui, io_manager)
             if prob_res == QueueResult.QUIT:
                 return TrainingResult.INCOMPLETE
             if line_res == QueueResult.FAILURE or prob_res == QueueResult.FAILURE:
                 res = TrainingResult.FAILURE
 
             self._record_attempt(tabia, res)
+            io_manager.write_meta(tabia)
 
     def _record_attempt(self, tabia: Tabia, result: TrainingResult) -> None:
         if result == TrainingResult.SUCCESS:
@@ -172,6 +195,9 @@ class TrainingSession(Scene):
         self._spec = spec
         self._gui = gui
     
-    def go(self) -> Optional[SceneResult]:
-        train(self._spec, self._gui)
+    def go(self, io_manager: IOManager) -> Optional[SceneResult]:
+        train(self._spec, self._gui, io_manager)
         return None
+
+    def kill(self, io_manager: IOManager) -> None:
+        pass
