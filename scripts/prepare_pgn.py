@@ -22,28 +22,27 @@ target_dir = sys.argv[1]
 pgn_files = sorted(os.listdir(target_dir))
 for filename in pgn_files:
 
-    if '-STUB' not in filename:
+    if "-STUB" not in filename:
         continue
 
     input_filename = os.path.join(target_dir, filename)
-    output_filename = os.path.join(target_dir, filename.replace('-STUB',''))
-    with open(input_filename) as pgn_file, open(output_filename, 'w') as output_file:
+    output_filename = os.path.join(target_dir, filename.replace("-STUB", ""))
+    with open(input_filename) as pgn_file, open(output_filename, "w") as output_file:
 
         game = chess.pgn.read_game(pgn_file)
-        while game is not None:            
+        while game is not None:
             # look to set the perspective from the game header
             # override perspective if found
-            if game.headers['White'] == 'p':
+            if game.headers["White"] == "p":
                 perspective = ZugColours.WHITE
-                print('Set perspective = WHITE based on game header')
-            if game.headers['Black'] == 'p':
+                print("Set perspective = WHITE based on game header")
+            if game.headers["Black"] == "p":
                 perspective = ZugColours.BLACK
-                print('Set perspective = BLACK based on game header')
+                print("Set perspective = BLACK based on game header")
 
             # set the root data on the root comment
             root_data = ZugRootData(perspective=perspective)
             game.comment = root_data.as_string()
-            
-            print(game, '\n', file=output_file)
+
+            print(game, "\n", file=output_file)
             game = chess.pgn.read_game(pgn_file)
-    

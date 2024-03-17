@@ -245,7 +245,7 @@ What will the interface to this class look like?
 2. Update their statuses if necessary:
    - what constitutes necessity here? perhaps that the last access date is in the past
    - perhaps we can assume that a training session always leaves the statuses in the
-     correct state. This is basically NEW vs INACTIVE. REVIEW status doesn't change 
+     correct state. This is basically NEW vs INACTIVE. REVIEW status doesn't change
 
 Perhaps it's actually simpler if there are only two statuses in the PGN,
 INACTIVE and REVIEW.
@@ -361,7 +361,7 @@ Reading and writing should be indpendent of updating.
 That is, updating should take place on the python objects.
 
 A chapter should do the following:
-1. initialise a ZugRoot from 
+1. initialise a ZugRoot from
 
 ~~~~~~~~~~~~~~~~
 2022-07-09 14:56
@@ -1171,7 +1171,7 @@ So which cases do we want to check?
 
 1) A completely empty Chapter - if we can even create one?
 2) A chapter with only one (non-trivial) game
-3) A chapter with multiple (non-trivial) games 
+3) A chapter with multiple (non-trivial) games
 
 I'm not sure we need to do anything beyond that.
 Do we need to check that a naked PGN is really turned into a chapter?

@@ -7,18 +7,19 @@ from zugzwang.display import ZugDisplay
 from zugzwang.scene import (
     ZugScene,
     ZugSceneView,
-    ZugSceneModel,    
+    ZugSceneModel,
 )
 from zugzwang.view import (
     ZugTextView,
     ZugViewGroup,
 )
 
+
 class ZugTableScene(ZugScene):
     _CHILD_SCENE_TYPE = None
 
     def __init__(self, display: ZugDisplay, group: ZugGroup):
-        model = ZugTableModel(group)    
+        model = ZugTableModel(group)
         width = display.get_screen().get_width()
         height = display.get_screen().get_height()
         view = ZugTableView(width, height)
@@ -27,11 +28,11 @@ class ZugTableScene(ZugScene):
 
     def _left_click_registered(self, view_id: str):
         print("CLICKED:", view_id)
-        if view_id.startswith('table-item-'):
-            path = view_id.split('.')
-            index = int(path[0].split('-')[-1])
+        if view_id.startswith("table-item-"):
+            path = view_id.split(".")
+            index = int(path[0].split("-")[-1])
             field = path[1]
-            if field == 'edit':
+            if field == "edit":
                 group = self._model.get_children()[index]
                 self._load_next_scene(group)
 
@@ -41,7 +42,6 @@ class ZugTableScene(ZugScene):
 
 
 class ZugTableView(ZugSceneView):
-
     def __init__(self, width: int, height: int):
         super().__init__(width, height)
 
@@ -54,7 +54,7 @@ class ZugTableView(ZugSceneView):
         data = model.table_data()
 
         for index, row in enumerate(data):
-            item_id = f'table-item-{index}'            
+            item_id = f"table-item-{index}"
             pos = (left, top + (index * height))
             self._add_item(item_id, pos, ZugRowView(row))
 
@@ -64,20 +64,20 @@ class ZugTableModel(ZugSceneModel):
         self._group = group
 
     def table_data(self):
-        data = []        
+        data = []
         for item in self._group.children:
             stats = item.stats
             coverage = (stats.learned * 100) // stats.total if stats.total > 0 else 0
-            training_available = True if stats.new + stats.due > 0 else False            
+            training_available = True if stats.new + stats.due > 0 else False
             data.append(
                 {
-                    'name': item.name,
-                    'coverage': coverage,
-                    'training_available': training_available,
-                    'new': stats.new,
-                    'due': stats.due,
-                    'learned': stats.learned,
-                    'total': stats.total,
+                    "name": item.name,
+                    "coverage": coverage,
+                    "training_available": training_available,
+                    "new": stats.new,
+                    "due": stats.due,
+                    "learned": stats.learned,
+                    "total": stats.total,
                 }
             )
         return data
@@ -85,11 +85,11 @@ class ZugTableModel(ZugSceneModel):
     def get_children(self):
         return self._group.children
 
-        
+
 class ZugRowView(ZugViewGroup):
     _HEIGHT = 40
     _WIDTH = 1000
-    
+
     def __init__(self, row: Dict[str, Any]):
         super().__init__()
 
@@ -101,8 +101,8 @@ class ZugRowView(ZugViewGroup):
         # name
         item_id = "name"
         position = (position[0] + ZugCoverageView.get_width(), 0)
-        self._add_item(item_id, position, ZugItemNameView())        
-        
+        self._add_item(item_id, position, ZugItemNameView())
+
         # new
         item_id = "new"
         position = (position[0] + ZugItemNameView.get_width(), 0)
@@ -140,11 +140,10 @@ class ZugRowView(ZugViewGroup):
 
         self.update(row)
 
-    def update(self, row: Dict[str: Any]):
+    def update(self, row: Dict[str:Any]):
         # remaining captions
         for item in ("coverage", "name", "new", "due", "learned", "total"):
             self._items[item].set_caption(str(row[item]))
-
 
 
 class ZugCoverageView(ZugTextView):
@@ -152,7 +151,7 @@ class ZugCoverageView(ZugTextView):
     _HEIGHT = ZugRowView.get_height()
 
     def set_caption(self, caption: str):
-        self._caption = caption + '%'
+        self._caption = caption + "%"
 
 
 class ZugItemNameView(ZugTextView):
@@ -170,29 +169,29 @@ class ZugPositionTrainingButton(ZugTextView):
     _HEIGHT = ZugRowView.get_height()
 
     def __init__(self):
-        super().__init__(caption='P')
+        super().__init__(caption="P")
 
 
 class ZugTreeTrainingButton(ZugTextView):
     _WIDTH = 50
     _HEIGHT = ZugRowView.get_height()
-    
+
     def __init__(self):
-        super().__init__(caption='T')
+        super().__init__(caption="T")
 
 
 class ZugEditButton(ZugTextView):
     _WIDTH = 50
     _HEIGHT = ZugRowView.get_height()
-    
+
     def __init__(self):
-        super().__init__(caption='E')
+        super().__init__(caption="E")
 
 
 class DuplicateViewIdError(ValueError):
     pass
 
-        
+
 class ZugTreeEditor(ZugScene):
     def __init__(self, display: ZugDisplay, chapter: ZugChapter):
         pass
@@ -206,11 +205,11 @@ class ZugCategoryScene(ZugTableScene):
     # so the type hints and nomenclature are wrong
     # but we'd get the same behaviour if we didn't override
     def _left_click_registered(self, view_id: str):
-        if view_id.startswith('table-item-'):
-            path = view_id.split('.')
-            index = int(path[0].split('-')[-1])
+        if view_id.startswith("table-item-"):
+            path = view_id.split(".")
+            index = int(path[0].split("-")[-1])
             field = path[1]
-            if field == 'edit':
+            if field == "edit":
                 chapter = self._model.get_children()[index]
                 self._load_next_scene(chapter)
 
@@ -225,5 +224,3 @@ class ZugCollectionScene(ZugTableScene):
 
 class ZugInitialScene(ZugTableScene):
     _CHILD_SCENE_TYPE = ZugCategoryScene
-
-

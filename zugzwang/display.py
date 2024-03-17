@@ -6,10 +6,10 @@ import random
 import os
 from typing import Dict, List, Any
 
-pygame.init()    
+pygame.init()
+
 
 class ZugDisplay:
-
     def __init__(self):
         self._scenes = []
         self._scene = None
@@ -55,5 +55,3 @@ class ZugDisplay:
             # limit redraw rate to 30 fps
             clock.tick(30)
             pygame.display.flip()
-
-

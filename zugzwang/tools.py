@@ -3,6 +3,7 @@ import chess
 import json
 import datetime
 
+
 class ZugJsonError(Exception):
     pass
 
@@ -16,21 +17,20 @@ class ZugJsonEncodeError(ZugJsonError):
 
 
 class ZugJsonTools:
-    
     @staticmethod
     def _json_conversion(value):
         # convert datetime.date to ISO date string
-        # leave all other values unchanged        
+        # leave all other values unchanged
         if isinstance(value, datetime.date):
             return value.isoformat()
-        raise TypeError('Cannot serialise python object in JSON.')
+        raise TypeError("Cannot serialise python object in JSON.")
 
     @classmethod
     def encode(cls, data_dict):
         """Encode a dictionary of data as a json string"""
         if not isinstance(data_dict, dict):
-            raise ZugJsonEncodeError('Non-dictionary is not decodable')
-        
+            raise ZugJsonEncodeError("Non-dictionary is not decodable")
+
         return json.dumps(data_dict, default=cls._json_conversion)
 
     @staticmethod
@@ -39,10 +39,10 @@ class ZugJsonTools:
         try:
             data_dict = json.loads(json_string)
         except json.JSONDecodeError:
-            raise ZugJsonDecodeError('String is not decodeable')
+            raise ZugJsonDecodeError("String is not decodeable")
 
         if not isinstance(data_dict, dict):
-            raise ZugJsonDecodeError('Decoded object is not a dictionary')
+            raise ZugJsonDecodeError("Decoded object is not a dictionary")
 
         for key, val in data_dict.items():
             # Convert ISO format data strings into datetime.date
@@ -50,7 +50,7 @@ class ZugJsonTools:
                 data_dict[key] = datetime.date.fromisoformat(val)
             except (TypeError, ValueError):
                 pass
-            
+
         return data_dict
 
 
@@ -63,32 +63,31 @@ class ZugStringDelimiterError(ZugStringError):
 
 
 class ZugStringTools:
-    
     @staticmethod
     def to_square_braces(string: str) -> str:
         if not isinstance(string, str):
-            raise TypeError(f'{string} is not a string.')
+            raise TypeError(f"{string} is not a string.")
 
-        if not (string.startswith('{') and string.endswith('}')):
+        if not (string.startswith("{") and string.endswith("}")):
             raise ZugStringDelimiterError(
-                f'String not delimited by curly braces: {string}'
+                f"String not delimited by curly braces: {string}"
             )
-        
+
         return string.replace("{", "[").replace("}", "]")
 
     @staticmethod
     def to_curly_braces(string: str) -> str:
         if not isinstance(string, str):
-            raise TypeError(f'{string} is not a string.')
+            raise TypeError(f"{string} is not a string.")
 
-        if not (string.startswith('[') and string.endswith(']')):
+        if not (string.startswith("[") and string.endswith("]")):
             raise ZugStringDelimiterError(
-                f'String not delimited by square braces: {string}'
+                f"String not delimited by square braces: {string}"
             )
-        
+
         return string.replace("[", "{").replace("]", "}")
 
-    
+
 class ZugChessToolsError(Exception):
     pass
 
@@ -98,20 +97,14 @@ class ZugChessToolsParseError(ZugChessToolsError):
 
 
 class ZugChessTools:
-
     @classmethod
     def get_solution_nodes(
-            cls,
-            game: chess.pgn.Game,
-            perspective: bool
+        cls, game: chess.pgn.Game, perspective: bool
     ) -> List[chess.pgn.ChildNode]:
         # define a list to store solutions and a recursive search function
         solutions = []
-        
-        def search_node(
-                node: chess.pgn.GameNode,
-                solution_perspective: bool
-        ):
+
+        def search_node(node: chess.pgn.GameNode, solution_perspective: bool):
             nonlocal solutions
             player_to_move = node.board().turn
             if player_to_move != solution_perspective:
@@ -121,7 +114,7 @@ class ZugChessTools:
                     solutions.append(node)
                 # work recursively on all children
                 for problem in node.variations:
-                    search_node(problem, solution_perspective)                
+                    search_node(problem, solution_perspective)
             else:
                 # the node is a problem
                 # if it has no variations, it's a hanging problem
@@ -138,7 +131,7 @@ class ZugChessTools:
                 # work recursively on blunders with reversed perspective
                 blunders = [node for node in replies if node.nags == {2}]
                 for blunder in blunders:
-                    search_node(blunder, not solution_perspective)                    
+                    search_node(blunder, not solution_perspective)
 
         # call it on the root node
         search_node(game, perspective)
@@ -147,20 +140,18 @@ class ZugChessTools:
 
     @classmethod
     def get_lines(
-            cls,
-            game: chess.pgn.Game,
-            perspective: bool
+        cls, game: chess.pgn.Game, perspective: bool
     ) -> List[chess.pgn.GameNode]:
 
-        # define an empty list to store the lines and a recursive search function        
+        # define an empty list to store the lines and a recursive search function
         lines = []
 
         def is_blunder(node: chess.pgn.GameNode):
             return 2 in node.nags
-                       
+
         def has_solution(problem: chess.pgn.GameNode):
             return any(not is_blunder(child) for child in problem.variations)
-        
+
         def is_line_end(solution: chess.pgn.GameNode):
             # determining whether a given node is the end of a line is quite complex
             # to illustrate: a solution S may have a child problem P, such that P
@@ -170,14 +161,14 @@ class ZugChessTools:
             # the simplest characterisation is: the line ends at a solution unless
             # there exists a child problem with a child solution
             return not any(has_solution(problem) for problem in solution.variations)
-        
+
         def search_node(
-                node: chess.pgn.GameNode,
-                solution_perspective: bool,
-                prefix: List[chess.pgn.GameNode]
+            node: chess.pgn.GameNode,
+            solution_perspective: bool,
+            prefix: List[chess.pgn.GameNode],
         ):
             # copy the prefix; necessary because otherwise all branches would modify
-            # the same prefix 
+            # the same prefix
             # it's easist to do this once, here at the top of the function
             prefix = prefix.copy()
             player_to_move = node.board().turn
@@ -185,7 +176,7 @@ class ZugChessTools:
                 # the node is a solution
                 # append it to the prefix if and only if it is not the root
                 if node != game:
-                    prefix.append(node)                
+                    prefix.append(node)
                 # if the line ends here, add it to the set of lines
                 # otherwise, work recursively on all children
                 if is_line_end(node):
@@ -212,10 +203,8 @@ class ZugChessTools:
                 blunders = [node for node in node.variations if node.nags == {2}]
                 for blunder in blunders:
                     search_node(blunder, not solution_perspective, [])
-        
+
         # call it on the root node
         search_node(game, perspective, [])
 
         return lines
-
-

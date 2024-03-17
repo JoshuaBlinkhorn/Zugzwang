@@ -10,13 +10,10 @@ from zugzwang.game import (
     ZugRootData,
     ZugSolutionData,
 )
-from zugzwang.constants import (
-    ZugSolutionStatuses,
-    ZugColours
-)
+from zugzwang.constants import ZugSolutionStatuses, ZugColours
 
 TEST_CATEGORY_PATH = os.path.join(
-    os.getcwd(), 'TestCollections/ExampleCollection/ChapterTestCHPs'
+    os.getcwd(), "TestCollections/ExampleCollection/ChapterTestCHPs"
 )
 
 # TODO
@@ -26,25 +23,25 @@ TEST_CATEGORY_PATH = os.path.join(
 # content. So we need to figure out how to make these processes backwards compatible,
 # as the .chp standard format will certainly expand.
 
-class TestZugChapter:
 
+class TestZugChapter:
     def test_constructor_empty_chp(self):
         """Sanity checks for opening an empty chapter."""
-        
-        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'empty.chp')
+
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, "empty.chp")
         chapter = ZugChapter(chp_filepath)
 
         expected_solutions = []
         expected_root_data = ZugRootData()
         expected_stats = ZugStats()
-        
+
         assert chapter.solutions == expected_solutions
         assert chapter.root.data == expected_root_data
         assert chapter.stats == expected_stats
-    
+
     def test_constructor_naked_chp(self):
-        
-        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'naked.chp')
+
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, "naked.chp")
         chapter = ZugChapter(chp_filepath)
 
         expected_solution_data = ZugSolutionData()
@@ -56,10 +53,10 @@ class TestZugChapter:
             assert solution.data == expected_solution_data
         assert chapter.root.data == expected_root_data
         assert chapter.stats == expected_stats
-    
+
     def test_constructor_incomplete_fields(self):
 
-        chp_filepath = os.path.join(TEST_CATEGORY_PATH, 'incomplete-fields.chp')
+        chp_filepath = os.path.join(TEST_CATEGORY_PATH, "incomplete-fields.chp")
         chapter = ZugChapter(chp_filepath)
 
         expected_solution_data = ZugSolutionData(status=ZugSolutionStatuses.LEARNED)
@@ -71,11 +68,11 @@ class TestZugChapter:
             assert solution.data == expected_solution_data
         assert chapter.root.data == expected_root_data
         assert chapter.stats == expected_stats
-    
+
     def test_init(self):
         # The constructor is sufficiently complex that it requires a unit test.
         pass
-    
+
     def test_update_stats(self):
         pass
 
@@ -84,7 +81,8 @@ class TestZugChapter:
 
 
 # These tests were considered redundant but they may be relevant to the Chapter class
-    
+
+
 class RedundantTests:
 
     # This should go into Chapter
@@ -117,4 +115,3 @@ class RedundantTests:
         # the root and solution should have default comments
         assert game.comment == ZugRootData().make_json()
         assert problem.comment == ZugSolutionData().make_json()
-

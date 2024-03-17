@@ -19,14 +19,15 @@ from zugzwang.tools import ZugChessTools, ZugJsonTools
 from zugzwang.dates import ZugDates
 from zugzwang import dates
 
+
 class Status(str, enum.Enum):
-    LEARNED = 'LEARNED'
-    UNLEARNED = 'UNLEARNED'
+    LEARNED = "LEARNED"
+    UNLEARNED = "UNLEARNED"
 
 
 class Result(str, enum.Enum):
-    SUCCESS = 'SUCCESS'
-    FAILURE = 'FAILURE'
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE"
 
 
 class MetadataError(Exception):
@@ -64,10 +65,10 @@ class Metadata:
             default=self._default,
             indent=2,
         )
-        return string + '\n'
+        return string + "\n"
 
     def success(self):
-        self.status = Status.LEARNED        
+        self.status = Status.LEARNED
         self.successes += 1
         self.last_study_date = dates.today()
         self.due_date = self._due_date()
@@ -80,10 +81,10 @@ class Metadata:
     @staticmethod
     def _default(value: Any) -> Any:
         # convert datetime.date to ISO date string
-        # leave all other values unchanged        
+        # leave all other values unchanged
         if isinstance(value, datetime.date):
             return value.isoformat()
-        raise TypeError('Cannot serialise python object in JSON.')
+        raise TypeError("Cannot serialise python object in JSON.")
 
     @classmethod
     def _inverse(cls, value: Any) -> Any:
@@ -93,21 +94,23 @@ class Metadata:
 
     @staticmethod
     def _is_date(string: str) -> bool:
-        if not len(parts := string.split('-')) == 3:
+        if not len(parts := string.split("-")) == 3:
             return False
-        if not all([
-            len(string) == 10,
-            len(parts[0]) == 4,
-            len(parts[1]) == 2,
-            len(parts[2]) == 2,
-            *[part.isdigit() for part in parts],
-        ]):
+        if not all(
+            [
+                len(string) == 10,
+                len(parts[0]) == 4,
+                len(parts[1]) == 2,
+                len(parts[2]) == 2,
+                *[part.isdigit() for part in parts],
+            ]
+        ):
             return False
         return True
-    
+
     @staticmethod
     def _to_date(date: str):
-        year, month, day = tuple(date.split('-'))
+        year, month, day = tuple(date.split("-"))
         return datetime.date(int(year), int(month), int(day))
 
     def _due_date(self) -> datetime.date:
@@ -116,7 +119,7 @@ class Metadata:
 
         if self.due_date is None:
             return dates.tomorrow()
-    
+
         # calculate the diff based on recall factor and radius
         previous_diff = (self.due_date - self.last_study_date).days
         absolute_diff = int(previous_diff * self.recall_factor)
@@ -128,11 +131,10 @@ class Metadata:
 
 
 class Item(abc.ABC):
-
     def __init__(
-            self,
-            name: str,
-            parent: Optional[Group] = None,
+        self,
+        name: str,
+        parent: Optional[Group] = None,
     ):
         self._name = name
         self._parent = parent
@@ -170,9 +172,9 @@ class Item(abc.ABC):
 
 class Group(Item):
     def __init__(
-            self,
-            name: str,
-            parent: Optional[Group]=None,
+        self,
+        name: str,
+        parent: Optional[Group] = None,
     ):
         self._name: str = name
         self._parent: Optional[Group] = parent
@@ -183,6 +185,7 @@ class Group(Item):
         def gen():
             for child in self._children:
                 yield from child.tabias()
+
         return gen()
 
     def _generate_stats(self):
@@ -200,12 +203,11 @@ class Group(Item):
 
 
 class Tabia(Item):
-
     def __init__(
-            self,
-            name: str,
-            parent: Group,
-            io_manager: IOManager,
+        self,
+        name: str,
+        parent: Group,
+        io_manager: IOManager,
     ):
         self._name = name
         self._parent = parent
@@ -219,10 +221,11 @@ class Tabia(Item):
 
     def flip_perspective(self):
         self._metadata.perspective = not self._metadata.perspective
-        
+
     def tabias(self) -> Generator[Tabia, None, None]:
         def gen():
             yield self
+
         return gen()
 
     def solutions(self) -> List[chess.pgn.ChildNode]:
@@ -232,17 +235,14 @@ class Tabia(Item):
         )
 
     def lines(self) -> List[List[chess.pgn.GameNode]]:
-        return ZugChessTools.get_lines(
-            self._game,
-            self._metadata.perspective
-        )
+        return ZugChessTools.get_lines(self._game, self._metadata.perspective)
 
     def is_learned(self):
         return self._metadata.status == Status.LEARNED
-        
+
     def is_due(self):
         return self.is_learned() and self._metadata.due_date <= dates.today()
-    
+
     def record_attempt(self, result: Result) -> None:
         if result == Result.SUCCESS:
             self._metadata.success()
@@ -255,9 +255,9 @@ class Tabia(Item):
         return stats
 
     def _default_metadata(self) -> Metadata:
-        if self._game.headers["White"] == 'p':
+        if self._game.headers["White"] == "p":
             perspective = chess.WHITE
-        elif self._game.headers["Black"] == 'p':
+        elif self._game.headers["Black"] == "p":
             perspective = chess.BLACK
         else:
             perspective = not self._game.board().turn
@@ -279,7 +279,6 @@ class IOManager(abc.ABC):
 
 
 class DefaultIOManager(IOManager):
-
     def __init__(self):
         self._groups: Dict[Group, pathlib.Path] = {}
 
@@ -306,11 +305,13 @@ class DefaultIOManager(IOManager):
 
     def register_group(self, group: Group, path: pathlib.Path):
         self._groups[group] = path
-    
+
     def _meta_path(self, tabia: Tabia) -> pathlib.Path:
         if not isinstance(tabia, Tabia):
-            import pdb; pdb.set_trace()
+            import pdb
+
+            pdb.set_trace()
         return self._groups[tabia.parent] / (tabia.name + ".json")
-    
+
     def _pgn_path(self, tabia: Tabia) -> pathlib.Path:
         return self._groups[tabia.parent] / (tabia.name + ".pgn")

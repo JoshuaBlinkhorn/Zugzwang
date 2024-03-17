@@ -7,14 +7,14 @@ from zugzwang.group import Item, Tabia, Group, IOManager
 
 
 _training_mode_map = {
-    'l': TrainingMode.LINES,
-    'p': TrainingMode.PROBLEMS,
-    't': TrainingMode.TABIAS,
-    's': TrainingMode.SCHEDULED,           
+    "l": TrainingMode.LINES,
+    "p": TrainingMode.PROBLEMS,
+    "t": TrainingMode.TABIAS,
+    "s": TrainingMode.SCHEDULED,
 }
 
-class MenuScene(Scene):
 
+class MenuScene(Scene):
     @abc.abstractmethod
     def _content(self) -> List[str]:
         pass
@@ -44,60 +44,64 @@ class MenuScene(Scene):
 
     def _prompt(self) -> str:
         return input(":")
-    
+
     @classmethod
     def _clear_screen(cls):
-        print('\n' * 100)
-    
-    
+        print("\n" * 100)
+
+
 class TabiaScene(MenuScene):
 
     _col_width = 20
-    
+
     def __init__(self, tabia: Tabia):
         self._tabia = tabia
 
     def kill(self, io_manager: IOManager) -> None:
         io_manager.write_meta(self._tabia)
         self._tabia.parent.update_stats()
-        
+
     def _content(self) -> List[str]:
         return [
-            " ".join(['Tabia'.ljust(self._col_width), self._tabia.name]),
-            " ".join([
-                'Perspective'.ljust(self._col_width),
-                "White" if self._tabia.metadata.perspective else "Black"
-            ]),          
+            " ".join(["Tabia".ljust(self._col_width), self._tabia.name]),
+            " ".join(
+                [
+                    "Perspective".ljust(self._col_width),
+                    "White" if self._tabia.metadata.perspective else "Black",
+                ]
+            ),
             "",
-            " ".join(['New '.ljust(self._col_width), str(self._tabia.stats.new)]),
-            " ".join(['Due'.ljust(self._col_width), str(self._tabia.stats.due)]),
-            " ".join(['Learned'.ljust(self._col_width), str(self._tabia.stats.learned)]),
-            " ".join(['Total'.ljust(self._col_width), str(self._tabia.stats.total)]),   
+            " ".join(["New ".ljust(self._col_width), str(self._tabia.stats.new)]),
+            " ".join(["Due".ljust(self._col_width), str(self._tabia.stats.due)]),
+            " ".join(
+                ["Learned".ljust(self._col_width), str(self._tabia.stats.learned)]
+            ),
+            " ".join(["Total".ljust(self._col_width), str(self._tabia.stats.total)]),
             "",
-            'p - position-based training',
-            'l - line-based training',
-            't - tabia-based training',
-            'f - flip perspective',            
-            'b - go back',
+            "p - position-based training",
+            "l - line-based training",
+            "t - tabia-based training",
+            "f - flip perspective",
+            "b - go back",
             "",
         ]
 
     def _validate(self, input_):
-        valid_chars = ['p', 'l', 't', 'f', 'b']
-        return input_ if input_ in valid_chars  else None
+        valid_chars = ["p", "l", "t", "f", "b"]
+        return input_ if input_ in valid_chars else None
 
     def _handle(self, input_):
 
-        if input_ in ['p', 'l', 't']:
+        if input_ in ["p", "l", "t"]:
             mode = _training_mode_map[input_]
             options = TrainingOptions(mode=mode)
             return TrainingSpec(self._tabia, options)
 
-        elif input_ == 'f':
+        elif input_ == "f":
             self._tabia.flip_perspective()
             return False
-            
-        elif input_ == 'b':
+
+        elif input_ == "b":
             return None
 
 
@@ -105,14 +109,14 @@ class GroupScene(MenuScene):
 
     _learning_limit = 1
     _table_schema = {
-        'item_id': ('ID', 3),
-        'coverage': ('COV.', 5),
-        'training_available': ('', 2),
-        'item_name': ('ITEM', 30),
-        'new': ('NEW', 6),
-        'due': ('DUE', 6),
-        'learned': ('LRN', 6),
-        'total': ('ALL', 6),                                   
+        "item_id": ("ID", 3),
+        "coverage": ("COV.", 5),
+        "training_available": ("", 2),
+        "item_name": ("ITEM", 30),
+        "new": ("NEW", 6),
+        "due": ("DUE", 6),
+        "learned": ("LRN", 6),
+        "total": ("ALL", 6),
     }
 
     def __init__(self, group: Group):
@@ -133,10 +137,7 @@ class GroupScene(MenuScene):
 
     def _get_header(self) -> str:
         return "".join(
-            [
-                header.ljust(spacing)
-                for header, spacing in self._table_schema.values()
-            ]
+            [header.ljust(spacing) for header, spacing in self._table_schema.values()]
         )
 
     def _get_table(self) -> List[str]:
@@ -149,20 +150,20 @@ class GroupScene(MenuScene):
         stats = item.stats
         coverage = (stats.learned * 100) // stats.total if stats.total > 0 else 0
         row = {
-            'item_id': str(index),
-            'coverage': str(coverage) + '% ',
-            'training_available': '*' if stats.new + stats.learned > 0 else '',
-            'item_name': item.name,
-            'new': str(stats.new),
-            'due': str(stats.due),
-            'learned': str(stats.learned),
-            'total': str(stats.total),   
+            "item_id": str(index),
+            "coverage": str(coverage) + "% ",
+            "training_available": "*" if stats.new + stats.learned > 0 else "",
+            "item_name": item.name,
+            "new": str(stats.new),
+            "due": str(stats.due),
+            "learned": str(stats.learned),
+            "total": str(stats.total),
         }
 
         row_str = ""
         for field, string in row.items():
             _, spacing = self._table_schema[field]
-            if field == 'coverage':
+            if field == "coverage":
                 row_str += string.rjust(spacing)
                 continue
             row_str += string.ljust(spacing)
@@ -171,20 +172,20 @@ class GroupScene(MenuScene):
 
     def _get_choices(self) -> List[str]:
         return [
-            'id - select item',
-            'p  - position-based training',
-            'l  - line-based training',
-            't  - tabia-based training',
-            's  - scheduled training',            
-            'b  - go back',
+            "id - select item",
+            "p  - position-based training",
+            "l  - line-based training",
+            "t  - tabia-based training",
+            "s  - scheduled training",
+            "b  - go back",
         ]
-    
+
     def _validate(self, input_) -> Optional[str]:
-        if input_ in ['p', 'l', 't', 's', 'b']:
+        if input_ in ["p", "l", "t", "s", "b"]:
             return input_
         if not self._represents_int(input_):
             return None
-        val = int(input_) - 1 
+        val = int(input_) - 1
         return input_ if val in range(0, len(self._group.children)) else None
 
     def _handle(self, input_) -> Optional[SceneResult]:
@@ -192,12 +193,12 @@ class GroupScene(MenuScene):
             index = int(input_) - 1
             return self._group.children[index]
 
-        elif input_ in ['p', 'l', 't', 's']:
+        elif input_ in ["p", "l", "t", "s"]:
             mode = _training_mode_map[input_]
             options = TrainingOptions(mode=mode)
             return TrainingSpec(self._group, options)
 
-        elif input_ == 'b':
+        elif input_ == "b":
             return None
 
     @classmethod

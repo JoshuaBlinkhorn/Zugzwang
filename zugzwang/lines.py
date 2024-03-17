@@ -6,17 +6,16 @@ from zugzwang.queue import ZugQueueItem
 from zugzwang.board import ZugBoard
 from zugzwang.gui import ZugGUI
 
-class ZugTrainingLine(ZugQueueItem):
 
+class ZugTrainingLine(ZugQueueItem):
     def __init__(self, line: List[chess.pgn.GameNode]):
         self._line = line
 
-    def _present(self, gui: ZugGUI):        
+    def _present(self, gui: ZugGUI):
         return ZugTrainingLinePresenter(self._line).present(gui)
 
-        
-class ZugTrainingLinePresenter():
 
+class ZugTrainingLinePresenter:
     def __init__(self, line: List[chess.pgn.GameNode], gui: ZugGUI):
         self._line = line
         self._gui = gui
@@ -31,16 +30,16 @@ class ZugTrainingLinePresenter():
         return result
 
     def _present_pair(self, problem, solution):
-        board = problem.board()        
+        board = problem.board()
         self._gui.setup_position(board)
         gui_input = self._gui.get_input()
-        
+
         if gui_input == ZugGUI.QUIT:
             return ZugQueueItem.QUIT
         elif type(gui_input) == chess.Move:
             move = gui_input
         else:
-            raise ValueError('Input from ZugGUI not recognised.')        
+            raise ValueError("Input from ZugGUI not recognised.")
 
         if move == solution.move:
             self._gui.setup_position(solution.board())
@@ -51,5 +50,5 @@ class ZugTrainingLinePresenter():
             while self._gui.get_input() != solution.move:
                 self._gui.setup_position(board)
             self._gui.setup_position(solution.board())
-            time.sleep(1)                
+            time.sleep(1)
             return ZugQueueItem.FAILURE

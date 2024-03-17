@@ -4,17 +4,16 @@ from colorama import Fore, Back, Style
 from zugzwang.constants import ZugPieces, ZugColours
 
 
-class ZugUnicodePieces():
-    KING = '\u2654'
-    QUEEN = '\u2655'
-    ROOK = '\u2656'
-    BISHOP = '\u2657'
-    KNIGHT = '\u2658'        
-    PAWN = '\u2659'    
+class ZugUnicodePieces:
+    KING = "\u2654"
+    QUEEN = "\u2655"
+    ROOK = "\u2656"
+    BISHOP = "\u2657"
+    KNIGHT = "\u2658"
+    PAWN = "\u2659"
 
 
-class ZugBoard():
-
+class ZugBoard:
     def __init__(self, board: chess.Board):
         self._board = board
 
@@ -29,17 +28,17 @@ class ZugBoard():
 
     @classmethod
     def _piece_type_to_unicode(cls, piece_type):
-        return cls.PIECE_TYPE_TO_UNICODE.get(piece_type, ' ')
-        
+        return cls.PIECE_TYPE_TO_UNICODE.get(piece_type, " ")
+
     PIECE_COLOUR_TO_FORE = {
         ZugColours.WHITE: Fore.WHITE,
-        ZugColours.BLACK: Fore.BLACK,        
+        ZugColours.BLACK: Fore.BLACK,
     }
 
     @classmethod
     def _piece_colour_to_fore(cls, piece_colour):
         return cls.PIECE_COLOUR_TO_FORE.get(piece_colour)
-        
+
     SQUARE_COLOUR_TO_BACK = {
         ZugColours.WHITE: Back.CYAN,
         ZugColours.BLACK: Back.GREEN,
@@ -48,7 +47,7 @@ class ZugBoard():
     @classmethod
     def _square_colour_to_back(cls, square_colour):
         return cls.SQUARE_COLOUR_TO_BACK.get(square_colour)
-        
+
     @classmethod
     def _render_square(cls, piece_type, piece_colour, square_colour):
         fore = cls._piece_colour_to_fore(piece_colour)
@@ -58,12 +57,12 @@ class ZugBoard():
 
     @classmethod
     def _render_newline(cls):
-        return Style.RESET_ALL + '\n'
-    
+        return Style.RESET_ALL + "\n"
+
     def _render_button(self):
         back = self._square_colour_to_back(self._board.turn)
-        return Style.RESET_ALL + '  ' + back + '  '
-    
+        return Style.RESET_ALL + "  " + back + "  "
+
     @classmethod
     def _square_colour(cls, square):
         if (chess.square_rank(square) + chess.square_file(square)) % 2:
@@ -77,12 +76,12 @@ class ZugBoard():
             return lambda row, col: ((7 - row) * 8) + col
         else:
             return lambda row, col: (row * 8) + (7 - col)
-                
+
     def make_string(self, perspective: bool, margin=20):
         square_index_by_row_and_col = self._square_index_by_row_and_col(perspective)
-        string = ''
+        string = ""
         for row in range(8):
-            string += ' ' * margin
+            string += " " * margin
             for col in range(8):
                 square_index = square_index_by_row_and_col(row, col)
                 square_colour = self._square_colour(square_index)
@@ -90,10 +89,9 @@ class ZugBoard():
                 piece_type = piece.piece_type if piece else None
                 piece_colour = piece.color if piece else ZugColours.WHITE
                 string += self._render_square(piece_type, piece_colour, square_colour)
-                string += ' '
-            on_move = perspective == self._board.turn 
+                string += " "
+            on_move = perspective == self._board.turn
             if (on_move and row == 7) or (not on_move and row == 0):
                 string += self._render_button()
             string += self._render_newline()
         return string
-

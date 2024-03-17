@@ -4,20 +4,24 @@ import random
 
 import chess.pgn
 
+
 def get_words() -> List[str]:
     with open("/Users/joshuablinkhorn/Training/Zugzwang/words.txt") as f:
         words = f.readlines()
     return [word[:-1] for word in words if len(word) > 2]
+
 
 def three_random_words(words: List[str]) -> str:
     random.shuffle(words)
     three = words[:3]
     return "".join([word[0].upper() + word[1:] for word in three])
 
+
 def clean_node(node: chess.pgn.GameNode) -> None:
     node.comment = ""
     for child in node.variations:
         clean_node(child)
+
 
 mapper = {
     "idea-of-reti.pgn": "Reti",
