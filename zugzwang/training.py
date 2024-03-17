@@ -69,9 +69,10 @@ def _get_trainer(options: TrainingOptions) -> Trainer:
 def _get_tabias(item: Item, options: TrainingOptions) -> List[Tabia]:
     if isinstance(item, Tabia):
         return [item]
+    tabias = list(item.tabias())
     if options.mode == TrainingMode.SCHEDULED:
-        due_tabias = [tabia for tabia in item.tabias() if tabia.is_due()]
-        new_tabias = [tabia for tabia in item.tabias() if not tabia.is_learned()]
+        due_tabias = [tabia for tabia in tabias if tabia.is_due()]
+        new_tabias = [tabia for tabia in tabias if not tabia.is_learned()]
         tabias = due_tabias + new_tabias[: config["learning_limit"]]
     return tabias
 
