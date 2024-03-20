@@ -2174,4 +2174,19 @@ check that it works, and merge
 work on 2 - should be easy for the endgames
 for the grunfeld repertoire - perhaps we should build it up as and when
 we get it in games
-We can make the root tabia(s, that will be a good exercise
+We can make the root tabia(s), that will be a good exercise
+
+2024-03-20
+
+We're close to having a working and decent code base.
+What's needed?
+
+1. removal/archive of redundant code
+2. unit tests
+3. better stats
+4. in-session training dialogue
+
+4 is a pretty major refactor
+1 we should archive the old code on a branch
+Then plough on destructively on master
+
