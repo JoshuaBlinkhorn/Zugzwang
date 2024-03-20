@@ -11,9 +11,6 @@ import enum
 import chess
 import random
 
-from zugzwang.game import ZugSolution
-from zugzwang.stats import ZugStats
-from zugzwang.game import ZugRoot, ZugSolution
 from zugzwang.stats import ZugStats
 from zugzwang.tools import ZugChessTools, ZugJsonTools
 from zugzwang.dates import ZugDates
