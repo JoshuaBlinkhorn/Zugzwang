@@ -8,7 +8,7 @@ import chess.pgn
 def get_words() -> List[str]:
     with open("/Users/joshuablinkhorn/Training/Zugzwang/words.txt") as f:
         words = f.readlines()
-    return [word[:-1] for word in words if len(word) > 2]
+    return [word[:-1] for word in words if len(word) > 3]
 
 
 def three_random_words(words: List[str]) -> str:
@@ -24,20 +24,18 @@ def clean_node(node: chess.pgn.GameNode) -> None:
 
 
 mapper = {
-    "idea-of-reti.pgn": "Reti",
-    "key-squares.pgn": "KeySquares",
-    "mined-squares.pgn": "MinedSquares",
-    "opposition.pgn": "Opposition",
-    "other-correspondance.pgn": "Correspondance",
-    "rule-of-the-square.pgn": "TheSquare",
-    "triangulation.pgn": "Triangulation",
+    "1-the-dangerous-corner.pgn": "DangerousCorner",
+    "2-the-safe-corner.pgn": "SafeCorner",
+    "3-a-bishop-pawn.pgn": "BishopsPawn",
 }
+
 filenames = os.listdir()
 words = get_words()
 
 for filename in mapper:
     dir_name = mapper[filename]
-    os.mkdir(dir_name)
+    if not os.path.isdir(dir_name):
+        os.mkdir(dir_name)
     pgn = open(filename)
     game = chess.pgn.read_game(pgn)
     while game:
