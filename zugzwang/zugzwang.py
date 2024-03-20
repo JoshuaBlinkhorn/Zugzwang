@@ -7,7 +7,6 @@ import os
 import pathlib
 
 from zugzwang.group import Group, Tabia, Item, DefaultIOManager
-from zugzwang.menu import GroupMenu
 from zugzwang.gui import ZugGUI
 from zugzwang.config import config
 from zugzwang.scenes import Scene
