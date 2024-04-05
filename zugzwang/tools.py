@@ -208,4 +208,5 @@ class ZugChessTools:
         # call it on the root node
         search_node(game, perspective, [])
 
-        return lines
+        # TODO: I think the search process is returning empty lines
+        return [line for line in lines if line]
