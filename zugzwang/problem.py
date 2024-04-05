@@ -50,8 +50,9 @@ class Line(QueueItem):
         self._line = line
 
     def play(self, gui: ZugGUI) -> QueueResult:
+        result = QueueResult.SUCCESS
         gui.set_perspective(self._line[0].board().turn)
         for solution in self._line[1::2]:
-            if (result := _present_problem(solution, gui)) != QueueResult.SUCCESS:
-                break
+            if (_present_problem(solution, gui)) != QueueResult.SUCCESS:
+                result = QueueResult.FAILURE
         return result
