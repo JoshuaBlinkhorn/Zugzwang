@@ -48,6 +48,7 @@ class TrainingResult(str, enum.Enum):
 class TrainingOptions:
     mode: TrainingMode = TrainingMode.LINES
     randomise: bool = True
+    coalesce: bool = True
 
 
 @dataclasses.dataclass
@@ -109,6 +110,24 @@ class Trainer(abc.ABC):
         gui: ZugGui,
         io_manager: IOManager,
     ) -> TrainingResult:
+        if self._options.coalesce is True:
+            return self._train_coalesced(tabias, gui)
+        return _train(tabias, gui, io_manager)
+
+    def _train_coalesced(self, tabias: List[Tabia], gui: ZugGui) -> None:
+        self._queue.empty()
+        self._fill_queue_coalesced(tabias)
+        while not self._queue.is_empty():
+            clear_screen()
+            print(self._report_coalesced())
+            self._queue.play_single(gui)
+
+    def _train(
+        self,
+        tabias: List[Tabia],
+        gui: ZugGui,
+        io_manager: IOManager,
+    ) -> TrainingResult:
 
         _ = io_manager
         self._queue.empty()
@@ -128,10 +147,18 @@ class Trainer(abc.ABC):
     def _fill_queue(self, tabia: Tabia) -> None:
         pass
 
+    @abc.abstractmethod
+    def _fill_queue_coalesced(self, tabia: Tabia) -> None:
+        pass
+
     def _report(self, tabia) -> str:
         name = tabia.name
         size = self._queue.size()
         return f"{tabia.name}: {size} remaining"
+
+    def _report_coalesced(self) -> str:
+        size = self._queue.size()
+        return f"Coalesced: {size} remaining"
 
 
 class LineTrainer(Trainer):
@@ -141,10 +168,24 @@ class LineTrainer(Trainer):
             random.shuffle(lines)
         self._queue.extend(lines)
 
+    def _fill_queue_coalesced(self, tabias: List[Tabia]) -> None:
+        lines = [Line(line) for tabia in tabias for line in tabia.lines()]
+        if self._options.randomise is True:
+            random.shuffle(lines)
+        self._queue.extend(lines)
+
 
 class ProblemTrainer(Trainer):
     def _fill_queue(self, tabia: Tabia) -> None:
         problems = [Problem(solution) for solution in tabia.solutions()]
+        if self._options.randomise is True:
+            random.shuffle(problems)
+        self._queue.extend(problems)
+
+    def _fill_queue_coalesced(self, tabias: List[Tabia]) -> None:
+        problems = [
+            Problem(solution) for tabia in tabias for solution in tabia.solutions()
+        ]
         if self._options.randomise is True:
             random.shuffle(problems)
         self._queue.extend(problems)
