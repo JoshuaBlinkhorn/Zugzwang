@@ -53,6 +53,9 @@ class Line(QueueItem):
         result = QueueResult.SUCCESS
         gui.set_perspective(self._line[0].board().turn)
         for solution in self._line[1::2]:
-            if (_present_problem(solution, gui)) != QueueResult.SUCCESS:
+            item_result = _present_problem(solution, gui)
+            if item_result == QueueResult.QUIT:
+                return QueueResult.QUIT
+            if item_result == QueueResult.FAILURE:
                 result = QueueResult.FAILURE
         return result

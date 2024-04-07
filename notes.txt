@@ -2189,3 +2189,41 @@ What's needed?
 4 is a pretty major refactor
 1 we should archive the old code on a branch
 Then plough on destructively on master
+
+2024-04-03
+
+- Scheduled training is not decrementing the learning limit;
+  so sheduled training will train a new tabia each call, rather than each day
+
+The next improvement should be the dialogue during the training session.
+
+2024-04-05
+
+Now let's get the training dialogue going - and also work out how to
+quit properly during the line training session
+
+What we want is for at the end of every training item, the dialogue
+gets updated.
+That's a good first point to aim for.
+So this can only be updated after each line, each problem etc.
+
+So what we need to do is pass control back to the training session
+after each play of a training item in the queue.
+
+So queue needs a play_one() method.
+
+2024-04-07
+
+We now have it print the Tabia name and the number of training items remaining
+
+We should have it print th number of tabias remaining and the type of
+training item, i.e. we override the method in the training classes
+
+I think tabia-based training is broken, so we should fix that first
+
+Perhaps we should just implement the tabia trainer from scratch
+And then we can refactor the training code.
+It looks like we'll need to pass the quit directive through from the
+gui, as we have a trainer that attempts to refill the queue.
+Also, for sessions with multiple tabias, we want the quit button to quit
+the session, not the tabia.
