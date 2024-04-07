@@ -8,6 +8,7 @@ import enum
 import random
 import abc
 
+from zugzwang.cli_tools import clear_screen
 from zugzwang.config import config
 from zugzwang.group import (
     Group,
@@ -78,20 +79,6 @@ def _get_tabias(item: Item, options: TrainingOptions) -> List[Tabia]:
 
 
 def train(
-    tabias: List[Tabias],
-    options: TrainingOptions,
-    io_manager: IOManager,
-) -> TrainingStatus:
-    trainer = _get_trainer(options)
-    gui = ZugGUI()
-
-    trainer.train(tabias, gui)
-    gui.kill()
-
-    return TrainingStatus.COMPLETED
-
-
-def train(
     spec: TrainingSpec,
     gui: ZugGUI,
     io_manager: IOManager,
@@ -122,61 +109,80 @@ class Trainer(abc.ABC):
         gui: ZugGui,
         io_manager: IOManager,
     ) -> TrainingResult:
+
         _ = io_manager
         self._queue.empty()
-        self._fill_queue(tabias)
-        return self._result_map[self._queue.play(gui)]
+        result = TrainingResult.SUCCESS
+
+        for tabia in tabias:
+            self._fill_queue(tabia)
+            while not self._queue.is_empty():
+                clear_screen()
+                print(self._report(tabia))
+                if self._queue.play_single(gui) == QueueResult.FAILURE:
+                    result = TrainingResult.FAILURE
+
+        return result
 
     @abc.abstractmethod
-    def _fill_queue(self, tabias: List[Tabia]) -> None:
+    def _fill_queue(self, tabia: Tabia) -> None:
         pass
+
+    def _report(self, tabia) -> str:
+        name = tabia.name
+        size = self._queue.size()
+        return f"{tabia.name}: {size} remaining"
 
 
 class LineTrainer(Trainer):
-    def _fill_queue(self, tabias: List[Tabia]) -> None:
-        lines = [Line(line) for tabia in tabias for line in tabia.lines()]
+    def _fill_queue(self, tabia: Tabia) -> None:
+        lines = [Line(line) for line in tabia.lines()]
         if self._options.randomise is True:
             random.shuffle(lines)
         self._queue.extend(lines)
 
 
 class ProblemTrainer(Trainer):
-    def _fill_queue(self, tabias: List[Tabia]) -> None:
-        problems = [
-            Problem(solution) for tabia in tabias for solution in tabia.solutions()
-        ]
+    def _fill_queue(self, tabia: Tabia) -> None:
+        problems = [Problem(solution) for solution in tabia.solutions()]
         if self._options.randomise is True:
             random.shuffle(problems)
         self._queue.extend(problems)
 
 
-class TabiaTrainer(Trainer):
+class TabiaTrainer:
     def __init__(self, options: TrainingOptions):
         self._options = options
-        self._line_trainer = LineTrainer(options)
-        self._problem_trainer = ProblemTrainer(options)
+        self._queue = Queue(insertion_index=3, insertion_radius=1)
 
     def train(
         self,
         tabias: List[Tabia],
         gui: ZugGUI,
         io_manager: IOManager,
-    ) -> TrainingResult:
+    ) -> None:
+
         if self._options.randomise:
             random.shuffle(tabias)
-        for tabia in tabias:
-            res = TrainingResult.SUCCESS
-            line_res = self._line_trainer.train([tabia], gui, io_manager)
 
-            if line_res == QueueResult.QUIT:
-                return TrainingResult.INCOMPLETE
-            prob_res = self._problem_trainer.train([tabia], gui, io_manager)
-            if prob_res == QueueResult.QUIT:
-                return TrainingResult.INCOMPLETE
-            if line_res == QueueResult.FAILURE or prob_res == QueueResult.FAILURE:
-                res = TrainingResult.FAILURE
+        for index, tabia in enumerate(tabias):
+            result = TrainingResult.SUCCESS
 
-            self._record_attempt(tabia, res)
+            self._fill_queue_lines(tabia)
+            while not self._queue.is_empty():
+                clear_screen()
+                print(self._report_lines(tabia, index + 1, len(tabias)))
+                if self._queue.play_single(gui) == QueueResult.FAILURE:
+                    result = TrainingResult.FAILURE
+
+            self._fill_queue_problems(tabia)
+            while not self._queue.is_empty():
+                clear_screen()
+                print(self._report_problems(tabia, index + 1, len(tabias)))
+                if self._queue.play_single(gui) == QueueResult.FAILURE:
+                    result = TrainingResult.FAILURE
+
+            self._record_attempt(tabia, result)
             io_manager.write_meta(tabia)
 
     def _record_attempt(self, tabia: Tabia, result: TrainingResult) -> None:
@@ -185,8 +191,32 @@ class TabiaTrainer(Trainer):
         elif result == TrainingResult.FAILURE:
             tabia.record_attempt(TabiaResult.FAILURE)
 
-    def _fill_queue(self, tabias: List[Tabia]) -> None:
-        pass
+    def _fill_queue_lines(self, tabia: Tabia) -> None:
+        lines = [Line(line) for line in tabia.lines()]
+        if self._options.randomise is True:
+            random.shuffle(lines)
+        self._queue.extend(lines)
+
+    def _fill_queue_problems(self, tabia: Tabia) -> None:
+        problems = [Problem(solution) for solution in tabia.solutions()]
+        if self._options.randomise is True:
+            random.shuffle(problems)
+        self._queue.extend(problems)
+
+    def _report_lines(self, tabia: Tabia, index: int, total: int) -> None:
+        name = tabia.name
+        size = self._queue.size()
+        return f"{tabia.name} ({index}/{total}): {size} lines remaining"
+
+    def _report_problems(
+        self,
+        tabia: Tabia,
+        index: int,
+        total: int,
+    ) -> None:
+        name = tabia.name
+        size = self._queue.size()
+        return f"{tabia.name} ({index}/{total}): {size} problems remaining"
 
 
 class TrainingSession(Scene):

@@ -58,16 +58,25 @@ class Queue:
     def extend(self, items: List[QueueItem]) -> None:
         self._queue.extend(items)
 
-    def play(self, gui: ZugGUI) -> None:
+    def is_empty(self) -> bool:
+        return len(self._queue) == 0
+
+    def size(self) -> int:
+        return len(self._queue)
+
+    def play_single(self, gui: ZugGUI) -> None:
+        item = self._queue.pop(0)
+        result = item.play(gui)
+        if result == QueueResult.QUIT:
+            self.empty()
+        return result
+
+    def play(self, gui: ZugGUI) -> QueueResult:
         queue_result = QueueResult.SUCCESS
 
         while self._queue:
-            item = self._queue.pop(0)
-            result = item.play(gui)
-
-            if result == QueueResult.QUIT:
-                return result
-            elif result == QueueResult.FAILURE:
+            result = self.play_single(gui)
+            if result == QueueResult.FAILURE:
                 self._insert(item, self._insertion_index)
                 queue_result = result
 

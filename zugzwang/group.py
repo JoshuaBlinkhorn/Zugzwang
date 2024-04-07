@@ -213,6 +213,10 @@ class Tabia(Item):
         self._stats = None
 
     @property
+    def name(self) -> str:
+        return self._name
+
+    @property
     def metadata(self) -> Metadata:
         return self._metadata
 
@@ -304,10 +308,6 @@ class DefaultIOManager(IOManager):
         self._groups[group] = path
 
     def _meta_path(self, tabia: Tabia) -> pathlib.Path:
-        if not isinstance(tabia, Tabia):
-            import pdb
-
-            pdb.set_trace()
         return self._groups[tabia.parent] / (tabia.name + ".json")
 
     def _pgn_path(self, tabia: Tabia) -> pathlib.Path:
