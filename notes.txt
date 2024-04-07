@@ -2227,3 +2227,10 @@ It looks like we'll need to pass the quit directive through from the
 gui, as we have a trainer that attempts to refill the queue.
 Also, for sessions with multiple tabias, we want the quit button to quit
 the session, not the tabia.
+
+Coalesced training needs a full refactor
+The design pattern will work but it clearly not best
+I'm not sure anymore that we really need a training class
+It's really a case of implementing a training function that has options
+The universe of set options doesn't appear anymore to project well
+onto a class hierarchy
