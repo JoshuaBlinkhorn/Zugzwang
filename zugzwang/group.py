@@ -213,6 +213,10 @@ class Tabia(Item):
         self._stats = None
 
     @property
+    def game(self) -> chess.GameNode:
+        return self._game
+
+    @property
     def name(self) -> str:
         return self._name
 

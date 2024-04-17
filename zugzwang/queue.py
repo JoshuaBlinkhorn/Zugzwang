@@ -69,15 +69,14 @@ class Queue:
         result = item.play(gui)
         if result == QueueResult.QUIT:
             self.empty()
+        if result == QueueResult.FAILURE:
+            self.append(item)
         return result
 
     def play(self, gui: ZugGUI) -> QueueResult:
         queue_result = QueueResult.SUCCESS
-
         while self._queue:
-            result = self.play_single(gui)
-            if result == QueueResult.FAILURE:
-                self._insert(item, self._insertion_index)
-                queue_result = result
+            if self.play_single(gui) == QueueResult.FAILURE:
+                queue_result = QueueResult.FAILURE
 
         return queue_result

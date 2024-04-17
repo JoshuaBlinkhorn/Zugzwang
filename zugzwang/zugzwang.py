@@ -21,6 +21,7 @@ def is_excluded(filename: str):
 def search_dir(
     path: pathlib.Path,
     parent: Group,
+    io_manager: DefaultIOManager,
 ) -> List[Item]:
 
     names: List[str] = [
@@ -59,7 +60,7 @@ def initialise_group(
         parent=parent,
     )
     io_manager.register_group(group, path)
-    for item in search_dir(path, group):
+    for item in search_dir(path, group, io_manager):
         group.add_child(item)
 
     return group
