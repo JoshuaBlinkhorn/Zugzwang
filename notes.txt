@@ -2234,3 +2234,17 @@ I'm not sure anymore that we really need a training class
 It's really a case of implementing a training function that has options
 The universe of set options doesn't appear anymore to project well
 onto a class hierarchy
+
+2024-04-20
+
+Now the task is to try to break up the Grunfeld.
+First, the master tabias
+I think a master one for the Reti, one for the English, one for the Grunfeld
+Done for the Reti.
+
+Now we need to collect the leaves of the master as a set of FENs and
+search a dir of PGNs for those FENs. If one is found, create a new
+Tabia starting from that FEN.
+
+It should be as simple as creating the game node, attaching the variations,
+and saving the PGN.
