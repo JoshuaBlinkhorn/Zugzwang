@@ -57,10 +57,6 @@ def game_from_fen(
     source_node: chess.pgn.Game,
     perspective: bool,
 ) -> chess.pgn.Game:
-    import pdb
-
-    pdb.set_trace()
-
     key = "White" if perspective else "Black"
     headers = {key: "p"}
     board = chess.Board(fen=fen)
@@ -86,6 +82,8 @@ if __name__ == "__main__":
 
     sources = []
     for source in source_dir.iterdir():
+        if source == stub:
+            continue
         with open(source) as pgn:
             sources.append(chess.pgn.read_game(pgn))
 
@@ -95,10 +93,6 @@ if __name__ == "__main__":
             if (node := find_source_node(fen, source)) is not None:
                 fens_map[fen] = node
                 break
-
-    import pdb
-
-    pdb.set_trace()
 
     for fen, source_node in fens_map.items():
         game = game_from_fen(fen, source_node, perspective)
