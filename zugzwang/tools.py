@@ -201,7 +201,7 @@ class ZugChessTools:
                         search_node(node, solution_perspective, [])
                 # work recursively on blunders with reversed perspective
                 # and a new prefix starting at the blunder
-                blunders = [node for node in node.variations if node.nags == {2}]
+                blunders = [node for node in replies if node.nags == {2}]
                 for blunder in blunders:
                     search_node(blunder, not solution_perspective, [])
 

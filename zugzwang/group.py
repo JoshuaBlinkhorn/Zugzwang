@@ -11,6 +11,7 @@ import enum
 import chess
 import random
 
+from zugzwang.config import config
 from zugzwang.stats import ZugStats
 from zugzwang.tools import ZugChessTools, ZugJsonTools
 from zugzwang.dates import ZugDates
@@ -36,17 +37,7 @@ class IOError(Exception):
 
 
 @dataclasses.dataclass
-class Metadata:
-    perspective: chess.Color = chess.WHITE
-    status: Status = Status.UNLEARNED
-    last_study_date: Optional[datetime.date] = None
-    due_date: Optional[datetime.date] = None
-    successes: int = 0
-    failures: int = 0
-    recall_radius: int = 3
-    recall_factor: float = 2.0
-    recall_max: int = 365
-
+class Metadata(abc.ABC):
     @classmethod
     def from_json(cls, json_str: str) -> Metadata:
         try:
@@ -63,17 +54,6 @@ class Metadata:
             indent=2,
         )
         return string + "\n"
-
-    def success(self):
-        self.status = Status.LEARNED
-        self.successes += 1
-        self.last_study_date = dates.today()
-        self.due_date = self._due_date()
-
-    def failure(self):
-        self.last_study_date = dates.today()
-        self.due_date = ZugDates.tomorrow()
-        self.failures += 1
 
     @staticmethod
     def _default(value: Any) -> Any:
@@ -110,6 +90,30 @@ class Metadata:
         year, month, day = tuple(date.split("-"))
         return datetime.date(int(year), int(month), int(day))
 
+
+@dataclasses.dataclass
+class TabiaMetadata(Metadata):
+    perspective: chess.Color = chess.WHITE
+    status: Status = Status.UNLEARNED
+    last_study_date: Optional[datetime.date] = None
+    due_date: Optional[datetime.date] = None
+    successes: int = 0
+    failures: int = 0
+    recall_radius: int = 3
+    recall_factor: float = 2.0
+    recall_max: int = 365
+
+    def success(self):
+        self.status = Status.LEARNED
+        self.successes += 1
+        self.last_study_date = dates.today()
+        self.due_date = self._due_date()
+
+    def failure(self):
+        self.last_study_date = dates.today()
+        self.due_date = ZugDates.tomorrow()
+        self.failures += 1
+
     def _due_date(self) -> datetime.date:
         if self.last_study_date is None:
             raise ValueError("Cannot calculate due_date without last_study_date")
@@ -125,6 +129,24 @@ class Metadata:
         # impose minimum and maximum values
         diff = max(1, min(absolute_diff + offset, self.recall_max))
         return dates.today() + datetime.timedelta(days=diff)
+
+
+@dataclasses.dataclass
+class GroupMetadata(Metadata):
+    learning_limit: int = config["learning_limit"]
+    learning_remaining: int = config["learning_limit"]
+    last_study_date: Optional[datetime.date] = None
+
+    def refresh(self):
+        today = dates.today()
+        if self.last_study_date is None or self.last_study_date != today:
+            self.learning_remaining = self.learning_limit
+            self.last_study_date = today
+
+    def tabia_complete(self):
+        if self.learning_remaining < 1:
+            raise ValueError("Cannot decrement non-positive learning_remaining")
+        self._learning_remaining -= 1
 
 
 class Item(abc.ABC):
@@ -221,7 +243,7 @@ class Tabia(Item):
         return self._name
 
     @property
-    def metadata(self) -> Metadata:
+    def metadata(self) -> TabiaMetadata:
         return self._metadata
 
     def flip_perspective(self):
@@ -259,14 +281,14 @@ class Tabia(Item):
         stats.total = len(self.solutions())
         return stats
 
-    def _default_metadata(self) -> Metadata:
+    def _default_metadata(self) -> TabiaMetadata:
         if self._game.headers["White"] == "p":
             perspective = chess.WHITE
         elif self._game.headers["Black"] == "p":
             perspective = chess.BLACK
         else:
             perspective = not self._game.board().turn
-        return Metadata(perspective=perspective)
+        return TabiaMetadata(perspective=perspective)
 
 
 class IOManager(abc.ABC):
@@ -287,21 +309,24 @@ class DefaultIOManager(IOManager):
     def __init__(self):
         self._groups: Dict[Group, pathlib.Path] = {}
 
-    def read_meta(self, tabia: Tabia) -> Optional[Metadata]:
-        meta_path = self._meta_path(tabia)
+    def read_meta(self, item: Item) -> Optional[Metadata]:
+        meta_path = self._meta_path(item)
         if not meta_path.exists():
             return None
+
+        cls = TabiaMetadata if isinstance(item, Tabia) else GroupMetadata
+
         with open(meta_path) as fp:
             data = fp.read()
         try:
-            meta = Metadata.from_json(data)
+            meta = cls.from_json(data)
         except MetadataError as exc:
-            raise IOError(f"Cannot read metadata for {tabia.name}") from exc
+            raise IOError(f"Cannot read metadata for {item.name}") from exc
         return meta
 
-    def write_meta(self, tabia: Tabia) -> None:
-        with open(self._meta_path(tabia), "w") as fp:
-            fp.write(tabia.metadata.as_json())
+    def write_meta(self, item: Item) -> None:
+        with open(self._meta_path(item), "w") as fp:
+            fp.write(item.metadata.as_json())
 
     def read(self, tabia: Tabia) -> chess.pgn.Game:
         with open(self._pgn_path(tabia)) as fp:
@@ -311,8 +336,11 @@ class DefaultIOManager(IOManager):
     def register_group(self, group: Group, path: pathlib.Path):
         self._groups[group] = path
 
-    def _meta_path(self, tabia: Tabia) -> pathlib.Path:
-        return self._groups[tabia.parent] / (tabia.name + ".json")
+    def _meta_path(self, item: Item) -> pathlib.Path:
+        if isinstance(item, Tabia):
+            return self._groups[item.parent] / (item.name + ".json")
+        if isinstance(item, Group):
+            return config["user_meta"]
 
     def _pgn_path(self, tabia: Tabia) -> pathlib.Path:
         return self._groups[tabia.parent] / (tabia.name + ".pgn")
