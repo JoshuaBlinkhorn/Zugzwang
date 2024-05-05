@@ -1758,7 +1758,7 @@ and en passent. And then create a chess board, and use piece at etc.
 The en passent business is going to be fairly complex.
 So let's leave it until last.
 
-For now, let's focus on getting the FEN written into the FEN box.
+§For now, let's focus on getting the FEN written into the FEN box.
 
 Alright, we've made loads of progress.
 All we need to do now is to get in the castling rights and the en passent square,
@@ -2248,3 +2248,33 @@ Tabia starting from that FEN.
 
 It should be as simple as creating the game node, attaching the variations,
 and saving the PGN.
+
+2024-04-20
+
+The next two things to prioritise:
+- generate the grunfeld repertoire stubbed
+- get scheduled training working
+
+We now have a metadata class with helper methods, that should be readable.
+We just need to use that in the scheduled trainer.
+We should somehow make schduled training link always to the master meta file.
+This would allow scheduled tabias to be picked from a group of the users choosing
+just by navigating there.
+
+Now all we have to do is pass the io_manager into _get_tabias() and refresh the metadata to pick up the learning remaining. Then report tabia complete in the trainer.
+I think the whole training module needs a refactor
+
+2024-05-05
+
+There's a bug in the line generation that is hiding initial blunders
+So let's try to fix that as soon as we can.
+
+This is a definite candidate for unit testing.
+
+There was a bug - I think it's fixed
+
+Now the prioirity is getting the grunfeld repertoire in tact.
+First, try to stub the english out.
+
+Then we'll go for a top-level stub of the grunfeld.
+And fill in the leaves from there.
