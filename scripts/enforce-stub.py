@@ -2,7 +2,7 @@
 # enforce-stub.py <stub> <source-dir> <target-dir>
 #
 # Find all leaf nodes of the stub with perspective not to move
-# Search for those positions amonst the PGNs in source and create
+# Search for those positions amongst the PGNs in source and create
 # PGNs starting from those leaves, placing them in target
 
 import sys
