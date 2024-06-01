@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 import chess
 import chess.pgn
 import json
@@ -97,116 +97,120 @@ class ZugChessToolsParseError(ZugChessToolsError):
     pass
 
 
-class ZugChessTools:
-    @classmethod
-    def get_solution_nodes(
-        cls, game: chess.pgn.Game, perspective: bool
-    ) -> List[chess.pgn.ChildNode]:
-        # define a list to store solutions and a recursive search function
-        solutions = []
+def _is_solution(
+    node: chess.pgn.GameNode,
+    perspective: bool
+) -> bool:
+    return node.board().turn != perspective and node.move is not None
 
-        def search_node(node: chess.pgn.GameNode, solution_perspective: bool):
-            nonlocal solutions
-            player_to_move = node.board().turn
-            if player_to_move != solution_perspective:
-                # the node is a solution or an alternative
-                # if it's solution, add it to the solution set
-                if node != game and node.nags == set():
-                    solutions.append(node)
-                # work recursively on all children
-                for problem in node.variations:
-                    search_node(problem, solution_perspective)
-            else:
-                # the node is a problem
-                # if it has no variations, it's a hanging problem
-                # otherwise, any variation is either a blunder or a candidate
-                # find the first candidate if it exists, and work recursively
-                replies = node.variations
-                candidates = [node for node in replies if node.nags == set()]
-                if candidates:
-                    solution = candidates[0]
-                    search_node(solution, solution_perspective)
-                alternatives = [node for node in replies if node.nags == {5}]
-                for alternative in alternatives:
-                    search_node(alternative, solution_perspective)
-                # work recursively on blunders with reversed perspective
-                blunders = [node for node in replies if node.nags == {2}]
-                for blunder in blunders:
-                    search_node(blunder, not solution_perspective)
 
-        # call it on the root node
-        search_node(game, perspective)
+def _is_problem(
+    node: chess.pgn.GameNode,
+    perspective: bool
+) -> bool:
+    return node.board().turn == perspective
 
-        return solutions
 
-    @classmethod
-    def get_lines(
-        cls, game: chess.pgn.Game, perspective: bool
-    ) -> List[chess.pgn.GameNode]:
+def _is_blunder(node: chess.pgn.GameNode) -> bool:
+    return 2 in node.nags    
 
-        # define an empty list to store the lines and a recursive search function
-        lines = []
 
-        def is_blunder(node: chess.pgn.GameNode):
-            return 2 in node.nags
+def _is_alternative(node: chess.pgn.GameNode) -> bool:
+    return 5 in node.nags    
 
-        def has_solution(problem: chess.pgn.GameNode):
-            return any(not is_blunder(child) for child in problem.variations)
 
-        def is_line_end(solution: chess.pgn.GameNode):
-            # determining whether a given node is the end of a line is quite complex
-            # to illustrate: a solution S may have a child problem P, such that P
-            # has no child solution T, but it has a child blunder B
-            # if P is the only child of S, then S is the end of the line
-            #
-            # the simplest characterisation is: the line ends at a solution unless
-            # there exists a child problem with a child solution
-            return not any(has_solution(problem) for problem in solution.variations)
+def _has_solution(problem: chess.pgn.GameNode) -> bool:
+    return any(not _is_blunder(child) for child in problem.variations)
 
-        def search_node(
-            node: chess.pgn.GameNode,
-            solution_perspective: bool,
-            prefix: List[chess.pgn.GameNode],
-        ):
-            # copy the prefix; necessary because otherwise all branches would modify
-            # the same prefix
-            # it's easist to do this once, here at the top of the function
-            prefix = prefix.copy()
-            player_to_move = node.board().turn
-            if player_to_move != solution_perspective:
-                # the node is a solution
-                # append it to the prefix if and only if it is not the root
-                if node != game:
-                    prefix.append(node)
-                # if the line ends here, add it to the set of lines
-                # otherwise, work recursively on all children
-                if is_line_end(node):
-                    lines.append(prefix)
-                for problem in node.variations:
-                    search_node(problem, solution_perspective, prefix)
-            else:
-                # the node is a problem; append it to the prefix
+
+def _get_solution(problem: chess.pgn.GameNode) -> Optional[chess.pgn.GameNode]:
+    candidates = [
+        child for child in problem.variations
+        if not _is_blunder(child) and not _is_alternative(child)
+    ]
+
+    if len(candidates) == 0:
+        return None
+
+    if len(candidates) > 1:
+        import pdb; pdb.set_trace()
+        raise ZugChessToolsParseError("Problem has ambiguous solution.")
+
+    return candidates.pop()
+
+def _get_alternatives(problem: chess.pgn.GameNode) -> List[chess.pgn.GameNode]:
+    return [child for child in problem.variations if _is_alternative(child)]
+
+def _get_blunders(problem: chess.pgn.GameNode) -> List[chess.pgn.GameNode]:
+    return [child for child in problem.variations if _is_blunder(child)]
+
+def _is_line_end(solution: chess.pgn.GameNode):
+    return not any(_has_solution(problem) for problem in solution.variations)
+
+
+def get_lines(
+        game: chess.pgn.Game,
+        perspective: bool
+) -> List[List[chess.pgn.GameNode]]:
+    lines = []    
+    
+    def search_node(
+        node: chess.pgn.GameNode,
+        perspective: bool,
+        prefix: List[chess.pgn.GameNode],
+    ) -> None:
+        nonlocal lines
+        prefix = prefix.copy()
+
+        if _is_problem(node, perspective):
+            problem = node
+            prefix.append(problem)
+            if (solution := _get_solution(problem)):
+                search_node(solution, perspective, prefix)
+            for alternative in _get_alternatives(problem):
+                for sub_problem in alternative.variations:
+                    search_node(sub_problem, perspective, list())
+            for blunder in _get_blunders(problem):
+                search_node(blunder, not solution_perspective, list())
+
+        else:
+            if _is_solution(node, perspective):
                 prefix.append(node)
-                # if it has no variations, it's a hanging problem, ignore it
-                # otherwise, any variation is either a candidate or a blunder
-                # find the first candidate if it exists, and work recursively
-                replies = node.variations
-                candidates = [node for node in replies if node.nags == set()]
-                if candidates:
-                    solution = candidates[0]
-                    search_node(solution, solution_perspective, prefix)
-                alternatives = [node for node in replies if node.nags == {5}]
-                for alternative in alternatives:
-                    for node in alternative.variations:
-                        search_node(node, solution_perspective, [])
-                # work recursively on blunders with reversed perspective
-                # and a new prefix starting at the blunder
-                blunders = [node for node in replies if node.nags == {2}]
-                for blunder in blunders:
-                    search_node(blunder, not solution_perspective, [])
+            if _is_line_end(node):
+                lines.append(prefix)
+            for problem in node.variations:
+                search_node(problem, perspective, prefix)
 
-        # call it on the root node
-        search_node(game, perspective, [])
+    search_node(game, perspective, [])
+    return [line for line in lines if line]
+    
 
-        # TODO: I think the search process is returning empty lines
-        return [line for line in lines if line]
+def get_solutions(
+        game: chess.pgn.Game,
+        perspective: bool,
+) -> List[chess.pgn.ChildNode]:
+    solutions = []
+
+    def search_node(
+            node: chess.pgn.GameNode,
+            perspective: bool,
+    ) -> None:
+        nonlocal solutions
+        
+        if _is_problem(node, perspective):
+            problem = node
+            if (solution := _get_solution(problem)):
+                search_node(solution, perspective)
+            for alternative in _get_alternatives(problem):
+                search_node(alternative, perspective)
+            for blunder in _get_blunders(problem):
+                search_node(blunder, not perspective)
+
+        else:
+            if _is_solution(node, perspective):
+                solutions.append(node)
+            for problem in node.variations:
+                search_node(problem, perspective)
+
+    search_node(game, perspective)
+    return solutions

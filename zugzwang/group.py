@@ -13,7 +13,10 @@ import random
 
 from zugzwang.config import config
 from zugzwang.stats import ZugStats
-from zugzwang.tools import ZugChessTools, ZugJsonTools
+from zugzwang.tools import (
+    get_lines,
+    get_solutions,
+)
 from zugzwang.dates import ZugDates
 from zugzwang import dates
 
@@ -256,13 +259,10 @@ class Tabia(Item):
         return gen()
 
     def solutions(self) -> List[chess.pgn.ChildNode]:
-        return ZugChessTools.get_solution_nodes(
-            self._game,
-            self._metadata.perspective,
-        )
+        return get_solutions(self._game, self._metadata.perspective)
 
     def lines(self) -> List[List[chess.pgn.GameNode]]:
-        return ZugChessTools.get_lines(self._game, self._metadata.perspective)
+        return get_lines(self._game, self._metadata.perspective)
 
     def is_learned(self):
         return self._metadata.status == Status.LEARNED
