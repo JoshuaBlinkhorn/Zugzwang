@@ -282,6 +282,8 @@ class Tabia(Item):
         return stats
 
     def _default_metadata(self) -> TabiaMetadata:
+        if self._game is None:
+            import pdb; pdb.set_trace()
         if self._game.headers["White"] == "p":
             perspective = chess.WHITE
         elif self._game.headers["Black"] == "p":
