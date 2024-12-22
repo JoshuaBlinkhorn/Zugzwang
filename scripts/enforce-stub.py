@@ -45,7 +45,7 @@ def find_fens(
 
 
 def find_source_node(fen: str, node: chess.pgn.GameNode):
-    if node.board().fen() == fen:
+    if node.board().board_fen() == fen.split(" ")[0]:
         return node
     for child in node.variations:
         if (node := find_source_node(fen, child)) is not None:
@@ -95,6 +95,7 @@ if __name__ == "__main__":
                 break
 
     for fen, source_node in fens_map.items():
+        import pdb; pdb.set_trace()
         game = game_from_fen(fen, source_node, perspective)
         game_filename = pathlib.Path(f"{three_random_words(words)}.pgn")
         target = target_dir / game_filename

@@ -2278,3 +2278,9 @@ First, try to stub the english out.
 
 Then we'll go for a top-level stub of the grunfeld.
 And fill in the leaves from there.
+
+2024-06-13
+
+Issue in ShroudMysteriousPhloem where the best move is to queen the pawn,
+but the tabia gives something else.
+Check back in DEM to see what went wrong.

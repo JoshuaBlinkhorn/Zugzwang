@@ -97,26 +97,20 @@ class ZugChessToolsParseError(ZugChessToolsError):
     pass
 
 
-def _is_solution(
-    node: chess.pgn.GameNode,
-    perspective: bool
-) -> bool:
+def _is_solution(node: chess.pgn.GameNode, perspective: bool) -> bool:
     return node.board().turn != perspective and node.move is not None
 
 
-def _is_problem(
-    node: chess.pgn.GameNode,
-    perspective: bool
-) -> bool:
+def _is_problem(node: chess.pgn.GameNode, perspective: bool) -> bool:
     return node.board().turn == perspective
 
 
 def _is_blunder(node: chess.pgn.GameNode) -> bool:
-    return 2 in node.nags    
+    return 2 in node.nags or 4 in node.nags
 
 
 def _is_alternative(node: chess.pgn.GameNode) -> bool:
-    return 5 in node.nags    
+    return 5 in node.nags
 
 
 def _has_solution(problem: chess.pgn.GameNode) -> bool:
@@ -125,7 +119,8 @@ def _has_solution(problem: chess.pgn.GameNode) -> bool:
 
 def _get_solution(problem: chess.pgn.GameNode) -> Optional[chess.pgn.GameNode]:
     candidates = [
-        child for child in problem.variations
+        child
+        for child in problem.variations
         if not _is_blunder(child) and not _is_alternative(child)
     ]
 
@@ -133,27 +128,31 @@ def _get_solution(problem: chess.pgn.GameNode) -> Optional[chess.pgn.GameNode]:
         return None
 
     if len(candidates) > 1:
-        import pdb; pdb.set_trace()
+        import pdb
+
+        pdb.set_trace()
         raise ZugChessToolsParseError("Problem has ambiguous solution.")
 
     return candidates.pop()
 
+
 def _get_alternatives(problem: chess.pgn.GameNode) -> List[chess.pgn.GameNode]:
     return [child for child in problem.variations if _is_alternative(child)]
 
+
 def _get_blunders(problem: chess.pgn.GameNode) -> List[chess.pgn.GameNode]:
     return [child for child in problem.variations if _is_blunder(child)]
+
 
 def _is_line_end(solution: chess.pgn.GameNode):
     return not any(_has_solution(problem) for problem in solution.variations)
 
 
 def get_lines(
-        game: chess.pgn.Game,
-        perspective: bool
+    game: chess.pgn.Game, perspective: bool
 ) -> List[List[chess.pgn.GameNode]]:
-    lines = []    
-    
+    lines = []
+
     def search_node(
         node: chess.pgn.GameNode,
         perspective: bool,
@@ -165,13 +164,13 @@ def get_lines(
         if _is_problem(node, perspective):
             problem = node
             prefix.append(problem)
-            if (solution := _get_solution(problem)):
+            if solution := _get_solution(problem):
                 search_node(solution, perspective, prefix)
             for alternative in _get_alternatives(problem):
                 for sub_problem in alternative.variations:
                     search_node(sub_problem, perspective, list())
             for blunder in _get_blunders(problem):
-                search_node(blunder, not solution_perspective, list())
+                search_node(blunder, not perspective, list())
 
         else:
             if _is_solution(node, perspective):
@@ -183,23 +182,23 @@ def get_lines(
 
     search_node(game, perspective, [])
     return [line for line in lines if line]
-    
+
 
 def get_solutions(
-        game: chess.pgn.Game,
-        perspective: bool,
+    game: chess.pgn.Game,
+    perspective: bool,
 ) -> List[chess.pgn.ChildNode]:
     solutions = []
 
     def search_node(
-            node: chess.pgn.GameNode,
-            perspective: bool,
+        node: chess.pgn.GameNode,
+        perspective: bool,
     ) -> None:
         nonlocal solutions
-        
+
         if _is_problem(node, perspective):
             problem = node
-            if (solution := _get_solution(problem)):
+            if solution := _get_solution(problem):
                 search_node(solution, perspective)
             for alternative in _get_alternatives(problem):
                 search_node(alternative, perspective)
