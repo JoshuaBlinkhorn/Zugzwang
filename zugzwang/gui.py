@@ -1,5 +1,6 @@
 import pygame
 import chess
+import time
 
 from typing import List, Tuple, Dict, Callable
 
@@ -118,6 +119,7 @@ class ZugGUI:
     def _event_loop(self):
         self._running = True
         while self._running:
+            time.sleep(0.02)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self._input = self.QUIT
