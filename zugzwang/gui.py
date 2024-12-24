@@ -122,13 +122,16 @@ class ZugGUI:
                 if event.type == pygame.QUIT:
                     self._input = self.QUIT
                     self._running = False
+                    pygame.display.flip()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
                     self._mouse_down(pos)
+                    pygame.display.flip()
                 if event.type == pygame.MOUSEBUTTONUP:
                     pos = pygame.mouse.get_pos()
                     self._mouse_up(pos)
-            pygame.display.flip()
+                    pygame.display.flip()
+
 
     def _mouse_down(self, coordinates: Tuple[int, int]):
         square = self._get_square(coordinates)
