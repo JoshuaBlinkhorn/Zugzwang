@@ -168,6 +168,8 @@ class ZugChessTools:
             solution_perspective: bool,
             prefix: List[chess.pgn.GameNode],
         ):
+
+
             # copy the prefix; necessary because otherwise all branches would modify
             # the same prefix
             # it's easist to do this once, here at the top of the function
